@@ -2,6 +2,8 @@
 #define tokens_h
 
 #include <string.h>
+#include <stdlib.h>
+#include <stdio.h>
 
 typedef enum {
 	LEFT_PAREN,
@@ -38,42 +40,57 @@ typedef enum {
 	RETURN,
 	WHILE,
 	FOR,
-	EOF_TOKEN
+	EOF_TOKEN,
+	INVALID_TOKEN
 } token_type;
 
 token_type get_token_atom_from_string(const char *key) {
-	if (strcmp(key, "(")) { return LEFT_PAREN; }
-	if (strcmp(key, ")")) { return RIGHT_PAREN; }
-	if (strcmp(key, "{")) { return LEFT_BRACE; }
-	if (strcmp(key, "}")) { return RIGHT_BRACE; }
-	if (strcmp(key, ",")) { return COMMA; }
-	if (strcmp(key, ".")) { return DOT; }
-	if (strcmp(key, "-")) { return MINUS; }
-	if (strcmp(key, "+")) { return PLUS; }
-	if (strcmp(key, ";")) { return SEMICOLON; }
-	if (strcmp(key, "/")) { return SLASH; }
-	if (strcmp(key, "*")) { return STAR; }
-	if (strcmp(key, "!")) { return BANG; }
-	if (strcmp(key, "=")) { return EQUAL; }
-	if (strcmp(key, "==")) { return EQUAL_EQUAL; }
-	if (strcmp(key, "!=")) { return BANG_EQUAL; }
-	if (strcmp(key, ">")) { return GREATER; }
-	if (strcmp(key, ">=")) { return GREATER_EQUAL; }
-	if (strcmp(key, "<")) { return LESS; }
-	if (strcmp(key, "<=")) { return LESS_EQUAL; }
-	if (strcmp(key, "&&")) { return AND; }
-	if (strcmp(key, "||")) { return OR; }
-	if (strcmp(key, "FUNCTION")) { return FUNCTION; }
-	if (strcmp(key, "if")) { return IF; }
-	if (strcmp(key, "else")) { return ELSE; }
-	if (strcmp(key, "true")) { return TRUE; }
-	if (strcmp(key, "false")) { return FALSE; }
-	if (strcmp(key, "nil")) { return NIL; }
-	if (strcmp(key, "var")) { return VAR; }
-	if (strcmp(key, "return")) { return RETURN; }
-	if (strcmp(key, "while")) { return WHILE; }
-	if (strcmp(key, "for")) { return FOR; }
-	return -1;
+    if (strcmp(key, "(") == 0) { return LEFT_PAREN; }
+    if (strcmp(key, ")") == 0) { return RIGHT_PAREN; }
+    if (strcmp(key, "{") == 0) { return LEFT_BRACE; }
+    if (strcmp(key, "}") == 0) { return RIGHT_BRACE; }
+    if (strcmp(key, ",") == 0) { return COMMA; }
+    if (strcmp(key, ".") == 0) { return DOT; }
+    if (strcmp(key, "-") == 0) { return MINUS; }
+    if (strcmp(key, "+") == 0) { return PLUS; }
+    if (strcmp(key, ";") == 0) { return SEMICOLON; }
+    if (strcmp(key, "/") == 0) { return SLASH; }
+    if (strcmp(key, "*") == 0) { return STAR; }
+    if (strcmp(key, "!") == 0) { return BANG; }
+    if (strcmp(key, "=") == 0) { return EQUAL; }
+    if (strcmp(key, "==") == 0) { return EQUAL_EQUAL; }
+    if (strcmp(key, "!=") == 0) { return BANG_EQUAL; }
+    if (strcmp(key, ">") == 0) { return GREATER; }
+    if (strcmp(key, ">=") == 0) { return GREATER_EQUAL; }
+    if (strcmp(key, "<") == 0) { return LESS; }
+    if (strcmp(key, "<=") == 0) { return LESS_EQUAL; }
+    if (strcmp(key, "&&") == 0) { return AND; }
+    if (strcmp(key, "||") == 0) { return OR; }
+    if (strcmp(key, "function") == 0) { return FUNCTION; }
+    if (strcmp(key, "if") == 0) { return IF; }
+    if (strcmp(key, "else") == 0) { return ELSE; }
+    if (strcmp(key, "true") == 0) { return TRUE; }
+    if (strcmp(key, "false") == 0) { return FALSE; }
+    if (strcmp(key, "nil") == 0) { return NIL; }
+    if (strcmp(key, "var") == 0) { return VAR; }
+    if (strcmp(key, "return") == 0) { return RETURN; }
+    if (strcmp(key, "while") == 0) { return WHILE; }
+    if (strcmp(key, "for") == 0) { return FOR; }
+    return INVALID_TOKEN;
+}
+
+token_type get_keyword_token_from_string(const char *key) {
+    if (strcmp(key, "function") == 0) { return FUNCTION; }
+    if (strcmp(key, "if") == 0) { return IF; }
+    if (strcmp(key, "else") == 0) { return ELSE; }
+    if (strcmp(key, "true") == 0) { return TRUE; }
+    if (strcmp(key, "false") == 0) { return FALSE; }
+    if (strcmp(key, "nil") == 0) { return NIL; }
+    if (strcmp(key, "var") == 0) { return VAR; }
+    if (strcmp(key, "return") == 0) { return RETURN; }
+    if (strcmp(key, "while") == 0) { return WHILE; }
+    if (strcmp(key, "for") == 0) { return FOR; }
+    return IDENTIFIER; 
 }
 
 const char *get_string_from_token_atom(token_type type) {
@@ -100,12 +117,12 @@ const char *get_string_from_token_atom(token_type type) {
             return "/";
         case STAR:
             return "*";
-        case BANG:
-            return "!";
         case EQUAL:
             return "=";
         case EQUAL_EQUAL:
             return "==";
+        case BANG:
+            return "!";
         case BANG_EQUAL:
             return "!=";
         case GREATER:
@@ -120,8 +137,14 @@ const char *get_string_from_token_atom(token_type type) {
             return "&&";
         case OR:
             return "||";
+		case IDENTIFIER:
+			return "<identifier>";
+		case STRING:
+			return "<string>";
+		case NUMBER:
+			return "<number>";
         case FUNCTION:
-            return "FUNCTION";
+            return "function";
         case IF:
             return "if";
         case ELSE:
@@ -141,9 +164,26 @@ const char *get_string_from_token_atom(token_type type) {
         case FOR:
             return "for";
         default:
-            return NULL;
+            return "INVALID";
     }
 }
 
+typedef struct {
+	token_type type;
+	const char *token_char;
+	size_t token_char_len;
+} token;
+
+token *create_token(token_type type, const char *token_char, size_t token_char_len) {
+	token *token_ = malloc(sizeof(token));
+	if (!token_) {
+		perror("Memory allocation error for token");
+		return NULL;
+	}
+	token_->type = type;
+	token_->token_char = token_char;
+	token_->token_char_len = token_char_len;
+	return token_;
+}
 
 #endif

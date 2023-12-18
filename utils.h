@@ -1,12 +1,14 @@
 #ifndef utils_h
 #define utils_h
 
+#include "tokens.h"
 #include <fcntl.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <stdio.h>
 
 #define BUFFER_SIZE 10240
+#define IDENTIFIER_BUFFER_SIZE 50
 
 char *read_file(const char *file_path) {
 	if (!file_path) {
@@ -34,11 +36,17 @@ char *read_file(const char *file_path) {
 		return NULL;
 	}
 
-	buffer[bytes_read] = '\0';
 	close(fd);
 
 	return buffer;
 
+}
+
+char *create_token_string_copy(const char *char_ptr, size_t start_index, 
+		size_t current_index) {
+	char *iden_buffer = calloc(IDENTIFIER_BUFFER_SIZE, sizeof(char));
+	memcpy(iden_buffer, (char_ptr + start_index), (current_index - start_index));
+	return iden_buffer;
 }
 
 
