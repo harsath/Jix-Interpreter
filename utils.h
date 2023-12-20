@@ -1,5 +1,5 @@
-#ifndef utils_h
-#define utils_h
+#ifndef UTILS_H
+#define UTILS_H
 
 #include "ast.h"
 #include "tokens.h"
