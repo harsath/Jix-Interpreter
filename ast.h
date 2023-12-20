@@ -1,22 +1,39 @@
 #ifndef AST_H
 #define AST_H
 
+#include <stdbool.h>
 #include "tokens.h"
 
-typedef enum { BINARY_NODE, PRIMARY_NODE } ast_node_type;
+typedef enum { BINARY_NODE, PRIMARY_NODE, VARIABLE_DECL_STMT } ast_node_type;
 
 typedef enum {
   NUMBER_PRIMARY_NODE,
   STRING_PRIMARY_NODE,
-  BOOLEAN_PRIMARY_NODE
+  IDENTIFIER_PRIMARY_NODE,
+  BOOLEAN_PRIMARY_NODE,
+  NIL_PRIMARY_NODE
 } ast_primary_node_type;
 
 typedef struct ast_node {
   ast_node_type node_type;
   ast_primary_node_type primary_node_type;
 
+  /* Variable decl statement */
+  token_type var_decl_stmt_dtype;
+  struct ast_node *var_decl_stmt_id;
+  struct ast_node *var_decl_stmt_expr;
+
   /* Number node */
   long number_value;
+
+  /* String node */
+  token *string_value;
+
+  /* Identifier node */
+  token *identifier_value;
+
+  /* Boolean node */
+  bool boolean_value;
 
   /* Binary node */
   struct ast_node *left;

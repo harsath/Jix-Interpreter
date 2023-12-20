@@ -11,6 +11,10 @@ typedef struct {
   vector *tokens;
 } parser_state;
 
+vector *parse_program(vector *tokens);
+
+ast_node *parse_statement(parser_state *parser);
+ast_node *parse_variable_decl_statement(parser_state *parser);
 ast_node *parse_expression(parser_state *parser);
 ast_node *additive(parser_state *parser);
 ast_node *multiplicative(parser_state *parser);
@@ -20,9 +24,49 @@ token *get_current_token(parser_state *parser);
 void increment_token_index(parser_state *parser);
 bool check_index_bound(parser_state *parser);
 
-ast_node *build_ast(vector *tokens) {
+vector *parse_program(vector *tokens) {
   parser_state parser = {.tokens = tokens, .current_token_index = 0};
-  return parse_expression(&parser);
+  vector *program = vector_init();
+  while (parser.current_token_index < tokens->size) {
+    vector_push_back(program, parse_statement(&parser));
+  }
+  return program;
+}
+
+ast_node *parse_statement(parser_state *parser) {
+  return parse_variable_decl_statement(parser);
+}
+ast_node *parse_variable_decl_statement(parser_state *parser) {
+  token *dtype = get_current_token(parser);
+  switch (dtype->type) {
+  case INT_DATATYPE:
+  case STRING_DATATYPE:
+  case BOOL_DATATYPE: {
+    increment_token_index(parser);
+    ast_node *var_decl_stmt = malloc(sizeof(ast_node));
+    var_decl_stmt->node_type = VARIABLE_DECL_STMT;
+    var_decl_stmt->var_decl_stmt_dtype = dtype->type;
+    var_decl_stmt->var_decl_stmt_id = primary(parser);
+    if (get_current_token(parser)->type != EQUAL) {
+      printf("Identifier must have '=' next\n");
+      exit(1);
+    }
+    increment_token_index(parser);
+    var_decl_stmt->var_decl_stmt_expr = parse_expression(parser);
+    if (!check_index_bound(parser) ||
+        get_current_token(parser)->type != SEMICOLON) {
+      printf("Statement must end with ';'\n");
+      exit(1);
+    }
+    increment_token_index(parser);
+    return var_decl_stmt;
+    break;
+  }
+  default: {
+    printf("Unsupported datatype in variable declaration statement");
+    exit(1);
+  }
+  }
 }
 
 ast_node *parse_expression(parser_state *parser) { return additive(parser); }
@@ -76,6 +120,38 @@ ast_node *primary(parser_state *parser) {
     num_node->number_value = strtol(temp_value, &end_ptr, 10);
     increment_token_index(parser);
     return num_node;
+  }
+  case STRING: {
+    ast_node *string_node = malloc(sizeof(ast_node));
+    string_node->node_type = PRIMARY_NODE;
+    string_node->primary_node_type = STRING_PRIMARY_NODE;
+    string_node->string_value = cur_tok;
+    increment_token_index(parser);
+    return string_node;
+  }
+  case IDENTIFIER: {
+    ast_node *identifier_node = malloc(sizeof(ast_node));
+    identifier_node->node_type = PRIMARY_NODE;
+    identifier_node->primary_node_type = IDENTIFIER_PRIMARY_NODE;
+    identifier_node->identifier_value = cur_tok;
+    increment_token_index(parser);
+    return identifier_node;
+  }
+  case TRUE:
+  case FALSE: {
+    ast_node *bool_node = malloc(sizeof(ast_node));
+    bool_node->node_type = PRIMARY_NODE;
+    bool_node->primary_node_type = BOOLEAN_PRIMARY_NODE;
+    bool_node->boolean_value = cur_tok->type == TRUE ? true : false;
+    increment_token_index(parser);
+    return bool_node;
+  }
+  case NIL: {
+    ast_node *nil_node = malloc(sizeof(ast_node));
+    nil_node->node_type = PRIMARY_NODE;
+    nil_node->primary_node_type = NIL_PRIMARY_NODE;
+    increment_token_index(parser);
+    return nil_node;
   }
   case LEFT_PAREN: {
     increment_token_index(parser);

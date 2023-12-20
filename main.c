@@ -18,13 +18,13 @@ int main(int argc, const char *argv[]) {
   /*          (int)tok->token_char_len, tok->token_char); */
   /* } */
 
-  ast_node *ast = build_ast(tokens);
+  vector *program = parse_program(tokens);
 
-  print_ast(ast, 0);
+  print_ast_program(program);
 
-  long interpreter_value = interpret(ast);
-
-  printf("Result: %ld\n", interpreter_value);
+  /* long interpreter_value = interpret(ast); */
+  /*  */
+  /* printf("Result: %ld\n", interpreter_value); */
 
   vector_free(tokens);
 

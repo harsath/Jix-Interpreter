@@ -15,6 +15,10 @@ long interpret(ast_node *ast) {
 
 long interpret_ast(ast_node *ast) {
   switch (ast->node_type) {
+  case VARIABLE_DECL_STMT: {
+    printf("Unsupported\n");
+    exit(1);
+  }
   case BINARY_NODE: {
     long lhs = interpret_ast(ast->left);
     long rhs = interpret_ast(ast->right);
@@ -48,6 +52,16 @@ long interpret_ast(ast_node *ast) {
     }
     case BOOLEAN_PRIMARY_NODE: {
       printf("Boolean primary node unimplemented\n");
+      exit(1);
+    }
+    case IDENTIFIER_PRIMARY_NODE: {
+
+      printf("Identifier primary node unimplemented\n");
+      exit(1);
+    }
+    case NIL_PRIMARY_NODE: {
+
+      printf("Nil primary node unimplemented\n");
       exit(1);
     }
     }

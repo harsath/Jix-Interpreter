@@ -40,6 +40,9 @@ typedef enum {
   RETURN,
   WHILE,
   FOR,
+  STRING_DATATYPE,
+  INT_DATATYPE,
+  BOOL_DATATYPE,
   EOF_TOKEN,
   INVALID_TOKEN
 } token_type;
@@ -138,6 +141,9 @@ token_type get_token_atom_from_string(const char *key) {
   if (strcmp(key, "for") == 0) {
     return FOR;
   }
+  if (strcmp(key, "int") == 0) { return INT_DATATYPE; }
+  if (strcmp(key, "string") == 0 ) { return STRING_DATATYPE; }
+  if (strcmp(key, "bool") == 0 ) { return BOOL_DATATYPE; }
   return INVALID_TOKEN;
 }
 
@@ -172,6 +178,9 @@ token_type get_keyword_token_from_string(const char *key) {
   if (strcmp(key, "for") == 0) {
     return FOR;
   }
+  if (strcmp(key, "int") == 0) { return INT_DATATYPE; }
+  if (strcmp(key, "string") == 0 ) { return STRING_DATATYPE; }
+  if (strcmp(key, "bool") == 0 ) { return BOOL_DATATYPE; }
   return IDENTIFIER;
 }
 
@@ -245,6 +254,12 @@ const char *get_string_from_token_atom(token_type type) {
     return "while";
   case FOR:
     return "for";
+  case INT_DATATYPE:
+    return "int";
+  case STRING_DATATYPE:
+    return "string";
+  case BOOL_DATATYPE:
+    return "bool";
   default:
     return "INVALID";
   }
