@@ -16,6 +16,10 @@ ast_node *additive(parser_state *parser);
 ast_node *multiplicative(parser_state *parser);
 ast_node *primary(parser_state *parser);
 
+token *get_current_token(parser_state *parser);
+void increment_token_index(parser_state *parser);
+bool check_index_bound(parser_state *parser);
+
 ast_node *build_ast(vector *tokens) {
   parser_state parser = {.tokens = tokens, .current_token_index = 0};
   return parse_expression(&parser);
@@ -25,10 +29,10 @@ ast_node *parse_expression(parser_state *parser) { return additive(parser); }
 
 ast_node *additive(parser_state *parser) {
   ast_node *left = multiplicative(parser);
-  token *op = vector_at(parser->tokens, parser->current_token_index);
-  while ((parser->current_token_index < parser->tokens->size) && op != NULL &&
+  token *op = get_current_token(parser);
+  while (check_index_bound(parser) && op != NULL &&
          (op->type == PLUS || op->type == MINUS)) {
-    parser->current_token_index++;
+    increment_token_index(parser);
     ast_node *right = multiplicative(parser);
     ast_node *new_left = malloc(sizeof(ast_node));
     new_left->node_type = BINARY_NODE;
@@ -36,17 +40,17 @@ ast_node *additive(parser_state *parser) {
     new_left->right = right;
     new_left->op = op->type;
     left = new_left;
-    op = vector_at(parser->tokens, parser->current_token_index);
+    op = get_current_token(parser);
   }
   return left;
 }
 
 ast_node *multiplicative(parser_state *parser) {
   ast_node *left = primary(parser);
-  token *op = vector_at(parser->tokens, parser->current_token_index);
-  while ((parser->current_token_index < parser->tokens->size) && op != NULL &&
+  token *op = get_current_token(parser);
+  while (check_index_bound(parser) && op != NULL &&
          (op->type == STAR || op->type == SLASH)) {
-    parser->current_token_index++;
+    increment_token_index(parser);
     ast_node *right = primary(parser);
     ast_node *new_left = malloc(sizeof(ast_node));
     new_left->node_type = BINARY_NODE;
@@ -54,13 +58,13 @@ ast_node *multiplicative(parser_state *parser) {
     new_left->right = right;
     new_left->op = op->type;
     left = new_left;
-    op = vector_at(parser->tokens, parser->current_token_index);
+    op = get_current_token(parser);
   }
   return left;
 }
 
 ast_node *primary(parser_state *parser) {
-  token *cur_tok = vector_at(parser->tokens, parser->current_token_index);
+  token *cur_tok = get_current_token(parser);
   switch (cur_tok->type) {
   case NUMBER: {
     ast_node *num_node = malloc(sizeof(ast_node));
@@ -70,17 +74,17 @@ ast_node *primary(parser_state *parser) {
     memcpy(temp_value, cur_tok->token_char, cur_tok->token_char_len);
     char *end_ptr;
     num_node->number_value = strtol(temp_value, &end_ptr, 10);
-    parser->current_token_index++;
+    increment_token_index(parser);
     return num_node;
   }
   case LEFT_PAREN: {
-    parser->current_token_index++;
+    increment_token_index(parser);
     ast_node *expr = parse_expression(parser);
-    cur_tok = vector_at(parser->tokens, parser->current_token_index);
+    cur_tok = get_current_token(parser);
     if (cur_tok->type != RIGHT_PAREN) {
       printf("Expecting ')' after the expression\n");
     }
-    parser->current_token_index++;
+    increment_token_index(parser);
     return expr;
   }
   default: {
@@ -89,6 +93,18 @@ ast_node *primary(parser_state *parser) {
   }
   }
   return NULL;
+}
+
+token *get_current_token(parser_state *parser) {
+  return vector_at(parser->tokens, parser->current_token_index);
+}
+
+void increment_token_index(parser_state *parser) {
+  parser->current_token_index++;
+}
+
+bool check_index_bound(parser_state *parser) {
+  return parser->current_token_index < parser->tokens->size;
 }
 
 #endif

@@ -65,7 +65,7 @@ void print_ast(ast_node *node, size_t level) {
   }
 
   case PRIMARY_NODE: {
-    printf("%lu\n", node->number_value);
+    printf("%ld\n", node->number_value);
     break;
   }
   }
