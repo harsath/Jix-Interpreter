@@ -1,5 +1,6 @@
 #include "parser.h"
 #include "scanner.h"
+#include "interpreter.h"
 #include "tokens.h"
 #include "utils.h"
 
@@ -11,15 +12,19 @@ int main(int argc, const char *argv[]) {
   }
   vector *tokens = scan_tokens(input);
 
-  for (size_t i = 0; i < tokens->size; i++) {
-    token *tok = (token *)tokens->_internal_buffer[i];
-    printf("type: %s, value: '%.*s'\n", get_string_from_token_atom(tok->type),
-           (int)tok->token_char_len, tok->token_char);
-  }
+  /* for (size_t i = 0; i < tokens->size; i++) { */
+  /*   token *tok = (token *)tokens->_internal_buffer[i]; */
+  /*   printf("type: %s, value: '%.*s'\n", get_string_from_token_atom(tok->type), */
+  /*          (int)tok->token_char_len, tok->token_char); */
+  /* } */
 
   ast_node *ast = build_ast(tokens);
 
   print_ast(ast, 0);
+
+  long interpreter_value = interpret(ast);
+
+  printf("Result: %ld\n", interpreter_value);
 
   vector_free(tokens);
 

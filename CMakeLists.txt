@@ -13,5 +13,6 @@ add_executable(
 	vector.h
 	parser.h
 	ast.h
+	interpreter.h
 )
 
