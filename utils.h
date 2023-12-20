@@ -54,7 +54,7 @@ void print_ast(ast_node *node, size_t level) {
     return;
   }
   for (size_t i = 0; i < level; i++) {
-    printf(i == level - 1 ? "|-" : "  ");
+    printf(i == level - 1 ? "| " : "  ");
   }
   switch (node->node_type) {
   case BINARY_NODE: {

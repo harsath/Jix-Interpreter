@@ -73,6 +73,16 @@ ast_node *primary(parser_state *parser) {
     parser->current_token_index++;
     return num_node;
   }
+  case LEFT_PAREN: {
+    parser->current_token_index++;
+    ast_node *expr = parse_expression(parser);
+    cur_tok = vector_at(parser->tokens, parser->current_token_index);
+    if (cur_tok->type != RIGHT_PAREN) {
+      printf("Expecting ')' after the expression\n");
+    }
+    parser->current_token_index++;
+    return expr;
+  }
   default: {
     printf("Unsupported primary '%s'\n",
            get_string_from_token_atom(cur_tok->type));
