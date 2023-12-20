@@ -1,0 +1,6 @@
+expr				:	additive ;
+additive			:	multiplicative ( ('+' | '-') multiplicative )* ;
+multiplicative			:	primary ( ('*' | '/') primary )* ;
+primary				:	NUMBER
+				|	"(" expr ")" ;
+NUMBER				:	[0-9]+ ;
