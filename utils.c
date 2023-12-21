@@ -32,9 +32,9 @@ char *read_file(const char *file_path) {
 }
 
 char *create_token_string_copy(const char *char_ptr, size_t start_index,
-                               size_t current_index) {
+                               size_t end_index) {
   char *iden_buffer = calloc(IDENTIFIER_BUFFER_SIZE, sizeof(char));
-  memcpy(iden_buffer, (char_ptr + start_index), (current_index - start_index));
+  memcpy(iden_buffer, (char_ptr + start_index), (end_index - start_index));
   return iden_buffer;
 }
 
@@ -84,14 +84,12 @@ void print_ast(ast_node *node, size_t level) {
       break;
     }
     case STRING_PRIMARY_NODE: {
-      printf("\"%.*s\"", (int)node->string_value->token_char_len,
-             node->string_value->token_char);
+      printf("\"%s\"", node->string_value);
       printf("\n");
       break;
     }
     case IDENTIFIER_PRIMARY_NODE: {
-      printf("%.*s", (int)node->identifier_value->token_char_len,
-             node->identifier_value->token_char);
+      printf("%s", node->identifier_value);
       printf("\n");
       break;
     }

@@ -15,7 +15,7 @@ typedef struct {
   
   long int_value;
   bool bool_value;
-  const char *string_value;
+  char *string_value;
 } object;
 
 object *interpret(vector *program);

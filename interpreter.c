@@ -1,6 +1,7 @@
 #include "interpreter.h"
 #include "ast.h"
 #include "tokens.h"
+#include "utils.h"
 #include "vector.h"
 
 object *interpret(vector *program) {
@@ -12,7 +13,8 @@ object *interpret(vector *program) {
   for (size_t i = 0; i < program->size; i++) {
     interpret_statement(vector_at(program, i), &state, return_code);
   }
-  object *xx = hash_table_lookup(state.variables, "xxx");
+  object *xx = hash_table_lookup(state.variables, "bar");
+  printf("Ret: %li\n", xx->int_value);
   return return_code;
 }
 
@@ -20,17 +22,17 @@ void interpret_statement(ast_node *stmt_node, interpreter_state *state,
                          object *return_code) {
   switch (stmt_node->node_type) {
   case VARIABLE_DECL_STMT: {
-    char variable_key[100] = {0};
-    ast_node *identifier = stmt_node->var_decl_stmt_id;
-    memcpy(variable_key, identifier->identifier_value->token_char,
-           identifier->identifier_value->token_char_len);
-    if (hash_table_lookup(state->variables, variable_key)) {
-      printf("Variable '%s' already exists\n", variable_key);
+    if (hash_table_lookup(state->variables,
+                          stmt_node->var_decl_stmt_id->identifier_value)) {
+      printf("Variable '%s' already exists\n",
+             stmt_node->var_decl_stmt_id->identifier_value);
       exit(1);
     }
     object *variable_value =
         eval_expression(stmt_node->var_decl_stmt_expr, state);
-    hash_table_insert(state->variables, variable_key, variable_value);
+    hash_table_insert(state->variables,
+                      stmt_node->var_decl_stmt_id->identifier_value,
+                      variable_value);
     break;
   }
   default: {
@@ -103,20 +105,45 @@ object *eval_expression(ast_node *ast, interpreter_state *state) {
       break;
     }
     case STRING_PRIMARY_NODE: {
-      printf("String primary node unimplemented\n");
-      exit(1);
+      returner->data_type = STRING_DATATYPE;
+      returner->string_value = ast->string_value;
+      break;
     }
     case BOOLEAN_PRIMARY_NODE: {
-      printf("Boolean primary node unimplemented\n");
-      exit(1);
+      returner->data_type = BOOL_DATATYPE;
+      returner->bool_value = ast->boolean_value;
+      break;
     }
     case IDENTIFIER_PRIMARY_NODE: {
-      printf("Identifier primary node unimplemented\n");
-      exit(1);
+      object *identifier_lookup =
+          hash_table_lookup(state->variables, ast->identifier_value);
+      if (!identifier_lookup) {
+        printf("Identifier '%s' does not exist\n", ast->identifier_value);
+        exit(1);
+      }
+      returner->data_type = identifier_lookup->data_type;
+      switch (identifier_lookup->data_type) {
+      case INT_DATATYPE: {
+        returner->int_value = identifier_lookup->int_value;
+        break;
+      }
+      case STRING_DATATYPE: {
+        returner->string_value = identifier_lookup->string_value;
+        break;
+      }
+      case BOOL_DATATYPE: {
+        returner->bool_value = identifier_lookup->bool_value;
+        break;
+      }
+      default: {
+        printf("Unsupported data type on identifier lookup\n");
+      }
+      }
+      break;
     }
     case NIL_PRIMARY_NODE: {
-      printf("Nil primary node unimplemented\n");
-      exit(1);
+      returner->data_type = NIL;
+      break;
     }
     }
     break;

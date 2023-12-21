@@ -31,14 +31,14 @@ void *hash_table_lookup(hash_table *table, const char *key) {
   return NULL;
 }
 
-void hash_table_insert(hash_table *table, const char *key, void *value) {
+void hash_table_insert(hash_table *table, char *key, void *value) {
   unsigned int index = hash(key);
   hash_node *new_node = malloc(sizeof(hash_node));
   if (!new_node) {
     perror("Hash table node allocation memory error\n");
     exit(1);
   }
-  new_node->key = strdup(key);
+  new_node->key = key;
   new_node->value = value;
   new_node->next = table->buckets[index];
   table->buckets[index] = new_node;

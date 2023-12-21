@@ -1,4 +1,5 @@
 #include "parser.h"
+#include "utils.h"
 
 vector *parse_program(vector *tokens) {
   parser_state parser = {.tokens = tokens, .current_token_index = 0};
@@ -101,7 +102,7 @@ ast_node *primary(parser_state *parser) {
     ast_node *string_node = malloc(sizeof(ast_node));
     string_node->node_type = PRIMARY_NODE;
     string_node->primary_node_type = STRING_PRIMARY_NODE;
-    string_node->string_value = cur_tok;
+    string_node->string_value = create_token_string_copy(cur_tok->token_char, 0, cur_tok->token_char_len);
     increment_token_index(parser);
     return string_node;
   }
@@ -109,7 +110,7 @@ ast_node *primary(parser_state *parser) {
     ast_node *identifier_node = malloc(sizeof(ast_node));
     identifier_node->node_type = PRIMARY_NODE;
     identifier_node->primary_node_type = IDENTIFIER_PRIMARY_NODE;
-    identifier_node->identifier_value = cur_tok;
+    identifier_node->identifier_value = create_token_string_copy(cur_tok->token_char, 0, cur_tok->token_char_len);
     increment_token_index(parser);
     return identifier_node;
   }

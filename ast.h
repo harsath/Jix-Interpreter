@@ -27,10 +27,10 @@ typedef struct ast_node {
   long number_value;
 
   /* String node */
-  token *string_value;
+  char *string_value;
 
   /* Identifier node */
-  token *identifier_value;
+  char *identifier_value;
 
   /* Boolean node */
   bool boolean_value;
