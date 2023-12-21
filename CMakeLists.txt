@@ -14,4 +14,5 @@ add_executable(
 	parser.c
 	interpreter.c
 	hash_table.c
+	ast_printer.c
 )

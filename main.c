@@ -3,6 +3,7 @@
 #include "interpreter.h"
 #include "tokens.h"
 #include "utils.h"
+#include "ast_printer.h"
 
 int main(int argc, const char *argv[]) {
   const char *file_name = "foo.jix";

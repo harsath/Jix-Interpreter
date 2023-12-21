@@ -4,7 +4,7 @@
 #include <stdbool.h>
 #include "tokens.h"
 
-typedef enum { BINARY_NODE, PRIMARY_NODE, VARIABLE_DECL_STMT } ast_node_type;
+typedef enum { BINARY_NODE, PRIMARY_NODE, VARIABLE_DECL_STMT, VARIABLE_ASSIGN_STMT } ast_node_type;
 
 typedef enum {
   NUMBER_PRIMARY_NODE,
