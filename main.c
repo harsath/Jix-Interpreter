@@ -26,6 +26,8 @@ int main(int argc, const char *argv[]) {
   /*  */
   /* printf("Result: %ld\n", interpreter_value); */
 
+  object *return_value = interpret(program);
+
   vector_free(tokens);
 
   return 0;

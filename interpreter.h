@@ -4,6 +4,7 @@
 #include "ast.h"
 #include "tokens.h"
 #include "hash_table.h"
+#include "vector.h"
 
 typedef struct { 
   hash_table *variables;
@@ -11,11 +12,15 @@ typedef struct {
 
 typedef struct {
   token_type data_type;
-  void *value;
-} variable_value_node;
+  
+  long int_value;
+  bool bool_value;
+  const char *string_value;
+} object;
 
-long interpret(ast_node *ast);
-long interpret_ast(ast_node *ast, interpreter_state *state);
+object *interpret(vector *program);
+void interpret_statement(ast_node *ast, interpreter_state *state, object *return_code);
+object *eval_expression(ast_node *ast, interpreter_state *state);
 
 
 #endif
