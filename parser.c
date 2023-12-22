@@ -1,5 +1,6 @@
 #include "parser.h"
 #include "ast.h"
+#include "hash_table.h"
 #include "tokens.h"
 #include "utils.h"
 
@@ -23,8 +24,12 @@ ast_node *parse_statement(parser_state *parser) {
   case IDENTIFIER: {
     return parse_variable_assignment_statement(parser);
   }
+  case LEFT_BRACE: {
+    return parse_block_statement(parser);
+  }
   default: {
-    printf("Unsupported statement type\n");
+    printf("Unsupported statement type '%s'\n",
+           get_string_from_token_atom(stmt->type));
     exit(1);
   }
   }
@@ -81,6 +86,19 @@ ast_node *parse_variable_assignment_statement(parser_state *parser) {
   }
   increment_token_index(parser);
   return var_assign_stmt;
+}
+
+ast_node *parse_block_statement(parser_state *parser) {
+  increment_token_index(parser);
+  ast_node *block_stmt = malloc(sizeof(ast_node));
+  block_stmt->node_type = BLOCK_STMT;
+  block_stmt->block_stmt_stmts = vector_init();
+  while (check_index_bound(parser) &&
+         get_current_token(parser)->type != RIGHT_BRACE) {
+    vector_push_back(block_stmt->block_stmt_stmts, parse_statement(parser));
+  }
+  increment_token_index(parser);
+  return block_stmt;
 }
 
 ast_node *parse_expression(parser_state *parser) { return additive(parser); }

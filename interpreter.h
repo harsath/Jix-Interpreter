@@ -6,6 +6,12 @@
 #include "tokens.h"
 #include "vector.h"
 
+typedef struct environment {
+  hash_table *current_env_variables;
+  struct environment *enclosing_environment; 
+} environment;
+
+
 typedef struct {
   hash_table *variables;
 } interpreter_state;
@@ -18,9 +24,16 @@ typedef struct {
   char *string_value;
 } object;
 
+
 object *interpret(vector *program);
 void interpret_statement(ast_node *ast, interpreter_state *state,
                          object *return_code);
 object *eval_expression(ast_node *ast, interpreter_state *state);
+
+environment *environment_init();
+environment *environment_init_enclosed(environment *enclosed_env);
+object *environment_lookup(environment *env, char *key);
+void environment_free(environment *env);
+
 
 #endif

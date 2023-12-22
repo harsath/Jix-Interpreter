@@ -34,7 +34,7 @@ vector *scan_tokens(const char *source_code) {
       vector_push_back(tokens, token_);
     } else if (source_code[current_index] == '}') {
       current_index++;
-      token *token_ = create_token(RIGHT_PAREN, (source_code + start_index),
+      token *token_ = create_token(RIGHT_BRACE, (source_code + start_index),
                                    (current_index - start_index));
       vector_push_back(tokens, token_);
     } else if (source_code[current_index] == ',') {

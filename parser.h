@@ -5,6 +5,7 @@
 #include "tokens.h"
 #include "utils.h"
 #include "vector.h"
+#include "hash_table.h"
 
 typedef struct {
   size_t current_token_index;
@@ -12,10 +13,10 @@ typedef struct {
 } parser_state;
 
 vector *parse_program(vector *tokens);
-
 ast_node *parse_statement(parser_state *parser);
 ast_node *parse_variable_declaration_statement(parser_state *parser);
 ast_node *parse_variable_assignment_statement(parser_state *parser);
+ast_node *parse_block_statement(parser_state *parser);
 ast_node *parse_expression(parser_state *parser);
 ast_node *additive(parser_state *parser);
 ast_node *multiplicative(parser_state *parser);

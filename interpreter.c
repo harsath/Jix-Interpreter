@@ -171,3 +171,34 @@ object *eval_expression(ast_node *ast, interpreter_state *state) {
   }
   return returner;
 }
+
+environment *environment_init() {
+
+  environment *env = malloc(sizeof(environment));
+  env->current_env_variables = hash_table_init();
+  env->enclosing_environment = NULL;
+  return env;
+}
+
+environment *environment_init_enclosed(environment *enclosed_env) {
+  environment *env = malloc(sizeof(environment));
+  env->current_env_variables = hash_table_init();
+  env->enclosing_environment = enclosed_env;
+  return env;
+}
+
+object *environment_lookup(environment *env, char *key) {
+  object *cur_env_value = hash_table_lookup(env->current_env_variables, key);
+  if (cur_env_value != NULL) {
+    return cur_env_value;
+  }
+  if (env->enclosing_environment != NULL) {
+    return environment_lookup(env->enclosing_environment, key);
+  }
+  return NULL;
+}
+
+void environment_free(environment *env) {
+  hash_table_free(env->current_env_variables);
+  free(env);
+}
