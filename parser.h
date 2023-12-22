@@ -14,7 +14,8 @@ typedef struct {
 vector *parse_program(vector *tokens);
 
 ast_node *parse_statement(parser_state *parser);
-ast_node *parse_variable_decl_statement(parser_state *parser);
+ast_node *parse_variable_declaration_statement(parser_state *parser);
+ast_node *parse_variable_assignment_statement(parser_state *parser);
 ast_node *parse_expression(parser_state *parser);
 ast_node *additive(parser_state *parser);
 ast_node *multiplicative(parser_state *parser);

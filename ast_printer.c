@@ -1,4 +1,5 @@
 #include "ast_printer.h"
+#include "ast.h"
 
 void print_ast_program_var_decl_stmt(ast_node *var_decl_stmt) {
   printf("%s\n",
@@ -6,6 +7,12 @@ void print_ast_program_var_decl_stmt(ast_node *var_decl_stmt) {
   print_ast(var_decl_stmt->var_decl_stmt_id, 0);
   printf("=\n");
   print_ast(var_decl_stmt->var_decl_stmt_expr, 0);
+}
+
+void print_ast_program_var_assign_stmt(ast_node *var_assign_stmt) {
+  print_ast(var_assign_stmt->assign_stmt_id, 0);
+  printf("=\n");
+  print_ast(var_assign_stmt->assign_stmt_expr, 0);
 }
 
 void print_ast_program(vector *program) {
@@ -16,6 +23,10 @@ void print_ast_program(vector *program) {
       print_ast_program_var_decl_stmt(statement);
       break;
     }
+    case VARIABLE_ASSIGN_STMT: {
+print_ast_program_var_assign_stmt(statement);
+break;
+                               }
     default: {
       printf("Unsupported statement type on print_ast_program\n");
     }

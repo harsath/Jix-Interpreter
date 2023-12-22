@@ -23,6 +23,10 @@ typedef struct ast_node {
   struct ast_node *var_decl_stmt_id;
   struct ast_node *var_decl_stmt_expr;
 
+  /* Variable assign statement */
+  struct ast_node *assign_stmt_id;
+  struct ast_node *assign_stmt_expr;
+
   /* Number node */
   long number_value;
 

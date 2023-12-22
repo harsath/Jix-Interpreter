@@ -1,4 +1,6 @@
 #include "parser.h"
+#include "ast.h"
+#include "tokens.h"
 #include "utils.h"
 
 vector *parse_program(vector *tokens) {
@@ -11,9 +13,24 @@ vector *parse_program(vector *tokens) {
 }
 
 ast_node *parse_statement(parser_state *parser) {
-  return parse_variable_decl_statement(parser);
+  token *stmt = get_current_token(parser);
+  switch (stmt->type) {
+  case INT_DATATYPE:
+  case STRING_DATATYPE:
+  case BOOL_DATATYPE: {
+    return parse_variable_declaration_statement(parser);
+  }
+  case IDENTIFIER: {
+    return parse_variable_assignment_statement(parser);
+  }
+  default: {
+    printf("Unsupported statement type\n");
+    exit(1);
+  }
+  }
 }
-ast_node *parse_variable_decl_statement(parser_state *parser) {
+
+ast_node *parse_variable_declaration_statement(parser_state *parser) {
   token *dtype = get_current_token(parser);
   switch (dtype->type) {
   case INT_DATATYPE:
@@ -24,7 +41,8 @@ ast_node *parse_variable_decl_statement(parser_state *parser) {
     var_decl_stmt->node_type = VARIABLE_DECL_STMT;
     var_decl_stmt->var_decl_stmt_dtype = dtype->type;
     var_decl_stmt->var_decl_stmt_id = primary(parser);
-    if (get_current_token(parser)->type != EQUAL) {
+    if (!check_index_bound(parser) ||
+        get_current_token(parser)->type != EQUAL) {
       printf("Identifier must have '=' next\n");
       exit(1);
     }
@@ -44,6 +62,25 @@ ast_node *parse_variable_decl_statement(parser_state *parser) {
     exit(1);
   }
   }
+}
+
+ast_node *parse_variable_assignment_statement(parser_state *parser) {
+  ast_node *var_assign_stmt = malloc(sizeof(ast_node));
+  var_assign_stmt->node_type = VARIABLE_ASSIGN_STMT;
+  var_assign_stmt->assign_stmt_id = primary(parser);
+  if (!check_index_bound(parser) || get_current_token(parser)->type != EQUAL) {
+    printf("Variable assignment must have '='\n");
+    exit(1);
+  }
+  increment_token_index(parser);
+  var_assign_stmt->assign_stmt_expr = parse_expression(parser);
+  if (!check_index_bound(parser) ||
+      get_current_token(parser)->type != SEMICOLON) {
+    printf("Statement must end with ';'\n");
+    exit(1);
+  }
+  increment_token_index(parser);
+  return var_assign_stmt;
 }
 
 ast_node *parse_expression(parser_state *parser) { return additive(parser); }
@@ -102,7 +139,8 @@ ast_node *primary(parser_state *parser) {
     ast_node *string_node = malloc(sizeof(ast_node));
     string_node->node_type = PRIMARY_NODE;
     string_node->primary_node_type = STRING_PRIMARY_NODE;
-    string_node->string_value = create_token_string_copy(cur_tok->token_char, 0, cur_tok->token_char_len);
+    string_node->string_value = create_token_string_copy(
+        cur_tok->token_char, 0, cur_tok->token_char_len);
     increment_token_index(parser);
     return string_node;
   }
@@ -110,7 +148,8 @@ ast_node *primary(parser_state *parser) {
     ast_node *identifier_node = malloc(sizeof(ast_node));
     identifier_node->node_type = PRIMARY_NODE;
     identifier_node->primary_node_type = IDENTIFIER_PRIMARY_NODE;
-    identifier_node->identifier_value = create_token_string_copy(cur_tok->token_char, 0, cur_tok->token_char_len);
+    identifier_node->identifier_value = create_token_string_copy(
+        cur_tok->token_char, 0, cur_tok->token_char_len);
     increment_token_index(parser);
     return identifier_node;
   }
