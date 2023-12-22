@@ -1,11 +1,11 @@
-program				:	statement* ;
-statement			:	variable_decl_stmt ";"
-					|	assignment_stmt ";" ;
-variable_decl_stmt	:	( "int" | "string" | "bool" ) primary "=" expr ;
-assignment_stmt		:	primary "=" expr ;
-expr				:	additive ;
-additive			:	multiplicative ( ('+' | '-') multiplicative )* ;
-multiplicative		:	primary ( ('*' | '/') primary )* ;
-primary				:	NUMBER | STRING | IDENTIFIER | "true" | "false" | "nil"
-					|	"(" expr ")" ;
-NUMBER				:	[0-9]+ ;
+program             :   statement* ;
+statement           :   variable_decl_stmt ";"
+                    |   assignment_stmt ";" ;
+variable_decl_stmt  :   ( "int" | "string" | "bool" ) primary "=" expr ;
+assignment_stmt     :   primary "=" expr ;
+expr                :   additive ;
+additive            :   multiplicative ( ('+' | '-') multiplicative )* ;
+multiplicative      :   primary ( ('*' | '/') primary )* ;
+primary             :   NUMBER | STRING | IDENTIFIER | "true" | "false" | "nil"
+                    |   "(" expr ")" ;
+NUMBER              :   [0-9]+ ;
