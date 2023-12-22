@@ -44,6 +44,18 @@ void hash_table_insert(hash_table *table, char *key, void *value) {
   table->buckets[index] = new_node;
 }
 
+void hash_table_update(hash_table *table, char *key, void *value) {
+  unsigned int index = hash(key);
+  hash_node *node = table->buckets[index];
+  while (node) {
+    if (strcmp(node->key, key) == 0) {
+      node->value = value;
+      return;
+    }
+    node = node->next;
+  }
+}
+
 void hash_table_delete(hash_table *table, const char *key) {
   unsigned int index = hash(key);
   hash_node *node = table->buckets[index];

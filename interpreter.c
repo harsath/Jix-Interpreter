@@ -1,5 +1,6 @@
 #include "interpreter.h"
 #include "ast.h"
+#include "hash_table.h"
 #include "tokens.h"
 #include "utils.h"
 #include "vector.h"
@@ -32,6 +33,21 @@ void interpret_statement(ast_node *stmt_node, interpreter_state *state,
         eval_expression(stmt_node->var_decl_stmt_expr, state);
     hash_table_insert(state->variables,
                       stmt_node->var_decl_stmt_id->identifier_value,
+                      variable_value);
+    break;
+  }
+  case VARIABLE_ASSIGN_STMT: {
+    if (hash_table_lookup(state->variables,
+                          stmt_node->assign_stmt_id->identifier_value) ==
+        NULL) {
+      printf("Variable '%s' does not exist\n",
+             stmt_node->assign_stmt_id->identifier_value);
+      exit(1);
+    }
+    object *variable_value =
+        eval_expression(stmt_node->assign_stmt_expr, state);
+    hash_table_update(state->variables,
+                      stmt_node->assign_stmt_id->identifier_value,
                       variable_value);
     break;
   }

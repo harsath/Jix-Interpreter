@@ -21,6 +21,7 @@ unsigned int hash(const char *key);
 hash_table *hash_table_init();
 void *hash_table_lookup(hash_table *table, const char *key);
 void hash_table_insert(hash_table *table, char *key, void *value);
+void hash_table_update(hash_table *table, char *key, void *value);
 void hash_table_delete(hash_table *table, const char *key);
 void hash_table_free(hash_table *table);
 

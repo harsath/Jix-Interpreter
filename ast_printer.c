@@ -24,9 +24,9 @@ void print_ast_program(vector *program) {
       break;
     }
     case VARIABLE_ASSIGN_STMT: {
-print_ast_program_var_assign_stmt(statement);
-break;
-                               }
+      print_ast_program_var_assign_stmt(statement);
+      break;
+    }
     default: {
       printf("Unsupported statement type on print_ast_program\n");
     }

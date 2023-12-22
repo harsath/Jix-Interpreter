@@ -1,9 +1,9 @@
+#include "ast_printer.h"
+#include "interpreter.h"
 #include "parser.h"
 #include "scanner.h"
-#include "interpreter.h"
 #include "tokens.h"
 #include "utils.h"
-#include "ast_printer.h"
 
 int main(int argc, const char *argv[]) {
   const char *file_name = "foo.jix";
@@ -15,7 +15,8 @@ int main(int argc, const char *argv[]) {
 
   /* for (size_t i = 0; i < tokens->size; i++) { */
   /*   token *tok = (token *)tokens->_internal_buffer[i]; */
-  /*   printf("type: %s, value: '%.*s'\n", get_string_from_token_atom(tok->type), */
+  /*   printf("type: %s, value: '%.*s'\n",
+   * get_string_from_token_atom(tok->type), */
   /*          (int)tok->token_char_len, tok->token_char); */
   /* } */
 
@@ -27,7 +28,7 @@ int main(int argc, const char *argv[]) {
   /*  */
   /* printf("Result: %ld\n", interpreter_value); */
 
-  /* object *return_value = interpret(program); */
+  object *return_value = interpret(program);
 
   vector_free(tokens);
 
