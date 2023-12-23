@@ -9,12 +9,12 @@ object *interpret(vector *program) {
   if (!program) {
     return NULL;
   }
-  interpreter_state state = {.variables = hash_table_init()};
+  interpreter_state state = {.env = environment_init()};
   object *return_code = malloc(sizeof(object));
   for (size_t i = 0; i < program->size; i++) {
     interpret_statement(vector_at(program, i), &state, return_code);
   }
-  object *xx = hash_table_lookup(state.variables, "bar");
+  object *xx = environment_lookup(state.env, "bar");
   printf("Ret: %li\n", xx->int_value);
   return return_code;
 }
@@ -23,32 +23,15 @@ void interpret_statement(ast_node *stmt_node, interpreter_state *state,
                          object *return_code) {
   switch (stmt_node->node_type) {
   case VARIABLE_DECL_STMT: {
-    if (hash_table_lookup(state->variables,
-                          stmt_node->var_decl_stmt_id->identifier_value)) {
-      printf("Variable '%s' already exists\n",
-             stmt_node->var_decl_stmt_id->identifier_value);
-      exit(1);
-    }
-    object *variable_value =
-        eval_expression(stmt_node->var_decl_stmt_expr, state);
-    hash_table_insert(state->variables,
-                      stmt_node->var_decl_stmt_id->identifier_value,
-                      variable_value);
+    interpret_variable_decl_statement(stmt_node, state);
     break;
   }
   case VARIABLE_ASSIGN_STMT: {
-    if (hash_table_lookup(state->variables,
-                          stmt_node->assign_stmt_id->identifier_value) ==
-        NULL) {
-      printf("Variable '%s' does not exist\n",
-             stmt_node->assign_stmt_id->identifier_value);
-      exit(1);
-    }
-    object *variable_value =
-        eval_expression(stmt_node->assign_stmt_expr, state);
-    hash_table_update(state->variables,
-                      stmt_node->assign_stmt_id->identifier_value,
-                      variable_value);
+    interpret_variable_assignment_statement(stmt_node, state);
+    break;
+  }
+  case BLOCK_STMT: {
+    interpret_block_statement(stmt_node, state, return_code);
     break;
   }
   default: {
@@ -56,6 +39,49 @@ void interpret_statement(ast_node *stmt_node, interpreter_state *state,
     exit(1);
   }
   }
+}
+
+void interpret_variable_decl_statement(ast_node *stmt_node,
+                                       interpreter_state *state) {
+  /* Allow creating scope-local variable name of same name in a scope even if it
+   * exists in previous scopes. */
+  if (environment_lookup_current_env(
+          state->env, stmt_node->var_decl_stmt_id->identifier_value)) {
+    printf("Variable '%s' already exists\n",
+           stmt_node->var_decl_stmt_id->identifier_value);
+    exit(1);
+  }
+  object *variable_value =
+      eval_expression(stmt_node->var_decl_stmt_expr, state);
+  environment_insert(state->env, stmt_node->var_decl_stmt_id->identifier_value,
+                     variable_value);
+}
+
+void interpret_variable_assignment_statement(ast_node *stmt_node,
+                                             interpreter_state *state) {
+  /* Check current scope, if not traverse to previous parent scope. */
+  if (environment_lookup(state->env,
+                         stmt_node->assign_stmt_id->identifier_value) == NULL) {
+    printf("Variable '%s' does not exist\n",
+           stmt_node->assign_stmt_id->identifier_value);
+    exit(1);
+  }
+  object *variable_value = eval_expression(stmt_node->assign_stmt_expr, state);
+  environment_update(state->env, stmt_node->assign_stmt_id->identifier_value,
+                     variable_value);
+}
+
+void interpret_block_statement(ast_node *stmt_node, interpreter_state *state,
+                               object *return_code) {
+  environment *parent_env = state->env;
+  environment *block_env = environment_init_enclosed(state->env);
+  state->env = block_env;
+  for (size_t i = 0; i < stmt_node->block_stmt_stmts->size; i++) {
+    interpret_statement(vector_at(stmt_node->block_stmt_stmts, i), state,
+                        return_code);
+  }
+  environment_free(state->env);
+  state->env = parent_env;
 }
 
 object *eval_expression(ast_node *ast, interpreter_state *state) {
@@ -132,7 +158,7 @@ object *eval_expression(ast_node *ast, interpreter_state *state) {
     }
     case IDENTIFIER_PRIMARY_NODE: {
       object *identifier_lookup =
-          hash_table_lookup(state->variables, ast->identifier_value);
+          environment_lookup(state->env, ast->identifier_value);
       if (!identifier_lookup) {
         printf("Identifier '%s' does not exist\n", ast->identifier_value);
         exit(1);
@@ -196,6 +222,28 @@ object *environment_lookup(environment *env, char *key) {
     return environment_lookup(env->enclosing_environment, key);
   }
   return NULL;
+}
+
+object *environment_lookup_current_env(environment *env, char *key) {
+  return hash_table_lookup(env->current_env_variables, key);
+}
+
+void environment_insert(environment *env, char *key, object *value) {
+  hash_table_insert(env->current_env_variables, key, value);
+}
+
+/* Check if the variable exists in the current scope environment. If it is,
+ * update it. If it is not, recursively check the parent environment until we
+ * reach the global scope. */
+void environment_update(environment *env, char *key, object *value) {
+  object *scope = hash_table_lookup(env->current_env_variables, key);
+  if (scope != NULL) {
+    hash_table_update(env->current_env_variables, key, value);
+  } else {
+    if (env->enclosing_environment != NULL) {
+      environment_update(env->enclosing_environment, key, value);
+    }
+  }
 }
 
 void environment_free(environment *env) {
