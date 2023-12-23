@@ -14,8 +14,8 @@ object *interpret(vector *program) {
   for (size_t i = 0; i < program->size; i++) {
     interpret_statement(vector_at(program, i), &state, return_code);
   }
-  object *xx = environment_lookup(state.env, "xxx");
-  printf("Ret: %d\n", xx->bool_value);
+  object *xx = environment_lookup(state.env, "value_1");
+  printf("Ret: %lu\n", xx->int_value);
   return return_code;
 }
 
@@ -32,6 +32,10 @@ void interpret_statement(ast_node *stmt_node, interpreter_state *state,
   }
   case BLOCK_STMT: {
     interpret_block_statement(stmt_node, state, return_code);
+    break;
+  }
+  case IF_STMT: {
+    interpret_if_statement(stmt_node, state, return_code);
     break;
   }
   default: {
@@ -69,6 +73,19 @@ void interpret_variable_assignment_statement(ast_node *stmt_node,
   object *variable_value = eval_expression(stmt_node->assign_stmt_expr, state);
   environment_update(state->env, stmt_node->assign_stmt_id->identifier_value,
                      variable_value);
+}
+
+void interpret_if_statement(ast_node *stmt_node, interpreter_state *state,
+                            object *return_code) {
+  object *if_expr = eval_expression(stmt_node->if_stmt_expr, state);
+  if (if_expr->data_type != BOOL_DATATYPE) {
+    printf("The result of the <expression> inside 'if' statement should result "
+           "in a boolean value.\n");
+    exit(1);
+  }
+  if (if_expr->bool_value) {
+    interpret_block_statement(stmt_node->if_stmt_block, state, return_code);
+  }
 }
 
 void interpret_block_statement(ast_node *stmt_node, interpreter_state *state,

@@ -30,6 +30,8 @@ void interpret_variable_decl_statement(ast_node *stmt_node,
                                        interpreter_state *state);
 void interpret_variable_assignment_statement(ast_node *stmt_node,
                                              interpreter_state *state);
+void interpret_if_statement(ast_node *stmt_node, interpreter_state *state,
+                            object *return_code);
 void interpret_block_statement(ast_node *stmt_node, interpreter_state *state,
                                object *return_code);
 object *eval_expression(ast_node *ast, interpreter_state *state);

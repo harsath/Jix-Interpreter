@@ -105,6 +105,7 @@ ast_node *parse_if_statement(parser_state *parser) {
     printf("The <expression> in 'if' must be followed by ')'.\n");
     exit(1);
   }
+  increment_token_index(parser);
   if_stmt->if_stmt_block = parse_block_statement(parser);
   return if_stmt;
 }
@@ -117,6 +118,10 @@ ast_node *parse_block_statement(parser_state *parser) {
   while (check_index_bound(parser) &&
          get_current_token(parser)->type != RIGHT_BRACE) {
     vector_push_back(block_stmt->block_stmt_stmts, parse_statement(parser));
+  }
+  if (get_current_token(parser)->type != RIGHT_BRACE) {
+    printf("Block statement must end with '}'.\n");
+    exit(1);
   }
   increment_token_index(parser);
   return block_stmt;
