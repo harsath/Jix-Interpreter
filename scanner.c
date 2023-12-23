@@ -1,4 +1,5 @@
 #include "scanner.h"
+#include "utils.h"
 
 vector *scan_tokens(const char *source_code) {
   if (!source_code) {

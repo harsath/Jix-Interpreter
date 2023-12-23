@@ -101,7 +101,78 @@ ast_node *parse_block_statement(parser_state *parser) {
   return block_stmt;
 }
 
-ast_node *parse_expression(parser_state *parser) { return additive(parser); }
+ast_node *parse_expression(parser_state *parser) { return logical_or(parser); }
+
+ast_node *logical_or(parser_state *parser) {
+  ast_node *left = logical_and(parser);
+  token *op = get_current_token(parser);
+  while (check_index_bound(parser) && op != NULL && op->type == OR) {
+    increment_token_index(parser);
+    ast_node *right = logical_and(parser);
+    ast_node *new_left = malloc(sizeof(ast_node));
+    new_left->node_type = BINARY_NODE;
+    new_left->left = left;
+    new_left->right = right;
+    new_left->op = op->type;
+    left = new_left;
+    op = get_current_token(parser);
+  }
+  return left;
+}
+
+ast_node *logical_and(parser_state *parser) {
+  ast_node *left = equality(parser);
+  token *op = get_current_token(parser);
+  while (check_index_bound(parser) && op != NULL && op->type == AND) {
+    increment_token_index(parser);
+    ast_node *right = equality(parser);
+    ast_node *new_left = malloc(sizeof(ast_node));
+    new_left->node_type = BINARY_NODE;
+    new_left->left = left;
+    new_left->right = right;
+    new_left->op = op->type;
+    left = new_left;
+    op = get_current_token(parser);
+  }
+  return left;
+}
+
+ast_node *equality(parser_state *parser) {
+  ast_node *left = comparitive(parser);
+  token *op = get_current_token(parser);
+  while (check_index_bound(parser) && op != NULL &&
+         (op->type == EQUAL_EQUAL || op->type == BANG_EQUAL)) {
+    increment_token_index(parser);
+    ast_node *right = comparitive(parser);
+    ast_node *new_left = malloc(sizeof(ast_node));
+    new_left->node_type = BINARY_NODE;
+    new_left->left = left;
+    new_left->right = right;
+    new_left->op = op->type;
+    left = new_left;
+    op = get_current_token(parser);
+  }
+  return left;
+}
+
+ast_node *comparitive(parser_state *parser) {
+  ast_node *left = additive(parser);
+  token *op = get_current_token(parser);
+  while (check_index_bound(parser) && op != NULL &&
+         (op->type == GREATER || op->type == GREATER_EQUAL ||
+          op->type == LESS || op->type == LESS_EQUAL)) {
+    increment_token_index(parser);
+    ast_node *right = additive(parser);
+    ast_node *new_left = malloc(sizeof(ast_node));
+    new_left->node_type = BINARY_NODE;
+    new_left->left = left;
+    new_left->right = right;
+    new_left->op = op->type;
+    left = new_left;
+    op = get_current_token(parser);
+  }
+  return left;
+}
 
 ast_node *additive(parser_state *parser) {
   ast_node *left = multiplicative(parser);
@@ -192,7 +263,8 @@ ast_node *primary(parser_state *parser) {
     ast_node *expr = parse_expression(parser);
     cur_tok = get_current_token(parser);
     if (cur_tok->type != RIGHT_PAREN) {
-      printf("Expecting ')' after the expression\n");
+      printf("Expecting ')' after the expression, got '%s'\n",
+             get_string_from_token_atom(cur_tok->type));
     }
     increment_token_index(parser);
     return expr;

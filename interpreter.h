@@ -8,9 +8,8 @@
 
 typedef struct environment {
   hash_table *current_env_variables;
-  struct environment *enclosing_environment; 
+  struct environment *enclosing_environment;
 } environment;
-
 
 typedef struct {
   environment *env;
@@ -24,14 +23,22 @@ typedef struct {
   char *string_value;
 } object;
 
-
 object *interpret(vector *program);
 void interpret_statement(ast_node *ast, interpreter_state *state,
                          object *return_code);
-void interpret_variable_decl_statement(ast_node *stmt_node, interpreter_state *state);
-void interpret_variable_assignment_statement(ast_node *stmt_node, interpreter_state *state);
-void interpret_block_statement(ast_node *stmt_node, interpreter_state *state, object *return_code);
+void interpret_variable_decl_statement(ast_node *stmt_node,
+                                       interpreter_state *state);
+void interpret_variable_assignment_statement(ast_node *stmt_node,
+                                             interpreter_state *state);
+void interpret_block_statement(ast_node *stmt_node, interpreter_state *state,
+                               object *return_code);
 object *eval_expression(ast_node *ast, interpreter_state *state);
+object *eval_logical_expression(token_type op, object *lhs, object *rhs);
+object *eval_equality_expression(token_type op, object *lhs, object *rhs);
+object *eval_comparitive_expression(token_type op, object *lhs, object *rhs);
+object *eval_additive_multiplicative_expression(token_type op, object *lhs,
+                                                object *rhs);
+object *eval_primary_expression(ast_node *ast, interpreter_state *state);
 
 environment *environment_init();
 environment *environment_init_enclosed(environment *enclosed_env);
@@ -40,6 +47,5 @@ object *environment_lookup_current_env(environment *env, char *key);
 void environment_insert(environment *env, char *key, object *value);
 void environment_update(environment *env, char *key, object *value);
 void environment_free(environment *env);
-
 
 #endif

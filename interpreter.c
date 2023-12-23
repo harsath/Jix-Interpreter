@@ -14,8 +14,8 @@ object *interpret(vector *program) {
   for (size_t i = 0; i < program->size; i++) {
     interpret_statement(vector_at(program, i), &state, return_code);
   }
-  object *xx = environment_lookup(state.env, "bar");
-  printf("Ret: %li\n", xx->int_value);
+  object *xx = environment_lookup(state.env, "xxx");
+  printf("Ret: %d\n", xx->bool_value);
   return return_code;
 }
 
@@ -47,7 +47,7 @@ void interpret_variable_decl_statement(ast_node *stmt_node,
    * exists in previous scopes. */
   if (environment_lookup_current_env(
           state->env, stmt_node->var_decl_stmt_id->identifier_value)) {
-    printf("Variable '%s' already exists\n",
+    printf("Variable '%s' already exists in current scope.\n",
            stmt_node->var_decl_stmt_id->identifier_value);
     exit(1);
   }
@@ -85,109 +85,46 @@ void interpret_block_statement(ast_node *stmt_node, interpreter_state *state,
 }
 
 object *eval_expression(ast_node *ast, interpreter_state *state) {
-  object *returner = malloc(sizeof(object));
+  object *returner = NULL;
   switch (ast->node_type) {
   case BINARY_NODE: {
     object *lhs = eval_expression(ast->left, state);
     object *rhs = eval_expression(ast->right, state);
     switch (ast->op) {
-    case PLUS: {
-      if (lhs->data_type == INT_DATATYPE && rhs->data_type == INT_DATATYPE) {
-        returner->data_type = INT_DATATYPE;
-        returner->int_value = lhs->int_value + rhs->int_value;
-      } else {
-        printf("PLUS operator not defined for 'string' and 'bool', or mix of "
-               "data types");
-      }
-      break;
-    }
-    case MINUS: {
-      if (lhs->data_type == INT_DATATYPE && rhs->data_type == INT_DATATYPE) {
-        returner->data_type = INT_DATATYPE;
-        returner->int_value = lhs->int_value - rhs->int_value;
-      } else {
-        printf("MINUS operator not defined for 'string' and 'bool', or mix of "
-               "data types");
-      }
-      break;
-    }
-    case STAR: {
-      if (lhs->data_type == INT_DATATYPE && rhs->data_type == INT_DATATYPE) {
-        returner->data_type = INT_DATATYPE;
-        returner->int_value = lhs->int_value * rhs->int_value;
-      } else {
-        printf("STAR operator not defined for 'string' and 'bool', or mix of "
-               "data types");
-      }
-      break;
-    }
+    case PLUS:
+    case MINUS:
+    case STAR:
     case SLASH: {
-      if (lhs->data_type == INT_DATATYPE && rhs->data_type == INT_DATATYPE) {
-        returner->data_type = INT_DATATYPE;
-        returner->int_value = lhs->int_value / rhs->int_value;
-      } else {
-
-        printf("SLASH operator not defined for 'string' and 'bool', or mix of "
-               "data types");
-      }
+      returner = eval_additive_multiplicative_expression(ast->op, lhs, rhs);
       break;
     }
-    default:
+    case OR:
+    case AND: {
+      returner = eval_logical_expression(ast->op, lhs, rhs);
+      break;
+    }
+    case EQUAL_EQUAL:
+    case BANG_EQUAL: {
+      returner = eval_equality_expression(ast->op, lhs, rhs);
+      break;
+    }
+    case GREATER:
+    case GREATER_EQUAL:
+    case LESS:
+    case LESS_EQUAL: {
+      returner = eval_comparitive_expression(ast->op, lhs, rhs);
+      break;
+    }
+    default: {
       printf("Invalid operation '%s' in binary node\n",
              get_string_from_token_atom(ast->op));
       exit(1);
     }
+    }
     break;
   }
   case PRIMARY_NODE: {
-    switch (ast->primary_node_type) {
-    case NUMBER_PRIMARY_NODE: {
-      returner->data_type = INT_DATATYPE;
-      returner->int_value = ast->number_value;
-      break;
-    }
-    case STRING_PRIMARY_NODE: {
-      returner->data_type = STRING_DATATYPE;
-      returner->string_value = ast->string_value;
-      break;
-    }
-    case BOOLEAN_PRIMARY_NODE: {
-      returner->data_type = BOOL_DATATYPE;
-      returner->bool_value = ast->boolean_value;
-      break;
-    }
-    case IDENTIFIER_PRIMARY_NODE: {
-      object *identifier_lookup =
-          environment_lookup(state->env, ast->identifier_value);
-      if (!identifier_lookup) {
-        printf("Identifier '%s' does not exist\n", ast->identifier_value);
-        exit(1);
-      }
-      returner->data_type = identifier_lookup->data_type;
-      switch (identifier_lookup->data_type) {
-      case INT_DATATYPE: {
-        returner->int_value = identifier_lookup->int_value;
-        break;
-      }
-      case STRING_DATATYPE: {
-        returner->string_value = identifier_lookup->string_value;
-        break;
-      }
-      case BOOL_DATATYPE: {
-        returner->bool_value = identifier_lookup->bool_value;
-        break;
-      }
-      default: {
-        printf("Unsupported data type on identifier lookup\n");
-      }
-      }
-      break;
-    }
-    case NIL_PRIMARY_NODE: {
-      returner->data_type = NIL;
-      break;
-    }
-    }
+    returner = eval_primary_expression(ast, state);
     break;
   }
   default: {
@@ -198,8 +135,163 @@ object *eval_expression(ast_node *ast, interpreter_state *state) {
   return returner;
 }
 
-environment *environment_init() {
+object *eval_logical_expression(token_type op, object *lhs, object *rhs) {
+  object *returner = malloc(sizeof(object));
+  returner->data_type = BOOL_DATATYPE;
+  if (lhs->data_type == BOOL_DATATYPE && rhs->data_type == BOOL_DATATYPE) {
+    returner->bool_value = (op == AND) ? (lhs->bool_value && rhs->bool_value)
+                                       : (lhs->bool_value || rhs->bool_value);
+  } else {
+    printf("Logical '&&' and '||' can only be performed between two operands "
+           "of booleans.\n");
+    exit(1);
+  }
+  return returner;
+}
 
+object *eval_equality_expression(token_type op, object *lhs, object *rhs) {
+  object *returner = malloc(sizeof(object));
+  returner->data_type = BOOL_DATATYPE;
+  if ((lhs->data_type == INT_DATATYPE && rhs->data_type == INT_DATATYPE) ||
+      (lhs->data_type == BOOL_DATATYPE && rhs->data_type == BOOL_DATATYPE)) {
+    returner->bool_value = (op == EQUAL_EQUAL)
+                               ? (lhs->int_value == rhs->int_value)
+                               : (lhs->int_value != rhs->int_value);
+  } else if (lhs->data_type == STRING_DATATYPE &&
+             rhs->data_type == STRING_DATATYPE) {
+    returner->bool_value =
+        (op == EQUAL_EQUAL)
+            ? (strcmp(lhs->string_value, rhs->string_value) == 0)
+            : false;
+  } else {
+    printf("Equality operator can only be performed between two operands of "
+           "integers, strings, or booleans.\n");
+    exit(1);
+  }
+  return returner;
+}
+
+object *eval_comparitive_expression(token_type op, object *lhs, object *rhs) {
+  object *returner = malloc(sizeof(object));
+  returner->data_type = BOOL_DATATYPE;
+  if (lhs->data_type != INT_DATATYPE || rhs->data_type != INT_DATATYPE) {
+    printf(
+        "Comparitive expression can only be performed between two integers.\n");
+    exit(1);
+  }
+  long lhs_value = lhs->int_value;
+  long rhs_value = rhs->int_value;
+  switch (op) {
+  case GREATER: {
+    returner->bool_value = (lhs_value > rhs_value);
+    break;
+  }
+  case GREATER_EQUAL: {
+    returner->bool_value = (lhs_value >= rhs_value);
+    break;
+  }
+  case LESS: {
+    returner->bool_value = (lhs_value < rhs_value);
+    break;
+  }
+  case LESS_EQUAL: {
+    returner->bool_value = (lhs_value <= rhs_value);
+    break;
+  }
+  default: {
+  }
+  }
+  return returner;
+}
+
+object *eval_additive_multiplicative_expression(token_type op, object *lhs,
+                                                object *rhs) {
+  object *returner = malloc(sizeof(object));
+  returner->data_type = INT_DATATYPE;
+  if (lhs->data_type != INT_DATATYPE || rhs->data_type != INT_DATATYPE) {
+    printf("For additive and multiplicative expressions, both operands must be "
+           "of integer type.\n");
+    exit(1);
+  }
+  switch (op) {
+  case PLUS: {
+    returner->int_value = lhs->int_value + rhs->int_value;
+    break;
+  }
+  case MINUS: {
+    returner->int_value = lhs->int_value - rhs->int_value;
+    break;
+  }
+  case STAR: {
+    returner->int_value = lhs->int_value * rhs->int_value;
+    break;
+  }
+  case SLASH: {
+    returner->int_value = lhs->int_value / rhs->int_value;
+    break;
+  }
+  default: {
+    /* The `op' check is already performed by `eval_expression' parent function.
+     */
+  }
+  }
+  return returner;
+}
+
+object *eval_primary_expression(ast_node *ast, interpreter_state *state) {
+  object *returner = malloc(sizeof(object));
+  switch (ast->primary_node_type) {
+  case NUMBER_PRIMARY_NODE: {
+    returner->data_type = INT_DATATYPE;
+    returner->int_value = ast->number_value;
+    break;
+  }
+  case STRING_PRIMARY_NODE: {
+    returner->data_type = STRING_DATATYPE;
+    returner->string_value = ast->string_value;
+    break;
+  }
+  case BOOLEAN_PRIMARY_NODE: {
+    returner->data_type = BOOL_DATATYPE;
+    returner->bool_value = ast->boolean_value;
+    break;
+  }
+  case IDENTIFIER_PRIMARY_NODE: {
+    object *identifier_lookup =
+        environment_lookup(state->env, ast->identifier_value);
+    if (!identifier_lookup) {
+      printf("Identifier '%s' does not exist\n", ast->identifier_value);
+      exit(1);
+    }
+    returner->data_type = identifier_lookup->data_type;
+    switch (identifier_lookup->data_type) {
+    case INT_DATATYPE: {
+      returner->int_value = identifier_lookup->int_value;
+      break;
+    }
+    case STRING_DATATYPE: {
+      returner->string_value = identifier_lookup->string_value;
+      break;
+    }
+    case BOOL_DATATYPE: {
+      returner->bool_value = identifier_lookup->bool_value;
+      break;
+    }
+    default: {
+      printf("Unsupported data type on identifier lookup\n");
+    }
+    }
+    break;
+  }
+  case NIL_PRIMARY_NODE: {
+    returner->data_type = NIL;
+    break;
+  }
+  }
+  return returner;
+}
+
+environment *environment_init() {
   environment *env = malloc(sizeof(environment));
   env->current_env_variables = hash_table_init();
   env->enclosing_environment = NULL;
