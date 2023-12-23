@@ -1,13 +1,29 @@
 program             :   statement* ;
-statement           :   variable_decl_stmt ";"
-                    |   assignment_stmt ";" 
+
+statement           :   variable_decl_stmt
+                    |   assignment_stmt ';' 
+                    |   if_stmt
                     |   block_stmt ;
-variable_decl_stmt  :   ( "int" | "string" | "bool" ) primary "=" expr ;
-assignment_stmt     :   primary "=" expr ;
-block_stmt          :   "{" statement* "}" ;
+
+variable_decl_stmt  :   ( 'int' | 'string' | 'bool' ) primary '=' expr ';' ;
+
+assignment_stmt     :   primary '=' expr ';' ;
+
+if_stmt             :   'if' '(' expr ')' block_stmt ;
+
+block_stmt          :   '{' statement* '}' ;
+
 expr                :   additive ;
+
 additive            :   multiplicative ( ('+' | '-') multiplicative )* ;
+
 multiplicative      :   primary ( ('*' | '/') primary )* ;
-primary             :   NUMBER | STRING | IDENTIFIER | "true" | "false" | "nil"
-                    |   "(" expr ")" ;
+
+primary             :   NUMBER | STRING | IDENTIFIER | 'true' | 'false' | 'nil'
+                    |   '(' expr ')' ;
+
 NUMBER              :   [0-9]+ ;
+
+STRING              :   '"' .* '"' ;
+
+IDENTIFIER          :   [a-zA-Z_][a-zA-Z_0-9]+
