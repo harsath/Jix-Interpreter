@@ -24,6 +24,9 @@ ast_node *parse_statement(parser_state *parser) {
   case IDENTIFIER: {
     return parse_variable_assignment_statement(parser);
   }
+  case IF: {
+    return parse_if_statement(parser);
+  }
   case LEFT_BRACE: {
     return parse_block_statement(parser);
   }
@@ -86,6 +89,24 @@ ast_node *parse_variable_assignment_statement(parser_state *parser) {
   }
   increment_token_index(parser);
   return var_assign_stmt;
+}
+
+ast_node *parse_if_statement(parser_state *parser) {
+  increment_token_index(parser);
+  ast_node *if_stmt = malloc(sizeof(ast_node));
+  if_stmt->node_type = IF_STMT;
+  if (get_current_token(parser)->type != LEFT_PAREN) {
+    printf("Keyword 'if' must be followed by '(' <expression> ')'.\n");
+    exit(1);
+  }
+  increment_token_index(parser);
+  if_stmt->if_stmt_expr = parse_expression(parser);
+  if (get_current_token(parser)->type != RIGHT_PAREN) {
+    printf("The <expression> in 'if' must be followed by ')'.\n");
+    exit(1);
+  }
+  if_stmt->if_stmt_block = parse_block_statement(parser);
+  return if_stmt;
 }
 
 ast_node *parse_block_statement(parser_state *parser) {

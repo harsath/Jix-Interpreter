@@ -15,17 +15,22 @@ void print_ast_program_var_assign_stmt(ast_node *var_assign_stmt) {
   print_ast_expr(var_assign_stmt->assign_stmt_expr, 0);
 }
 
+void print_ast_program_if_stmt(ast_node *if_stmt) {
+  printf("if\n");
+  print_ast_expr(if_stmt->if_stmt_expr, 0);
+  print_ast_program_block_stmt(if_stmt->if_stmt_block);
+}
+
 void print_ast_program_block_stmt(ast_node *block_stmt) {
-  printf("{\n");
   for (size_t i = 0; i < block_stmt->block_stmt_stmts->size; i++) {
     print_ast_statement(vector_at(block_stmt->block_stmt_stmts, i));
   }
-  printf("}\n");
 }
 
 void print_ast_program(vector *program) {
   for (size_t i = 0; i < program->size; i++) {
     print_ast_statement(vector_at(program, i));
+    printf("----------------------------\n");
   }
 }
 
@@ -41,6 +46,10 @@ void print_ast_statement(ast_node *statement) {
   }
   case BLOCK_STMT: {
     print_ast_program_block_stmt(statement);
+    break;
+  }
+  case IF_STMT: {
+    print_ast_program_if_stmt(statement);
     break;
   }
   default: {

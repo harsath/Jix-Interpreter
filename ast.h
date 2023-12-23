@@ -5,7 +5,7 @@
 #include "tokens.h"
 #include "vector.h"
 
-typedef enum { BINARY_NODE, PRIMARY_NODE, VARIABLE_DECL_STMT, VARIABLE_ASSIGN_STMT, BLOCK_STMT } ast_node_type;
+typedef enum { BINARY_NODE, PRIMARY_NODE, VARIABLE_DECL_STMT, VARIABLE_ASSIGN_STMT, IF_STMT, BLOCK_STMT } ast_node_type;
 
 typedef enum {
   NUMBER_PRIMARY_NODE,
@@ -27,6 +27,10 @@ typedef struct ast_node {
   /* Variable assign statement */
   struct ast_node *assign_stmt_id;
   struct ast_node *assign_stmt_expr;
+
+  /* If statement */
+  struct ast_node *if_stmt_expr;
+  struct ast_node *if_stmt_block;
 
   /* Block statement */
   vector *block_stmt_stmts;
