@@ -2,18 +2,23 @@ program             :   statement* ;
 
 statement           :   variable_decl_stmt
                     |   assignment_stmt ';' 
-                    |   if_stmt
                     |   block_stmt ;
 
 variable_decl_stmt  :   ( 'int' | 'string' | 'bool' ) primary '=' expr ';' ;
 
 assignment_stmt     :   primary '=' expr ';' ;
 
-if_stmt             :   'if' '(' expr ')' block_stmt ;
-
 block_stmt          :   '{' statement* '}' ;
 
-expr                :   additive ;
+expr                :   logical_or ;
+
+logical_or          :   logical_and ( '||' logical_and )* ;
+
+logical_and         :   equality ( '&&' equality )* ;
+
+equality            :   comparitive ( ( '==' | '!=' ) comparitive )* ;
+
+comparitive         :   additive ( ( '>' | '>=' | '<' | '<=' ) additive )* ;
 
 additive            :   multiplicative ( ('+' | '-') multiplicative )* ;
 
