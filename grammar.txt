@@ -1,12 +1,15 @@
 program             :   statement* ;
 
-statement           :   variable_decl_stmt
+statement           :   function_definition
+                    |   variable_decl_stmt
                     |   assignment_stmt
                     |   if_else_stmt
                     |   while_stmt
                     |   block_stmt ;
 
-variable_decl_stmt  :   ( 'int' | 'string' | 'bool' ) primary '=' expr ';' ;
+function_definition :   data_type IDENTIFIER '(' fn_decl_parameters? ')' block_stmt ;
+
+variable_decl_stmt  :   data_type primary '=' expr ';' ;
 
 assignment_stmt     :   primary '=' expr ';' ;
 
@@ -15,6 +18,10 @@ if_else_stmt        :   'if' '(' expr ')' block_stmt ( 'else' block_stmt )? ;
 while_stmt          :   'while' '(' expr ')' block_stmt ;
 
 block_stmt          :   '{' statement* '}' ;
+
+fn_decl_parameters  :   data_type expr ( ',' data_type expr )* ;
+
+data_type           :   'int' | 'string' | 'bool' ;
 
 expr                :   logical_or ;
 
