@@ -5,7 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-typedef enum {
+enum token_type {
   LEFT_PAREN,
   RIGHT_PAREN,
   LEFT_BRACE,
@@ -45,18 +45,18 @@ typedef enum {
   BOOL_DATATYPE,
   EOF_TOKEN,
   INVALID_TOKEN
-} token_type;
+};
 
-typedef struct {
-  token_type type;
+struct token {
+  enum token_type type;
   const char *token_char;
   size_t token_char_len;
-} token;
+};
 
-token_type get_token_atom_from_string(const char *key);
-token_type get_keyword_token_from_string(const char *key);
-const char *get_string_from_token_atom(token_type type);
-token *create_token(token_type type, const char *token_char,
-                    size_t token_char_len);
+enum token_type get_token_atom_from_string(const char *key);
+enum token_type get_keyword_token_from_string(const char *key);
+const char *get_string_from_token_atom(enum token_type type);
+struct token *create_token(enum token_type type, const char *token_char,
+                           size_t token_char_len);
 
 #endif

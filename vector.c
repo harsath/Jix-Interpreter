@@ -1,7 +1,7 @@
 #include "vector.h"
 
-vector *vector_init() {
-  vector *vector_ = calloc(1, sizeof(vector));
+struct vector *vector_init() {
+  struct vector *vector_ = calloc(1, sizeof(struct vector));
   if (!vector_) {
     perror("Vector initilization error");
     return NULL;
@@ -18,7 +18,7 @@ vector *vector_init() {
   return vector_;
 }
 
-bool vector_push_back(vector *vector_, void *item) {
+bool vector_push_back(struct vector *vector_, void *item) {
   assert(vector_ != NULL && item != NULL);
   if (vector_->capacity <= vector_->size) {
     if (!_vector_increase_capacity(vector_)) {
@@ -29,7 +29,7 @@ bool vector_push_back(vector *vector_, void *item) {
   return true;
 }
 
-bool vector_remove_at(vector *vector_, size_t index) {
+bool vector_remove_at(struct vector *vector_, size_t index) {
   assert(vector_ != NULL && index >= 0);
   if (vector_->size <= index) {
     return false;
@@ -44,7 +44,7 @@ bool vector_remove_at(vector *vector_, size_t index) {
   return true;
 }
 
-void *vector_at(vector *vector_, size_t index) {
+void *vector_at(struct vector *vector_, size_t index) {
   assert(vector_ != NULL && index >= 0);
   if (vector_->size <= index) {
     return NULL;
@@ -52,12 +52,12 @@ void *vector_at(vector *vector_, size_t index) {
   return vector_->_internal_buffer[index];
 }
 
-void vector_free(vector *vector_) {
+void vector_free(struct vector *vector_) {
   free(vector_->_internal_buffer);
   free(vector_);
 }
 
-bool _vector_increase_capacity(vector *vector_) {
+bool _vector_increase_capacity(struct vector *vector_) {
   GENERIC_TYPE_PTR *temp_ptr =
       realloc(vector_->_internal_buffer,
               sizeof(GENERIC_TYPE_PTR) * vector_->capacity * 2);

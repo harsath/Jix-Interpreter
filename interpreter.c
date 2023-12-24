@@ -5,22 +5,23 @@
 #include "utils.h"
 #include "vector.h"
 
-object *interpret(vector *program) {
+struct object *interpret(struct vector *program) {
   if (!program) {
     return NULL;
   }
-  interpreter_state state = {.env = environment_init()};
-  object *return_code = malloc(sizeof(object));
+  struct interpreter_state state = {.env = environment_init()};
+  struct object *return_code = malloc(sizeof(struct object));
   for (size_t i = 0; i < program->size; i++) {
     interpret_statement(vector_at(program, i), &state, return_code);
   }
-  object *xx = environment_lookup(state.env, "value_1");
+  struct object *xx = environment_lookup(state.env, "value_1");
   printf("Ret: %lu\n", xx->int_value);
   return return_code;
 }
 
-void interpret_statement(ast_node *stmt_node, interpreter_state *state,
-                         object *return_code) {
+void interpret_statement(struct ast_node *stmt_node,
+                         struct interpreter_state *state,
+                         struct object *return_code) {
   switch (stmt_node->node_type) {
   case VARIABLE_DECL_STMT: {
     interpret_variable_decl_statement(stmt_node, state);
@@ -45,8 +46,8 @@ void interpret_statement(ast_node *stmt_node, interpreter_state *state,
   }
 }
 
-void interpret_variable_decl_statement(ast_node *stmt_node,
-                                       interpreter_state *state) {
+void interpret_variable_decl_statement(struct ast_node *stmt_node,
+                                       struct interpreter_state *state) {
   /* Allow creating scope-local variable name of same name in a scope even if it
    * exists in previous scopes. */
   if (environment_lookup_current_env(
@@ -55,14 +56,14 @@ void interpret_variable_decl_statement(ast_node *stmt_node,
            stmt_node->var_decl_stmt_id->identifier_value);
     exit(1);
   }
-  object *variable_value =
+  struct object *variable_value =
       eval_expression(stmt_node->var_decl_stmt_expr, state);
   environment_insert(state->env, stmt_node->var_decl_stmt_id->identifier_value,
                      variable_value);
 }
 
-void interpret_variable_assignment_statement(ast_node *stmt_node,
-                                             interpreter_state *state) {
+void interpret_variable_assignment_statement(struct ast_node *stmt_node,
+                                             struct interpreter_state *state) {
   /* Check current scope, if not traverse to previous parent scope. */
   if (environment_lookup(state->env,
                          stmt_node->assign_stmt_id->identifier_value) == NULL) {
@@ -70,14 +71,16 @@ void interpret_variable_assignment_statement(ast_node *stmt_node,
            stmt_node->assign_stmt_id->identifier_value);
     exit(1);
   }
-  object *variable_value = eval_expression(stmt_node->assign_stmt_expr, state);
+  struct object *variable_value =
+      eval_expression(stmt_node->assign_stmt_expr, state);
   environment_update(state->env, stmt_node->assign_stmt_id->identifier_value,
                      variable_value);
 }
 
-void interpret_if_statement(ast_node *stmt_node, interpreter_state *state,
-                            object *return_code) {
-  object *if_expr = eval_expression(stmt_node->if_stmt_expr, state);
+void interpret_if_statement(struct ast_node *stmt_node,
+                            struct interpreter_state *state,
+                            struct object *return_code) {
+  struct object *if_expr = eval_expression(stmt_node->if_stmt_expr, state);
   if (if_expr->data_type != BOOL_DATATYPE) {
     printf("The result of the <expression> inside 'if' statement should result "
            "in a boolean value.\n");
@@ -93,10 +96,11 @@ void interpret_if_statement(ast_node *stmt_node, interpreter_state *state,
   }
 }
 
-void interpret_block_statement(ast_node *stmt_node, interpreter_state *state,
-                               object *return_code) {
-  environment *parent_env = state->env;
-  environment *block_env = environment_init_enclosed(state->env);
+void interpret_block_statement(struct ast_node *stmt_node,
+                               struct interpreter_state *state,
+                               struct object *return_code) {
+  struct environment *parent_env = state->env;
+  struct environment *block_env = environment_init_enclosed(state->env);
   state->env = block_env;
   for (size_t i = 0; i < stmt_node->block_stmt_stmts->size; i++) {
     interpret_statement(vector_at(stmt_node->block_stmt_stmts, i), state,
@@ -106,12 +110,13 @@ void interpret_block_statement(ast_node *stmt_node, interpreter_state *state,
   state->env = parent_env;
 }
 
-object *eval_expression(ast_node *ast, interpreter_state *state) {
-  object *returner = NULL;
+struct object *eval_expression(struct ast_node *ast,
+                               struct interpreter_state *state) {
+  struct object *returner = NULL;
   switch (ast->node_type) {
   case BINARY_NODE: {
-    object *lhs = eval_expression(ast->left, state);
-    object *rhs = eval_expression(ast->right, state);
+    struct object *lhs = eval_expression(ast->left, state);
+    struct object *rhs = eval_expression(ast->right, state);
     switch (ast->op) {
     case PLUS:
     case MINUS:
@@ -157,8 +162,9 @@ object *eval_expression(ast_node *ast, interpreter_state *state) {
   return returner;
 }
 
-object *eval_logical_expression(token_type op, object *lhs, object *rhs) {
-  object *returner = malloc(sizeof(object));
+struct object *eval_logical_expression(enum token_type op, struct object *lhs,
+                                       struct object *rhs) {
+  struct object *returner = malloc(sizeof(struct object));
   returner->data_type = BOOL_DATATYPE;
   if (lhs->data_type == BOOL_DATATYPE && rhs->data_type == BOOL_DATATYPE) {
     returner->bool_value = (op == AND) ? (lhs->bool_value && rhs->bool_value)
@@ -171,8 +177,9 @@ object *eval_logical_expression(token_type op, object *lhs, object *rhs) {
   return returner;
 }
 
-object *eval_equality_expression(token_type op, object *lhs, object *rhs) {
-  object *returner = malloc(sizeof(object));
+struct object *eval_equality_expression(enum token_type op, struct object *lhs,
+                                        struct object *rhs) {
+  struct object *returner = malloc(sizeof(struct object));
   returner->data_type = BOOL_DATATYPE;
   if (lhs->data_type == INT_DATATYPE && rhs->data_type == INT_DATATYPE) {
     returner->bool_value = (op == EQUAL_EQUAL)
@@ -197,8 +204,10 @@ object *eval_equality_expression(token_type op, object *lhs, object *rhs) {
   return returner;
 }
 
-object *eval_comparitive_expression(token_type op, object *lhs, object *rhs) {
-  object *returner = malloc(sizeof(object));
+struct object *eval_comparitive_expression(enum token_type op,
+                                           struct object *lhs,
+                                           struct object *rhs) {
+  struct object *returner = malloc(sizeof(struct object));
   returner->data_type = BOOL_DATATYPE;
   if (lhs->data_type != INT_DATATYPE || rhs->data_type != INT_DATATYPE) {
     printf(
@@ -230,9 +239,10 @@ object *eval_comparitive_expression(token_type op, object *lhs, object *rhs) {
   return returner;
 }
 
-object *eval_additive_multiplicative_expression(token_type op, object *lhs,
-                                                object *rhs) {
-  object *returner = malloc(sizeof(object));
+struct object *eval_additive_multiplicative_expression(enum token_type op,
+                                                       struct object *lhs,
+                                                       struct object *rhs) {
+  struct object *returner = malloc(sizeof(struct object));
   returner->data_type = INT_DATATYPE;
   if (lhs->data_type != INT_DATATYPE || rhs->data_type != INT_DATATYPE) {
     printf("For additive and multiplicative expressions, both operands must be "
@@ -264,8 +274,9 @@ object *eval_additive_multiplicative_expression(token_type op, object *lhs,
   return returner;
 }
 
-object *eval_primary_expression(ast_node *ast, interpreter_state *state) {
-  object *returner = malloc(sizeof(object));
+struct object *eval_primary_expression(struct ast_node *ast,
+                                       struct interpreter_state *state) {
+  struct object *returner = malloc(sizeof(struct object));
   switch (ast->primary_node_type) {
   case NUMBER_PRIMARY_NODE: {
     returner->data_type = INT_DATATYPE;
@@ -283,7 +294,7 @@ object *eval_primary_expression(ast_node *ast, interpreter_state *state) {
     break;
   }
   case IDENTIFIER_PRIMARY_NODE: {
-    object *identifier_lookup =
+    struct object *identifier_lookup =
         environment_lookup(state->env, ast->identifier_value);
     if (!identifier_lookup) {
       printf("Identifier '%s' does not exist\n", ast->identifier_value);
@@ -317,22 +328,24 @@ object *eval_primary_expression(ast_node *ast, interpreter_state *state) {
   return returner;
 }
 
-environment *environment_init() {
-  environment *env = malloc(sizeof(environment));
+struct environment *environment_init() {
+  struct environment *env = malloc(sizeof(struct environment));
   env->current_env_variables = hash_table_init();
   env->enclosing_environment = NULL;
   return env;
 }
 
-environment *environment_init_enclosed(environment *enclosed_env) {
-  environment *env = malloc(sizeof(environment));
+struct environment *
+environment_init_enclosed(struct environment *enclosed_env) {
+  struct environment *env = malloc(sizeof(struct environment));
   env->current_env_variables = hash_table_init();
   env->enclosing_environment = enclosed_env;
   return env;
 }
 
-object *environment_lookup(environment *env, char *key) {
-  object *cur_env_value = hash_table_lookup(env->current_env_variables, key);
+struct object *environment_lookup(struct environment *env, char *key) {
+  struct object *cur_env_value =
+      hash_table_lookup(env->current_env_variables, key);
   if (cur_env_value != NULL) {
     return cur_env_value;
   }
@@ -342,19 +355,22 @@ object *environment_lookup(environment *env, char *key) {
   return NULL;
 }
 
-object *environment_lookup_current_env(environment *env, char *key) {
+struct object *environment_lookup_current_env(struct environment *env,
+                                              char *key) {
   return hash_table_lookup(env->current_env_variables, key);
 }
 
-void environment_insert(environment *env, char *key, object *value) {
+void environment_insert(struct environment *env, char *key,
+                        struct object *value) {
   hash_table_insert(env->current_env_variables, key, value);
 }
 
 /* Check if the variable exists in the current scope environment. If it is,
  * update it. If it is not, recursively check the parent environment until we
  * reach the global scope. */
-void environment_update(environment *env, char *key, object *value) {
-  object *scope = hash_table_lookup(env->current_env_variables, key);
+void environment_update(struct environment *env, char *key,
+                        struct object *value) {
+  struct object *scope = hash_table_lookup(env->current_env_variables, key);
   if (scope != NULL) {
     hash_table_update(env->current_env_variables, key, value);
   } else {
@@ -364,7 +380,7 @@ void environment_update(environment *env, char *key, object *value) {
   }
 }
 
-void environment_free(environment *env) {
+void environment_free(struct environment *env) {
   hash_table_free(env->current_env_variables);
   free(env);
 }

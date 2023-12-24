@@ -7,28 +7,31 @@
 #include "utils.h"
 #include "vector.h"
 
-typedef struct {
+struct parser_state {
   size_t current_token_index;
-  vector *tokens;
-} parser_state;
+  struct vector *tokens;
+};
 
-vector *parse_program(vector *tokens);
-ast_node *parse_statement(parser_state *parser);
-ast_node *parse_variable_declaration_statement(parser_state *parser);
-ast_node *parse_variable_assignment_statement(parser_state *parser);
-ast_node *parse_if_else_statement(parser_state *parser);
-ast_node *parse_block_statement(parser_state *parser);
-ast_node *parse_expression(parser_state *parser);
-ast_node *logical_or(parser_state *parser);
-ast_node *logical_and(parser_state *parser);
-ast_node *equality(parser_state *parser);
-ast_node *comparitive(parser_state *parser);
-ast_node *additive(parser_state *parser);
-ast_node *multiplicative(parser_state *parser);
-ast_node *primary(parser_state *parser);
+struct vector *parse_program(struct vector *tokens);
+struct ast_node *parse_statement(struct parser_state *parser);
+struct ast_node *
+parse_variable_declaration_statement(struct parser_state *parser);
+struct ast_node *
+parse_variable_assignment_statement(struct parser_state *parser);
+struct ast_node *parse_if_else_statement(struct parser_state *parser);
+struct ast_node *parse_while_statement(struct parser_state *parser);
+struct ast_node *parse_block_statement(struct parser_state *parser);
+struct ast_node *parse_expression(struct parser_state *parser);
+struct ast_node *logical_or(struct parser_state *parser);
+struct ast_node *logical_and(struct parser_state *parser);
+struct ast_node *equality(struct parser_state *parser);
+struct ast_node *comparitive(struct parser_state *parser);
+struct ast_node *additive(struct parser_state *parser);
+struct ast_node *multiplicative(struct parser_state *parser);
+struct ast_node *primary(struct parser_state *parser);
 
-token *get_current_token(parser_state *parser);
-void increment_token_index(parser_state *parser);
-bool check_index_bound(parser_state *parser);
+struct token *get_current_token(struct parser_state *parser);
+void increment_token_index(struct parser_state *parser);
+bool check_index_bound(struct parser_state *parser);
 
 #endif

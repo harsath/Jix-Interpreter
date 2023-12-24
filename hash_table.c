@@ -8,8 +8,8 @@ unsigned int hash(const char *key) {
   return hash % HASH_TABLE_CAPACITY;
 }
 
-hash_table *hash_table_init() {
-  hash_table *table = malloc(sizeof(hash_table));
+struct hash_table *hash_table_init() {
+  struct hash_table *table = malloc(sizeof(struct hash_table));
   if (!table) {
     return NULL;
   }
@@ -19,9 +19,9 @@ hash_table *hash_table_init() {
   return table;
 }
 
-void *hash_table_lookup(hash_table *table, const char *key) {
+void *hash_table_lookup(struct hash_table *table, const char *key) {
   unsigned int index = hash(key);
-  hash_node *node = table->buckets[index];
+  struct hash_node *node = table->buckets[index];
   while (node) {
     if (strcmp(node->key, key) == 0) {
       return node->value;
@@ -31,9 +31,9 @@ void *hash_table_lookup(hash_table *table, const char *key) {
   return NULL;
 }
 
-void hash_table_insert(hash_table *table, char *key, void *value) {
+void hash_table_insert(struct hash_table *table, char *key, void *value) {
   unsigned int index = hash(key);
-  hash_node *new_node = malloc(sizeof(hash_node));
+  struct hash_node *new_node = malloc(sizeof(struct hash_node));
   if (!new_node) {
     perror("Hash table node allocation memory error\n");
     exit(1);
@@ -44,9 +44,9 @@ void hash_table_insert(hash_table *table, char *key, void *value) {
   table->buckets[index] = new_node;
 }
 
-void hash_table_update(hash_table *table, char *key, void *value) {
+void hash_table_update(struct hash_table *table, char *key, void *value) {
   unsigned int index = hash(key);
-  hash_node *node = table->buckets[index];
+  struct hash_node *node = table->buckets[index];
   while (node) {
     if (strcmp(node->key, key) == 0) {
       node->value = value;
@@ -56,10 +56,10 @@ void hash_table_update(hash_table *table, char *key, void *value) {
   }
 }
 
-void hash_table_delete(hash_table *table, const char *key) {
+void hash_table_delete(struct hash_table *table, const char *key) {
   unsigned int index = hash(key);
-  hash_node *node = table->buckets[index];
-  hash_node *prev = NULL;
+  struct hash_node *node = table->buckets[index];
+  struct hash_node *prev = NULL;
   while (node) {
     if (strcmp(node->key, key) == 0) {
       if (prev) {
@@ -76,11 +76,11 @@ void hash_table_delete(hash_table *table, const char *key) {
   }
 }
 
-void hash_table_free(hash_table *table) {
+void hash_table_free(struct hash_table *table) {
   for (size_t i = 0; i < HASH_TABLE_CAPACITY; i++) {
-    hash_node *node = table->buckets[i];
+    struct hash_node *node = table->buckets[i];
     while (node) {
-      hash_node *next = node->next;
+      struct hash_node *next = node->next;
       free(node->key);
       free(node);
       node = next;

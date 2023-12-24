@@ -11,7 +11,7 @@ int main(int argc, const char *argv[]) {
   if (!input) {
     return -1;
   }
-  vector *tokens = scan_tokens(input);
+  struct vector *tokens = scan_tokens(input);
 
   /* for (size_t i = 0; i < tokens->size; i++) { */
   /*   token *tok = (token *)tokens->_internal_buffer[i]; */
@@ -20,11 +20,11 @@ int main(int argc, const char *argv[]) {
   /*          (int)tok->token_char_len, tok->token_char); */
   /* }  */
 
-  vector *program = parse_program(tokens);
+  struct vector *program = parse_program(tokens);
 
   print_ast_program(program);
 
-  object *interpreter_value = interpret(program);
+  struct object *interpreter_value = interpret(program);
   /*  */
   /* printf("Result: %ld\n", interpreter_value); */
 

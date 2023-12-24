@@ -6,48 +6,60 @@
 #include "tokens.h"
 #include "vector.h"
 
-typedef struct environment {
-  hash_table *current_env_variables;
+struct environment {
+  struct hash_table *current_env_variables;
   struct environment *enclosing_environment;
-} environment;
+};
 
-typedef struct {
-  environment *env;
-} interpreter_state;
+struct interpreter_state {
+  struct environment *env;
+};
 
-typedef struct {
-  token_type data_type;
+struct object {
+  enum token_type data_type;
 
   long int_value;
   bool bool_value;
   char *string_value;
-} object;
+};
 
-object *interpret(vector *program);
-void interpret_statement(ast_node *ast, interpreter_state *state,
-                         object *return_code);
-void interpret_variable_decl_statement(ast_node *stmt_node,
-                                       interpreter_state *state);
-void interpret_variable_assignment_statement(ast_node *stmt_node,
-                                             interpreter_state *state);
-void interpret_if_statement(ast_node *stmt_node, interpreter_state *state,
-                            object *return_code);
-void interpret_block_statement(ast_node *stmt_node, interpreter_state *state,
-                               object *return_code);
-object *eval_expression(ast_node *ast, interpreter_state *state);
-object *eval_logical_expression(token_type op, object *lhs, object *rhs);
-object *eval_equality_expression(token_type op, object *lhs, object *rhs);
-object *eval_comparitive_expression(token_type op, object *lhs, object *rhs);
-object *eval_additive_multiplicative_expression(token_type op, object *lhs,
-                                                object *rhs);
-object *eval_primary_expression(ast_node *ast, interpreter_state *state);
+struct object *interpret(struct vector *program);
+void interpret_statement(struct ast_node *ast, struct interpreter_state *state,
+                         struct object *return_code);
+void interpret_variable_decl_statement(struct ast_node *stmt_node,
+                                       struct interpreter_state *state);
+void interpret_variable_assignment_statement(struct ast_node *stmt_node,
+                                             struct interpreter_state *state);
+void interpret_if_statement(struct ast_node *stmt_node,
+                            struct interpreter_state *state,
+                            struct object *return_code);
+void interpret_block_statement(struct ast_node *stmt_node,
+                               struct interpreter_state *state,
+                               struct object *return_code);
+struct object *eval_expression(struct ast_node *ast,
+                               struct interpreter_state *state);
+struct object *eval_logical_expression(enum token_type op, struct object *lhs,
+                                       struct object *rhs);
+struct object *eval_equality_expression(enum token_type op, struct object *lhs,
+                                        struct object *rhs);
+struct object *eval_comparitive_expression(enum token_type op,
+                                           struct object *lhs,
+                                           struct object *rhs);
+struct object *eval_additive_multiplicative_expression(enum token_type op,
+                                                       struct object *lhs,
+                                                       struct object *rhs);
+struct object *eval_primary_expression(struct ast_node *ast,
+                                       struct interpreter_state *state);
 
-environment *environment_init();
-environment *environment_init_enclosed(environment *enclosed_env);
-object *environment_lookup(environment *env, char *key);
-object *environment_lookup_current_env(environment *env, char *key);
-void environment_insert(environment *env, char *key, object *value);
-void environment_update(environment *env, char *key, object *value);
-void environment_free(environment *env);
+struct environment *environment_init();
+struct environment *environment_init_enclosed(struct environment *enclosed_env);
+struct object *environment_lookup(struct environment *env, char *key);
+struct object *environment_lookup_current_env(struct environment *env,
+                                              char *key);
+void environment_insert(struct environment *env, char *key,
+                        struct object *value);
+void environment_update(struct environment *env, char *key,
+                        struct object *value);
+void environment_free(struct environment *env);
 
 #endif

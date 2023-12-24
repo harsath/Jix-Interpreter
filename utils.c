@@ -37,4 +37,3 @@ char *create_token_string_copy(const char *char_ptr, size_t start_index,
   memcpy(iden_buffer, (char_ptr + start_index), (end_index - start_index));
   return iden_buffer;
 }
-

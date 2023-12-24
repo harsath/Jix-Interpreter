@@ -1,6 +1,6 @@
 #include "tokens.h"
 
-token_type get_token_atom_from_string(const char *key) {
+enum token_type get_token_atom_from_string(const char *key) {
   if (strcmp(key, "(") == 0) {
     return LEFT_PAREN;
   }
@@ -106,7 +106,7 @@ token_type get_token_atom_from_string(const char *key) {
   return INVALID_TOKEN;
 }
 
-token_type get_keyword_token_from_string(const char *key) {
+enum token_type get_keyword_token_from_string(const char *key) {
   if (strcmp(key, "function") == 0) {
     return FUNCTION;
   }
@@ -149,7 +149,7 @@ token_type get_keyword_token_from_string(const char *key) {
   return IDENTIFIER;
 }
 
-const char *get_string_from_token_atom(token_type type) {
+const char *get_string_from_token_atom(enum token_type type) {
   switch (type) {
   case LEFT_PAREN:
     return "(";
@@ -230,9 +230,9 @@ const char *get_string_from_token_atom(token_type type) {
   }
 }
 
-token *create_token(token_type type, const char *token_char,
-                    size_t token_char_len) {
-  token *token_ = malloc(sizeof(token));
+struct token *create_token(enum token_type type, const char *token_char,
+                           size_t token_char_len) {
+  struct token *token_ = malloc(sizeof(struct token));
   if (!token_) {
     perror("Memory allocation error for token");
     return NULL;

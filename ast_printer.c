@@ -1,7 +1,7 @@
 #include "ast_printer.h"
 #include "ast.h"
 
-void print_ast_program_var_decl_stmt(ast_node *var_decl_stmt) {
+void print_ast_program_var_decl_stmt(struct ast_node *var_decl_stmt) {
   printf("%s\n",
          get_string_from_token_atom(var_decl_stmt->var_decl_stmt_dtype));
   print_ast_expr(var_decl_stmt->var_decl_stmt_id, 0);
@@ -9,13 +9,13 @@ void print_ast_program_var_decl_stmt(ast_node *var_decl_stmt) {
   print_ast_expr(var_decl_stmt->var_decl_stmt_expr, 0);
 }
 
-void print_ast_program_var_assign_stmt(ast_node *var_assign_stmt) {
+void print_ast_program_var_assign_stmt(struct ast_node *var_assign_stmt) {
   print_ast_expr(var_assign_stmt->assign_stmt_id, 0);
   printf("=\n");
   print_ast_expr(var_assign_stmt->assign_stmt_expr, 0);
 }
 
-void print_ast_program_if_stmt(ast_node *if_stmt) {
+void print_ast_program_if_stmt(struct ast_node *if_stmt) {
   printf("if\n");
   print_ast_expr(if_stmt->if_stmt_expr, 0);
   print_ast_program_block_stmt(if_stmt->if_stmt_block);
@@ -25,20 +25,20 @@ void print_ast_program_if_stmt(ast_node *if_stmt) {
   }
 }
 
-void print_ast_program_block_stmt(ast_node *block_stmt) {
+void print_ast_program_block_stmt(struct ast_node *block_stmt) {
   for (size_t i = 0; i < block_stmt->block_stmt_stmts->size; i++) {
     print_ast_statement(vector_at(block_stmt->block_stmt_stmts, i));
   }
 }
 
-void print_ast_program(vector *program) {
+void print_ast_program(struct vector *program) {
   for (size_t i = 0; i < program->size; i++) {
     print_ast_statement(vector_at(program, i));
     printf("----------------------------\n");
   }
 }
 
-void print_ast_statement(ast_node *statement) {
+void print_ast_statement(struct ast_node *statement) {
   switch (statement->node_type) {
   case VARIABLE_DECL_STMT: {
     print_ast_program_var_decl_stmt(statement);
@@ -62,7 +62,7 @@ void print_ast_statement(ast_node *statement) {
   }
 }
 
-void print_ast_expr(ast_node *node, size_t level) {
+void print_ast_expr(struct ast_node *node, size_t level) {
   if (node == NULL) {
     return;
   }

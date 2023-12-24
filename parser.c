@@ -4,17 +4,17 @@
 #include "tokens.h"
 #include "utils.h"
 
-vector *parse_program(vector *tokens) {
-  parser_state parser = {.tokens = tokens, .current_token_index = 0};
-  vector *program = vector_init();
+struct vector *parse_program(struct vector *tokens) {
+  struct parser_state parser = {.tokens = tokens, .current_token_index = 0};
+  struct vector *program = vector_init();
   while (parser.current_token_index < tokens->size) {
     vector_push_back(program, parse_statement(&parser));
   }
   return program;
 }
 
-ast_node *parse_statement(parser_state *parser) {
-  token *stmt = get_current_token(parser);
+struct ast_node *parse_statement(struct parser_state *parser) {
+  struct token *stmt = get_current_token(parser);
   switch (stmt->type) {
   case INT_DATATYPE:
   case STRING_DATATYPE:
@@ -27,6 +27,9 @@ ast_node *parse_statement(parser_state *parser) {
   case IF: {
     return parse_if_else_statement(parser);
   }
+  case WHILE: {
+return parse_while_statement(parser);
+              }
   case LEFT_BRACE: {
     return parse_block_statement(parser);
   }
@@ -38,14 +41,15 @@ ast_node *parse_statement(parser_state *parser) {
   }
 }
 
-ast_node *parse_variable_declaration_statement(parser_state *parser) {
-  token *dtype = get_current_token(parser);
+struct ast_node *
+parse_variable_declaration_statement(struct parser_state *parser) {
+  struct token *dtype = get_current_token(parser);
   switch (dtype->type) {
   case INT_DATATYPE:
   case STRING_DATATYPE:
   case BOOL_DATATYPE: {
     increment_token_index(parser);
-    ast_node *var_decl_stmt = malloc(sizeof(ast_node));
+    struct ast_node *var_decl_stmt = malloc(sizeof(struct ast_node));
     var_decl_stmt->node_type = VARIABLE_DECL_STMT;
     var_decl_stmt->var_decl_stmt_dtype = dtype->type;
     var_decl_stmt->var_decl_stmt_id = primary(parser);
@@ -72,8 +76,9 @@ ast_node *parse_variable_declaration_statement(parser_state *parser) {
   }
 }
 
-ast_node *parse_variable_assignment_statement(parser_state *parser) {
-  ast_node *var_assign_stmt = malloc(sizeof(ast_node));
+struct ast_node *
+parse_variable_assignment_statement(struct parser_state *parser) {
+  struct ast_node *var_assign_stmt = malloc(sizeof(struct ast_node));
   var_assign_stmt->node_type = VARIABLE_ASSIGN_STMT;
   var_assign_stmt->assign_stmt_id = primary(parser);
   if (!check_index_bound(parser) || get_current_token(parser)->type != EQUAL) {
@@ -91,9 +96,9 @@ ast_node *parse_variable_assignment_statement(parser_state *parser) {
   return var_assign_stmt;
 }
 
-ast_node *parse_if_else_statement(parser_state *parser) {
+struct ast_node *parse_if_else_statement(struct parser_state *parser) {
   increment_token_index(parser);
-  ast_node *if_stmt = calloc(1, sizeof(ast_node));
+  struct ast_node *if_stmt = calloc(1, sizeof(struct ast_node));
   if_stmt->node_type = IF_STMT;
   if (get_current_token(parser)->type != LEFT_PAREN) {
     printf("Keyword 'if' must be followed by '(' <expression> ')'.\n");
@@ -114,9 +119,20 @@ ast_node *parse_if_else_statement(parser_state *parser) {
   return if_stmt;
 }
 
-ast_node *parse_block_statement(parser_state *parser) {
+/* ast_node *parse_while_statement(parser_state *parser) { */
+/*   increment_token_index(parser); */
+/*   ast_node *while_stmt = malloc(sizeof(ast_node)); */
+/*   while_stmt->node_type = WHILE_STMT; */
+/*   if (get_current_token(parser)->type != LEFT_PAREN) { */
+/*     printf("Keyword 'while' must be followed by '(' <expression> ')'.\n"); */
+/*     exit(1); */
+/*   } */
+/*   increment_token_index(parser); */
+/* } */
+
+struct ast_node *parse_block_statement(struct parser_state *parser) {
   increment_token_index(parser);
-  ast_node *block_stmt = malloc(sizeof(ast_node));
+  struct ast_node *block_stmt = malloc(sizeof(struct ast_node));
   block_stmt->node_type = BLOCK_STMT;
   block_stmt->block_stmt_stmts = vector_init();
   while (check_index_bound(parser) &&
@@ -131,15 +147,17 @@ ast_node *parse_block_statement(parser_state *parser) {
   return block_stmt;
 }
 
-ast_node *parse_expression(parser_state *parser) { return logical_or(parser); }
+struct ast_node *parse_expression(struct parser_state *parser) {
+  return logical_or(parser);
+}
 
-ast_node *logical_or(parser_state *parser) {
-  ast_node *left = logical_and(parser);
-  token *op = get_current_token(parser);
+struct ast_node *logical_or(struct parser_state *parser) {
+  struct ast_node *left = logical_and(parser);
+  struct token *op = get_current_token(parser);
   while (check_index_bound(parser) && op != NULL && op->type == OR) {
     increment_token_index(parser);
-    ast_node *right = logical_and(parser);
-    ast_node *new_left = malloc(sizeof(ast_node));
+    struct ast_node *right = logical_and(parser);
+    struct ast_node *new_left = malloc(sizeof(struct ast_node));
     new_left->node_type = BINARY_NODE;
     new_left->left = left;
     new_left->right = right;
@@ -150,13 +168,13 @@ ast_node *logical_or(parser_state *parser) {
   return left;
 }
 
-ast_node *logical_and(parser_state *parser) {
-  ast_node *left = equality(parser);
-  token *op = get_current_token(parser);
+struct ast_node *logical_and(struct parser_state *parser) {
+  struct ast_node *left = equality(parser);
+  struct token *op = get_current_token(parser);
   while (check_index_bound(parser) && op != NULL && op->type == AND) {
     increment_token_index(parser);
-    ast_node *right = equality(parser);
-    ast_node *new_left = malloc(sizeof(ast_node));
+    struct ast_node *right = equality(parser);
+    struct ast_node *new_left = malloc(sizeof(struct ast_node));
     new_left->node_type = BINARY_NODE;
     new_left->left = left;
     new_left->right = right;
@@ -167,14 +185,14 @@ ast_node *logical_and(parser_state *parser) {
   return left;
 }
 
-ast_node *equality(parser_state *parser) {
-  ast_node *left = comparitive(parser);
-  token *op = get_current_token(parser);
+struct ast_node *equality(struct parser_state *parser) {
+  struct ast_node *left = comparitive(parser);
+  struct token *op = get_current_token(parser);
   while (check_index_bound(parser) && op != NULL &&
          (op->type == EQUAL_EQUAL || op->type == BANG_EQUAL)) {
     increment_token_index(parser);
-    ast_node *right = comparitive(parser);
-    ast_node *new_left = malloc(sizeof(ast_node));
+    struct ast_node *right = comparitive(parser);
+    struct ast_node *new_left = malloc(sizeof(struct ast_node));
     new_left->node_type = BINARY_NODE;
     new_left->left = left;
     new_left->right = right;
@@ -185,15 +203,15 @@ ast_node *equality(parser_state *parser) {
   return left;
 }
 
-ast_node *comparitive(parser_state *parser) {
-  ast_node *left = additive(parser);
-  token *op = get_current_token(parser);
+struct ast_node *comparitive(struct parser_state *parser) {
+  struct ast_node *left = additive(parser);
+  struct token *op = get_current_token(parser);
   while (check_index_bound(parser) && op != NULL &&
          (op->type == GREATER || op->type == GREATER_EQUAL ||
           op->type == LESS || op->type == LESS_EQUAL)) {
     increment_token_index(parser);
-    ast_node *right = additive(parser);
-    ast_node *new_left = malloc(sizeof(ast_node));
+    struct ast_node *right = additive(parser);
+    struct ast_node *new_left = malloc(sizeof(struct ast_node));
     new_left->node_type = BINARY_NODE;
     new_left->left = left;
     new_left->right = right;
@@ -204,14 +222,14 @@ ast_node *comparitive(parser_state *parser) {
   return left;
 }
 
-ast_node *additive(parser_state *parser) {
-  ast_node *left = multiplicative(parser);
-  token *op = get_current_token(parser);
+struct ast_node *additive(struct parser_state *parser) {
+  struct ast_node *left = multiplicative(parser);
+  struct token *op = get_current_token(parser);
   while (check_index_bound(parser) && op != NULL &&
          (op->type == PLUS || op->type == MINUS)) {
     increment_token_index(parser);
-    ast_node *right = multiplicative(parser);
-    ast_node *new_left = malloc(sizeof(ast_node));
+    struct ast_node *right = multiplicative(parser);
+    struct ast_node *new_left = malloc(sizeof(struct ast_node));
     new_left->node_type = BINARY_NODE;
     new_left->left = left;
     new_left->right = right;
@@ -222,14 +240,14 @@ ast_node *additive(parser_state *parser) {
   return left;
 }
 
-ast_node *multiplicative(parser_state *parser) {
-  ast_node *left = primary(parser);
-  token *op = get_current_token(parser);
+struct ast_node *multiplicative(struct parser_state *parser) {
+  struct ast_node *left = primary(parser);
+  struct token *op = get_current_token(parser);
   while (check_index_bound(parser) && op != NULL &&
          (op->type == STAR || op->type == SLASH)) {
     increment_token_index(parser);
-    ast_node *right = primary(parser);
-    ast_node *new_left = malloc(sizeof(ast_node));
+    struct ast_node *right = primary(parser);
+    struct ast_node *new_left = malloc(sizeof(struct ast_node));
     new_left->node_type = BINARY_NODE;
     new_left->left = left;
     new_left->right = right;
@@ -240,11 +258,11 @@ ast_node *multiplicative(parser_state *parser) {
   return left;
 }
 
-ast_node *primary(parser_state *parser) {
-  token *cur_tok = get_current_token(parser);
+struct ast_node *primary(struct parser_state *parser) {
+  struct token *cur_tok = get_current_token(parser);
   switch (cur_tok->type) {
   case NUMBER: {
-    ast_node *num_node = malloc(sizeof(ast_node));
+    struct ast_node *num_node = malloc(sizeof(struct ast_node));
     num_node->node_type = PRIMARY_NODE;
     num_node->primary_node_type = NUMBER_PRIMARY_NODE;
     char temp_value[100] = {0};
@@ -255,7 +273,7 @@ ast_node *primary(parser_state *parser) {
     return num_node;
   }
   case STRING: {
-    ast_node *string_node = malloc(sizeof(ast_node));
+    struct ast_node *string_node = malloc(sizeof(struct ast_node));
     string_node->node_type = PRIMARY_NODE;
     string_node->primary_node_type = STRING_PRIMARY_NODE;
     string_node->string_value = create_token_string_copy(
@@ -264,7 +282,7 @@ ast_node *primary(parser_state *parser) {
     return string_node;
   }
   case IDENTIFIER: {
-    ast_node *identifier_node = malloc(sizeof(ast_node));
+    struct ast_node *identifier_node = malloc(sizeof(struct ast_node));
     identifier_node->node_type = PRIMARY_NODE;
     identifier_node->primary_node_type = IDENTIFIER_PRIMARY_NODE;
     identifier_node->identifier_value = create_token_string_copy(
@@ -274,7 +292,7 @@ ast_node *primary(parser_state *parser) {
   }
   case TRUE:
   case FALSE: {
-    ast_node *bool_node = malloc(sizeof(ast_node));
+    struct ast_node *bool_node = malloc(sizeof(struct ast_node));
     bool_node->node_type = PRIMARY_NODE;
     bool_node->primary_node_type = BOOLEAN_PRIMARY_NODE;
     bool_node->boolean_value = cur_tok->type == TRUE ? true : false;
@@ -282,7 +300,7 @@ ast_node *primary(parser_state *parser) {
     return bool_node;
   }
   case NIL: {
-    ast_node *nil_node = malloc(sizeof(ast_node));
+    struct ast_node *nil_node = malloc(sizeof(struct ast_node));
     nil_node->node_type = PRIMARY_NODE;
     nil_node->primary_node_type = NIL_PRIMARY_NODE;
     increment_token_index(parser);
@@ -290,7 +308,7 @@ ast_node *primary(parser_state *parser) {
   }
   case LEFT_PAREN: {
     increment_token_index(parser);
-    ast_node *expr = parse_expression(parser);
+    struct ast_node *expr = parse_expression(parser);
     cur_tok = get_current_token(parser);
     if (cur_tok->type != RIGHT_PAREN) {
       printf("Expecting ')' after the expression, got '%s'\n",
@@ -307,14 +325,14 @@ ast_node *primary(parser_state *parser) {
   return NULL;
 }
 
-token *get_current_token(parser_state *parser) {
+struct token *get_current_token(struct parser_state *parser) {
   return vector_at(parser->tokens, parser->current_token_index);
 }
 
-void increment_token_index(parser_state *parser) {
+void increment_token_index(struct parser_state *parser) {
   parser->current_token_index++;
 }
 
-bool check_index_bound(parser_state *parser) {
+bool check_index_bound(struct parser_state *parser) {
   return parser->current_token_index < parser->tokens->size;
 }

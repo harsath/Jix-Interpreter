@@ -7,6 +7,6 @@
 #include <ctype.h>
 #include <stdlib.h>
 
-vector *scan_tokens(const char *source_code);
+struct vector *scan_tokens(const char *source_code);
 
 #endif
