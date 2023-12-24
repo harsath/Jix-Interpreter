@@ -3,6 +3,7 @@ program             :   statement* ;
 statement           :   variable_decl_stmt
                     |   assignment_stmt
                     |   if_else_stmt
+                    |   while_stmt
                     |   block_stmt ;
 
 variable_decl_stmt  :   ( 'int' | 'string' | 'bool' ) primary '=' expr ';' ;
@@ -10,6 +11,8 @@ variable_decl_stmt  :   ( 'int' | 'string' | 'bool' ) primary '=' expr ';' ;
 assignment_stmt     :   primary '=' expr ';' ;
 
 if_else_stmt        :   'if' '(' expr ')' block_stmt ( 'else' block_stmt )? ;
+
+while_stmt          :   'while' '(' expr ')' block_stmt ;
 
 block_stmt          :   '{' statement* '}' ;
 
