@@ -25,7 +25,7 @@ ast_node *parse_statement(parser_state *parser) {
     return parse_variable_assignment_statement(parser);
   }
   case IF: {
-    return parse_if_statement(parser);
+    return parse_if_else_statement(parser);
   }
   case LEFT_BRACE: {
     return parse_block_statement(parser);
@@ -91,9 +91,9 @@ ast_node *parse_variable_assignment_statement(parser_state *parser) {
   return var_assign_stmt;
 }
 
-ast_node *parse_if_statement(parser_state *parser) {
+ast_node *parse_if_else_statement(parser_state *parser) {
   increment_token_index(parser);
-  ast_node *if_stmt = malloc(sizeof(ast_node));
+  ast_node *if_stmt = calloc(1, sizeof(ast_node));
   if_stmt->node_type = IF_STMT;
   if (get_current_token(parser)->type != LEFT_PAREN) {
     printf("Keyword 'if' must be followed by '(' <expression> ')'.\n");
@@ -107,6 +107,10 @@ ast_node *parse_if_statement(parser_state *parser) {
   }
   increment_token_index(parser);
   if_stmt->if_stmt_block = parse_block_statement(parser);
+  if (check_index_bound(parser) && get_current_token(parser)->type == ELSE) {
+    increment_token_index(parser);
+    if_stmt->if_else_stmt_block = parse_block_statement(parser);
+  }
   return if_stmt;
 }
 

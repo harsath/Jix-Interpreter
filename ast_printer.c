@@ -19,6 +19,10 @@ void print_ast_program_if_stmt(ast_node *if_stmt) {
   printf("if\n");
   print_ast_expr(if_stmt->if_stmt_expr, 0);
   print_ast_program_block_stmt(if_stmt->if_stmt_block);
+  if (if_stmt->if_else_stmt_block != NULL) {
+    printf("else\n");
+    print_ast_program_block_stmt(if_stmt->if_else_stmt_block);
+  }
 }
 
 void print_ast_program_block_stmt(ast_node *block_stmt) {

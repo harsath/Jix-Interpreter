@@ -85,6 +85,11 @@ void interpret_if_statement(ast_node *stmt_node, interpreter_state *state,
   }
   if (if_expr->bool_value) {
     interpret_block_statement(stmt_node->if_stmt_block, state, return_code);
+  } else {
+    if (stmt_node->if_else_stmt_block != NULL) {
+      interpret_block_statement(stmt_node->if_else_stmt_block, state,
+                                return_code);
+    }
   }
 }
 
@@ -169,11 +174,15 @@ object *eval_logical_expression(token_type op, object *lhs, object *rhs) {
 object *eval_equality_expression(token_type op, object *lhs, object *rhs) {
   object *returner = malloc(sizeof(object));
   returner->data_type = BOOL_DATATYPE;
-  if ((lhs->data_type == INT_DATATYPE && rhs->data_type == INT_DATATYPE) ||
-      (lhs->data_type == BOOL_DATATYPE && rhs->data_type == BOOL_DATATYPE)) {
+  if (lhs->data_type == INT_DATATYPE && rhs->data_type == INT_DATATYPE) {
     returner->bool_value = (op == EQUAL_EQUAL)
                                ? (lhs->int_value == rhs->int_value)
                                : (lhs->int_value != rhs->int_value);
+  } else if (lhs->data_type == BOOL_DATATYPE &&
+             rhs->data_type == BOOL_DATATYPE) {
+    returner->bool_value = (op == EQUAL_EQUAL)
+                               ? (lhs->bool_value == rhs->bool_value)
+                               : (lhs->bool_value != rhs->bool_value);
   } else if (lhs->data_type == STRING_DATATYPE &&
              rhs->data_type == STRING_DATATYPE) {
     returner->bool_value =

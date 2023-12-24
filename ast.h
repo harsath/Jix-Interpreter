@@ -38,6 +38,7 @@ typedef struct ast_node {
   /* If statement */
   struct ast_node *if_stmt_expr;
   struct ast_node *if_stmt_block;
+  struct ast_node *if_else_stmt_block;
 
   /* Block statement */
   vector *block_stmt_stmts;
