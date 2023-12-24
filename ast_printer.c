@@ -25,6 +25,12 @@ void print_ast_program_if_stmt(struct ast_node *if_stmt) {
   }
 }
 
+void print_ast_program_while_stmt(struct ast_node *while_stmt) {
+  printf("while\n");
+  print_ast_expr(while_stmt->while_stmt_expr, 0);
+  print_ast_program_block_stmt(while_stmt->while_stmt_block);
+}
+
 void print_ast_program_block_stmt(struct ast_node *block_stmt) {
   for (size_t i = 0; i < block_stmt->block_stmt_stmts->size; i++) {
     print_ast_statement(vector_at(block_stmt->block_stmt_stmts, i));
@@ -56,6 +62,10 @@ void print_ast_statement(struct ast_node *statement) {
     print_ast_program_if_stmt(statement);
     break;
   }
+  case WHILE_STMT: {
+print_ast_program_while_stmt(statement);
+break;
+                   }
   default: {
     printf("Unsupported statement type on print_ast_program\n");
   }

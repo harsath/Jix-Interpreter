@@ -14,7 +14,7 @@ struct object *interpret(struct vector *program) {
   for (size_t i = 0; i < program->size; i++) {
     interpret_statement(vector_at(program, i), &state, return_code);
   }
-  struct object *xx = environment_lookup(state.env, "value_1");
+  struct object *xx = environment_lookup(state.env, "i");
   printf("Ret: %lu\n", xx->int_value);
   return return_code;
 }
@@ -37,6 +37,10 @@ void interpret_statement(struct ast_node *stmt_node,
   }
   case IF_STMT: {
     interpret_if_statement(stmt_node, state, return_code);
+    break;
+  }
+  case WHILE_STMT: {
+    interpret_while_statement(stmt_node, state, return_code);
     break;
   }
   default: {
@@ -93,6 +97,21 @@ void interpret_if_statement(struct ast_node *stmt_node,
       interpret_block_statement(stmt_node->if_else_stmt_block, state,
                                 return_code);
     }
+  }
+}
+
+void interpret_while_statement(struct ast_node *stmt_node,
+                               struct interpreter_state *state,
+                               struct object *return_code) {
+  struct object *while_expr =
+      eval_expression(stmt_node->while_stmt_expr, state);
+  if (while_expr->data_type != BOOL_DATATYPE) {
+    printf("The <expression> of 'while' must return boolean.\n");
+    exit(1);
+  }
+  while (while_expr->bool_value) {
+    interpret_block_statement(stmt_node->while_stmt_block, state, return_code);
+    while_expr = eval_expression(stmt_node->while_stmt_expr, state);
   }
 }
 

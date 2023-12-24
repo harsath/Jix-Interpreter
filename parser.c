@@ -28,8 +28,8 @@ struct ast_node *parse_statement(struct parser_state *parser) {
     return parse_if_else_statement(parser);
   }
   case WHILE: {
-return parse_while_statement(parser);
-              }
+    return parse_while_statement(parser);
+  }
   case LEFT_BRACE: {
     return parse_block_statement(parser);
   }
@@ -119,16 +119,24 @@ struct ast_node *parse_if_else_statement(struct parser_state *parser) {
   return if_stmt;
 }
 
-/* ast_node *parse_while_statement(parser_state *parser) { */
-/*   increment_token_index(parser); */
-/*   ast_node *while_stmt = malloc(sizeof(ast_node)); */
-/*   while_stmt->node_type = WHILE_STMT; */
-/*   if (get_current_token(parser)->type != LEFT_PAREN) { */
-/*     printf("Keyword 'while' must be followed by '(' <expression> ')'.\n"); */
-/*     exit(1); */
-/*   } */
-/*   increment_token_index(parser); */
-/* } */
+struct ast_node *parse_while_statement(struct parser_state *parser) {
+  increment_token_index(parser);
+  struct ast_node *while_stmt = malloc(sizeof(struct ast_node));
+  while_stmt->node_type = WHILE_STMT;
+  if (get_current_token(parser)->type != LEFT_PAREN) {
+    printf("Keyword 'while' must be followed by '(' <expression> ')'.\n");
+    exit(1);
+  }
+  increment_token_index(parser);
+  while_stmt->while_stmt_expr = parse_expression(parser);
+  if (get_current_token(parser)->type != RIGHT_PAREN) {
+    printf("The <expression> in 'while' must be followed by ')'.\n");
+    exit(1);
+  }
+  increment_token_index(parser);
+  while_stmt->while_stmt_block = parse_block_statement(parser);
+  return while_stmt;
+}
 
 struct ast_node *parse_block_statement(struct parser_state *parser) {
   increment_token_index(parser);

@@ -33,6 +33,9 @@ void interpret_variable_assignment_statement(struct ast_node *stmt_node,
 void interpret_if_statement(struct ast_node *stmt_node,
                             struct interpreter_state *state,
                             struct object *return_code);
+void interpret_while_statement(struct ast_node *stmt_node,
+                            struct interpreter_state *state,
+                            struct object *return_code);
 void interpret_block_statement(struct ast_node *stmt_node,
                                struct interpreter_state *state,
                                struct object *return_code);
