@@ -1,5 +1,24 @@
 #include "ast_printer.h"
 #include "ast.h"
+#include "tokens.h"
+#include "vector.h"
+
+void print_ast_program_fn_def_stmt(struct ast_node *fn_def_stmt) {
+  printf("%s %s ( ",
+         get_string_from_token_atom(fn_def_stmt->fn_def_stmt_return_type),
+         fn_def_stmt->fn_def_stmt_id->identifier_value);
+  for (size_t i = 0; i < fn_def_stmt->fn_def_stmt_parameters->size; i++) {
+    struct ast_fn_def_parameter *parameter =
+        vector_at(fn_def_stmt->fn_def_stmt_parameters, i);
+    printf("%s %s", get_string_from_token_atom(parameter->parameter_type),
+           parameter->parameter_name);
+    if (fn_def_stmt->fn_def_stmt_parameters->size > (i + 1)) {
+      printf(", ");
+    }
+  }
+  printf(" )\n");
+  print_ast_program_block_stmt(fn_def_stmt->fn_def_stmt_block);
+}
 
 void print_ast_program_var_decl_stmt(struct ast_node *var_decl_stmt) {
   printf("%s\n",
@@ -46,6 +65,10 @@ void print_ast_program(struct vector *program) {
 
 void print_ast_statement(struct ast_node *statement) {
   switch (statement->node_type) {
+  case FN_DEF_STMT: {
+    print_ast_program_fn_def_stmt(statement);
+    break;
+  }
   case VARIABLE_DECL_STMT: {
     print_ast_program_var_decl_stmt(statement);
     break;
@@ -63,9 +86,9 @@ void print_ast_statement(struct ast_node *statement) {
     break;
   }
   case WHILE_STMT: {
-print_ast_program_while_stmt(statement);
-break;
-                   }
+    print_ast_program_while_stmt(statement);
+    break;
+  }
   default: {
     printf("Unsupported statement type on print_ast_program\n");
   }

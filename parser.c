@@ -3,6 +3,7 @@
 #include "hash_table.h"
 #include "tokens.h"
 #include "utils.h"
+#include "vector.h"
 
 struct vector *parse_program(struct vector *tokens) {
   struct parser_state parser = {.tokens = tokens, .current_token_index = 0};
@@ -19,7 +20,13 @@ struct ast_node *parse_statement(struct parser_state *parser) {
   case INT_DATATYPE:
   case STRING_DATATYPE:
   case BOOL_DATATYPE: {
-    return parse_variable_declaration_statement(parser);
+    struct token *two_tokens_ahead =
+        vector_at(parser->tokens, parser->current_token_index + 2);
+    if (two_tokens_ahead->type == LEFT_PAREN) {
+      return parse_function_definition_statement(parser);
+    } else {
+      return parse_variable_declaration_statement(parser);
+    }
   }
   case IDENTIFIER: {
     return parse_variable_assignment_statement(parser);
@@ -74,6 +81,56 @@ parse_variable_declaration_statement(struct parser_state *parser) {
     exit(1);
   }
   }
+}
+
+struct ast_node *
+parse_function_definition_statement(struct parser_state *parser) {
+  struct ast_node *fn_def_stmt = malloc(sizeof(struct ast_node));
+  fn_def_stmt->node_type = FN_DEF_STMT;
+  fn_def_stmt->fn_def_stmt_parameters = vector_init();
+  fn_def_stmt->fn_def_stmt_return_type = get_current_token(parser)->type;
+  if (invalid_data_type(fn_def_stmt->fn_def_stmt_return_type)) {
+    printf("Function return type must be either 'int', 'bool', or 'string'.\n");
+    exit(1);
+  }
+  increment_token_index(parser);
+  fn_def_stmt->fn_def_stmt_id = primary(parser);
+  if (fn_def_stmt->fn_def_stmt_id->primary_node_type !=
+      IDENTIFIER_PRIMARY_NODE) {
+    printf("Function name must be identifier string.\n");
+    exit(1);
+  }
+  if (get_current_token(parser)->type != LEFT_PAREN) {
+    printf("Function name must be followed by '(' parameters ')'.\n");
+    exit(1);
+  }
+  increment_token_index(parser);
+  if (get_current_token(parser)->type != RIGHT_PAREN) {
+    do {
+      if (get_current_token(parser)->type == COMMA) {
+        increment_token_index(parser);
+      }
+      struct ast_fn_def_parameter *parameter_decl =
+          malloc(sizeof(struct ast_fn_def_parameter));
+      parameter_decl->parameter_type = get_current_token(parser)->type;
+      if (invalid_data_type(parameter_decl->parameter_type)) {
+        printf("Function parameter type should be a valid datatype.\n");
+        exit(1);
+      }
+      increment_token_index(parser);
+      struct ast_node *parameter_id = primary(parser);
+      if (parameter_id->primary_node_type != IDENTIFIER_PRIMARY_NODE) {
+        printf("Parameter name must be identifier string.\n");
+        exit(1);
+      }
+      parameter_decl->parameter_name = parameter_id->identifier_value;
+      vector_push_back(fn_def_stmt->fn_def_stmt_parameters, parameter_decl);
+      /* free(parameter_id); */
+    } while (get_current_token(parser)->type == COMMA);
+  }
+  increment_token_index(parser);
+  fn_def_stmt->fn_def_stmt_block = parse_block_statement(parser);
+  return fn_def_stmt;
 }
 
 struct ast_node *
@@ -343,4 +400,9 @@ void increment_token_index(struct parser_state *parser) {
 
 bool check_index_bound(struct parser_state *parser) {
   return parser->current_token_index < parser->tokens->size;
+}
+
+bool invalid_data_type(enum token_type type) {
+  return (type != INT_DATATYPE && type != BOOL_DATATYPE &&
+          type != STRING_DATATYPE);
 }
