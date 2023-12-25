@@ -1,13 +1,16 @@
 program             :   statement* ;
 
-statement           :   function_definition
+statement           :   fn_def_stmt
+                    |   expression_stmt 
                     |   variable_decl_stmt
                     |   assignment_stmt
                     |   if_else_stmt
                     |   while_stmt
                     |   block_stmt ;
 
-function_definition :   data_type IDENTIFIER '(' fn_decl_parameters? ')' block_stmt ;
+fn_def_stmt         :   data_type IDENTIFIER '(' fn_decl_parameters? ')' block_stmt ;
+
+expression_stmt     :   expr ';' ;
 
 variable_decl_stmt  :   data_type primary '=' expr ';' ;
 
@@ -35,10 +38,17 @@ comparitive         :   additive ( ( '>' | '>=' | '<' | '<=' ) additive )* ;
 
 additive            :   multiplicative ( ('+' | '-') multiplicative )* ;
 
-multiplicative      :   primary ( ('*' | '/') primary )* ;
+multiplicative      :   unary ( ('*' | '/') unary )* ;
+
+unary               :   primary
+                    |   fn_call;
 
 primary             :   NUMBER | STRING | IDENTIFIER | 'true' | 'false' | 'nil'
                     |   '(' expr ')' ;
+
+fn_call             :   IDENTIFIER '(' parameters? ')' ;
+
+parameters          :   expr (',' expr)* ;
 
 NUMBER              :   [0-9]+ ;
 

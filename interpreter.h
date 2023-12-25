@@ -18,7 +18,6 @@ struct interpreter_state {
 
 struct object {
   enum token_type data_type;
-
   long int_value;
   bool bool_value;
   char *string_value;
