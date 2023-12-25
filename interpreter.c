@@ -14,7 +14,7 @@ struct object *interpret(struct vector *program) {
   for (size_t i = 0; i < program->size; i++) {
     interpret_statement(vector_at(program, i), &state, return_code);
   }
-  struct object *xx = environment_lookup(state.env, "i");
+  struct object *xx = environment_lookup_variable(state.env, "i");
   printf("Ret: %lu\n", xx->int_value);
   return return_code;
 }
@@ -23,6 +23,10 @@ void interpret_statement(struct ast_node *stmt_node,
                          struct interpreter_state *state,
                          struct object *return_code) {
   switch (stmt_node->node_type) {
+  case FN_DEF_STMT: {
+    interpret_fn_def_statement(stmt_node, state);
+    break;
+  }
   case VARIABLE_DECL_STMT: {
     interpret_variable_decl_statement(stmt_node, state);
     break;
@@ -50,11 +54,30 @@ void interpret_statement(struct ast_node *stmt_node,
   }
 }
 
+void interpret_fn_def_statement(struct ast_node *stmt_node,
+                                struct interpreter_state *state) {
+  /* Functions are local to environment. Child environments have access to
+   * parent environment, but not vice versa. Works much like variable
+   * declaration statements. */
+  if (environment_lookup_function_current_env(
+          state->env, stmt_node->fn_def_stmt_id->identifier_value)) {
+    printf("Function '%s' already exists in current scope.\n",
+           stmt_node->fn_def_stmt_id->identifier_value);
+    exit(1);
+  }
+  struct function *fn_stmt = malloc(sizeof(struct function));
+  fn_stmt->return_type = stmt_node->fn_def_stmt_return_type;
+  fn_stmt->body = stmt_node->fn_def_stmt_block;
+  fn_stmt->parameters = stmt_node->fn_def_stmt_parameters;
+  environment_insert_function(
+      state->env, stmt_node->fn_def_stmt_id->identifier_value, fn_stmt);
+}
+
 void interpret_variable_decl_statement(struct ast_node *stmt_node,
                                        struct interpreter_state *state) {
   /* Allow creating scope-local variable name of same name in a scope even if it
    * exists in previous scopes. */
-  if (environment_lookup_current_env(
+  if (environment_lookup_variable_current_env(
           state->env, stmt_node->var_decl_stmt_id->identifier_value)) {
     printf("Variable '%s' already exists in current scope.\n",
            stmt_node->var_decl_stmt_id->identifier_value);
@@ -62,23 +85,24 @@ void interpret_variable_decl_statement(struct ast_node *stmt_node,
   }
   struct object *variable_value =
       eval_expression(stmt_node->var_decl_stmt_expr, state);
-  environment_insert(state->env, stmt_node->var_decl_stmt_id->identifier_value,
-                     variable_value);
+  environment_insert_variable(state->env,
+                              stmt_node->var_decl_stmt_id->identifier_value,
+                              variable_value);
 }
 
 void interpret_variable_assignment_statement(struct ast_node *stmt_node,
                                              struct interpreter_state *state) {
   /* Check current scope, if not traverse to previous parent scope. */
-  if (environment_lookup(state->env,
-                         stmt_node->assign_stmt_id->identifier_value) == NULL) {
+  if (environment_lookup_variable(
+          state->env, stmt_node->assign_stmt_id->identifier_value) == NULL) {
     printf("Variable '%s' does not exist\n",
            stmt_node->assign_stmt_id->identifier_value);
     exit(1);
   }
   struct object *variable_value =
       eval_expression(stmt_node->assign_stmt_expr, state);
-  environment_update(state->env, stmt_node->assign_stmt_id->identifier_value,
-                     variable_value);
+  environment_update_variable(
+      state->env, stmt_node->assign_stmt_id->identifier_value, variable_value);
 }
 
 void interpret_if_statement(struct ast_node *stmt_node,
@@ -314,7 +338,7 @@ struct object *eval_primary_expression(struct ast_node *ast,
   }
   case IDENTIFIER_PRIMARY_NODE: {
     struct object *identifier_lookup =
-        environment_lookup(state->env, ast->identifier_value);
+        environment_lookup_variable(state->env, ast->identifier_value);
     if (!identifier_lookup) {
       printf("Identifier '%s' does not exist\n", ast->identifier_value);
       exit(1);
@@ -350,6 +374,7 @@ struct object *eval_primary_expression(struct ast_node *ast,
 struct environment *environment_init() {
   struct environment *env = malloc(sizeof(struct environment));
   env->current_env_variables = hash_table_init();
+  env->current_env_functions = hash_table_init();
   env->enclosing_environment = NULL;
   return env;
 }
@@ -358,45 +383,67 @@ struct environment *
 environment_init_enclosed(struct environment *enclosed_env) {
   struct environment *env = malloc(sizeof(struct environment));
   env->current_env_variables = hash_table_init();
+  env->current_env_functions = hash_table_init();
   env->enclosing_environment = enclosed_env;
   return env;
 }
 
-struct object *environment_lookup(struct environment *env, char *key) {
+struct object *environment_lookup_variable(struct environment *env, char *key) {
   struct object *cur_env_value =
       hash_table_lookup(env->current_env_variables, key);
   if (cur_env_value != NULL) {
     return cur_env_value;
   }
   if (env->enclosing_environment != NULL) {
-    return environment_lookup(env->enclosing_environment, key);
+    return environment_lookup_variable(env->enclosing_environment, key);
   }
   return NULL;
 }
 
-struct object *environment_lookup_current_env(struct environment *env,
-                                              char *key) {
+struct object *environment_lookup_variable_current_env(struct environment *env,
+                                                       char *key) {
   return hash_table_lookup(env->current_env_variables, key);
 }
 
-void environment_insert(struct environment *env, char *key,
-                        struct object *value) {
+void environment_insert_variable(struct environment *env, char *key,
+                                 struct object *value) {
   hash_table_insert(env->current_env_variables, key, value);
 }
 
 /* Check if the variable exists in the current scope environment. If it is,
  * update it. If it is not, recursively check the parent environment until we
  * reach the global scope. */
-void environment_update(struct environment *env, char *key,
-                        struct object *value) {
+void environment_update_variable(struct environment *env, char *key,
+                                 struct object *value) {
   struct object *scope = hash_table_lookup(env->current_env_variables, key);
   if (scope != NULL) {
     hash_table_update(env->current_env_variables, key, value);
   } else {
     if (env->enclosing_environment != NULL) {
-      environment_update(env->enclosing_environment, key, value);
+      environment_update_variable(env->enclosing_environment, key, value);
     }
   }
+}
+
+struct function *environment_lookup_function(struct environment *env,
+                                             char *key) {
+  struct function *cur_env_value =
+      hash_table_lookup(env->current_env_functions, key);
+  if (cur_env_value != NULL) {
+    return cur_env_value;
+  }
+  if (env->enclosing_environment != NULL) {
+    return environment_lookup_function(env->enclosing_environment, key);
+  }
+  return NULL;
+}
+struct function *
+environment_lookup_function_current_env(struct environment *env, char *key) {
+  return hash_table_lookup(env->current_env_functions, key);
+}
+void environment_insert_function(struct environment *env, char *key,
+                                 struct function *value) {
+  hash_table_insert(env->current_env_functions, key, value);
 }
 
 void environment_free(struct environment *env) {

@@ -24,7 +24,7 @@ int main(int argc, const char *argv[]) {
 
   print_ast_program(program);
   /*  */
-  /* struct object *interpreter_value = interpret(program); */
+  struct object *interpreter_value = interpret(program);
   /*  */
   /* printf("Result: %ld\n", interpreter_value); */
 

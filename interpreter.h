@@ -7,7 +7,8 @@
 #include "vector.h"
 
 struct environment {
-  struct hash_table *current_env_variables;
+  struct hash_table *current_env_variables; /* Key: char*, Value: object* */
+  struct hash_table *current_env_functions; /* Key: char*, Value: function* */
   struct environment *enclosing_environment;
 };
 
@@ -23,9 +24,17 @@ struct object {
   char *string_value;
 };
 
+struct function {
+  enum token_type return_type;
+  struct vector *parameters;
+  struct ast_node *body;
+};
+
 struct object *interpret(struct vector *program);
 void interpret_statement(struct ast_node *ast, struct interpreter_state *state,
                          struct object *return_code);
+void interpret_fn_def_statement(struct ast_node *stmt_node,
+                                struct interpreter_state *state);
 void interpret_variable_decl_statement(struct ast_node *stmt_node,
                                        struct interpreter_state *state);
 void interpret_variable_assignment_statement(struct ast_node *stmt_node,
@@ -34,8 +43,8 @@ void interpret_if_statement(struct ast_node *stmt_node,
                             struct interpreter_state *state,
                             struct object *return_code);
 void interpret_while_statement(struct ast_node *stmt_node,
-                            struct interpreter_state *state,
-                            struct object *return_code);
+                               struct interpreter_state *state,
+                               struct object *return_code);
 void interpret_block_statement(struct ast_node *stmt_node,
                                struct interpreter_state *state,
                                struct object *return_code);
@@ -56,13 +65,19 @@ struct object *eval_primary_expression(struct ast_node *ast,
 
 struct environment *environment_init();
 struct environment *environment_init_enclosed(struct environment *enclosed_env);
-struct object *environment_lookup(struct environment *env, char *key);
-struct object *environment_lookup_current_env(struct environment *env,
-                                              char *key);
-void environment_insert(struct environment *env, char *key,
-                        struct object *value);
-void environment_update(struct environment *env, char *key,
-                        struct object *value);
+struct object *environment_lookup_variable(struct environment *env, char *key);
+struct object *environment_lookup_variable_current_env(struct environment *env,
+                                                       char *key);
+void environment_insert_variable(struct environment *env, char *key,
+                                 struct object *value);
+void environment_update_variable(struct environment *env, char *key,
+                                 struct object *value);
+struct function *environment_lookup_function(struct environment *env,
+                                             char *key);
+struct function *
+environment_lookup_function_current_env(struct environment *env, char *key);
+void environment_insert_function(struct environment *env, char *key,
+                                 struct function *value);
 void environment_free(struct environment *env);
 
 #endif
