@@ -14,7 +14,8 @@ struct parser_state {
 
 struct vector *parse_program(struct vector *tokens);
 struct ast_node *parse_statement(struct parser_state *parser);
-struct ast_node *parse_function_definition_statement(struct parser_state *parser);
+struct ast_node *
+parse_function_definition_statement(struct parser_state *parser);
 struct ast_node *parse_expression_statement(struct parser_state *parser);
 struct ast_node *
 parse_variable_declaration_statement(struct parser_state *parser);

@@ -29,11 +29,12 @@ struct ast_node *parse_statement(struct parser_state *parser) {
     }
   }
   case IDENTIFIER: {
-    struct token *one_token_ahead = vector_at(parser->tokens, parser->current_token_index + 1);
+    struct token *one_token_ahead =
+        vector_at(parser->tokens, parser->current_token_index + 1);
     if (one_token_ahead->type == LEFT_PAREN) {
       return parse_expression_statement(parser);
     } else {
-    return parse_variable_assignment_statement(parser);
+      return parse_variable_assignment_statement(parser);
     }
   }
   case IF: {
@@ -341,9 +342,12 @@ struct ast_node *multiplicative(struct parser_state *parser) {
 }
 
 struct ast_node *unary(struct parser_state *parser) {
-  struct token *current_token = vector_at(parser->tokens, parser->current_token_index);
-  struct token *one_token_ahead = vector_at(parser->tokens, parser->current_token_index + 1);
-  if ((current_token->type == IDENTIFIER) && (one_token_ahead->type == LEFT_PAREN)) {
+  struct token *current_token =
+      vector_at(parser->tokens, parser->current_token_index);
+  struct token *one_token_ahead =
+      vector_at(parser->tokens, parser->current_token_index + 1);
+  if ((current_token->type == IDENTIFIER) &&
+      (one_token_ahead->type == LEFT_PAREN)) {
     return fn_call(parser);
   } else {
     return primary(parser);
@@ -419,11 +423,12 @@ struct ast_node *primary(struct parser_state *parser) {
 
 struct ast_node *fn_call(struct parser_state *parser) {
   struct ast_node *fn_call_expr = malloc(sizeof(struct ast_node));
-  fn_call_expr->node_type = FN_CALL_NODE; 
+  fn_call_expr->node_type = FN_CALL_NODE;
   fn_call_expr->fn_call_parameters = vector_init();
   fn_call_expr->fn_call_identifier = primary(parser);
   if (get_current_token(parser)->type != LEFT_PAREN) {
-    printf("Function call expression should have '(' <expression> ')' after function identifier.\n");
+    printf("Function call expression should have '(' <expression> ')' after "
+           "function identifier.\n");
     exit(1);
   }
   increment_token_index(parser);
