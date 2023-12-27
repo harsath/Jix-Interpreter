@@ -15,6 +15,7 @@ struct parser_state {
 struct vector *parse_program(struct vector *tokens);
 struct ast_node *parse_statement(struct parser_state *parser);
 struct ast_node *parse_function_definition_statement(struct parser_state *parser);
+struct ast_node *parse_expression_statement(struct parser_state *parser);
 struct ast_node *
 parse_variable_declaration_statement(struct parser_state *parser);
 struct ast_node *
@@ -29,7 +30,9 @@ struct ast_node *equality(struct parser_state *parser);
 struct ast_node *comparitive(struct parser_state *parser);
 struct ast_node *additive(struct parser_state *parser);
 struct ast_node *multiplicative(struct parser_state *parser);
+struct ast_node *unary(struct parser_state *parser);
 struct ast_node *primary(struct parser_state *parser);
+struct ast_node *fn_call(struct parser_state *parser);
 
 struct token *get_current_token(struct parser_state *parser);
 void increment_token_index(struct parser_state *parser);

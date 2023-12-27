@@ -7,13 +7,15 @@
 
 enum ast_node_type {
   FN_DEF_STMT,
+  EXPR_STMT,
   VARIABLE_DECL_STMT,
   VARIABLE_ASSIGN_STMT,
   IF_STMT,
   WHILE_STMT,
   BLOCK_STMT,
   BINARY_NODE,
-  PRIMARY_NODE
+  PRIMARY_NODE,
+  FN_CALL_NODE
 };
 
 enum ast_primary_node_type {
@@ -40,6 +42,9 @@ struct ast_node {
       *fn_def_stmt_parameters; /* Vector of `ast_fn_def_parameter'. The arity is
                                   implied in vector `size'. */
   struct ast_node *fn_def_stmt_block;
+
+  /* Expression statement */
+  struct ast_node *expr_stmt_expr;
 
   /* Variable decl statement */
   enum token_type var_decl_stmt_dtype;
@@ -78,6 +83,12 @@ struct ast_node {
   struct ast_node *left;
   struct ast_node *right;
   enum token_type op;
+
+  /* Function call */
+  struct ast_node *fn_call_identifier;
+  struct vector *fn_call_parameters; /* Vector of `ast_node' that will be passed
+                                        to the function `fn_call_identifier'.
+                                        Interpreter handles arity checks. */
 };
 
 #endif

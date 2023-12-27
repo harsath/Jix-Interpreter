@@ -29,7 +29,12 @@ struct ast_node *parse_statement(struct parser_state *parser) {
     }
   }
   case IDENTIFIER: {
+    struct token *one_token_ahead = vector_at(parser->tokens, parser->current_token_index + 1);
+    if (one_token_ahead->type == LEFT_PAREN) {
+      return parse_expression_statement(parser);
+    } else {
     return parse_variable_assignment_statement(parser);
+    }
   }
   case IF: {
     return parse_if_else_statement(parser);
@@ -131,6 +136,18 @@ parse_function_definition_statement(struct parser_state *parser) {
   increment_token_index(parser);
   fn_def_stmt->fn_def_stmt_block = parse_block_statement(parser);
   return fn_def_stmt;
+}
+
+struct ast_node *parse_expression_statement(struct parser_state *parser) {
+  struct ast_node *expr_stmt = malloc(sizeof(struct ast_node));
+  expr_stmt->node_type = EXPR_STMT;
+  expr_stmt->expr_stmt_expr = parse_expression(parser);
+  if (get_current_token(parser)->type != SEMICOLON) {
+    printf("Statement must end with ';'.\n");
+    exit(1);
+  }
+  increment_token_index(parser);
+  return expr_stmt;
 }
 
 struct ast_node *
@@ -306,12 +323,12 @@ struct ast_node *additive(struct parser_state *parser) {
 }
 
 struct ast_node *multiplicative(struct parser_state *parser) {
-  struct ast_node *left = primary(parser);
+  struct ast_node *left = unary(parser);
   struct token *op = get_current_token(parser);
   while (check_index_bound(parser) && op != NULL &&
          (op->type == STAR || op->type == SLASH)) {
     increment_token_index(parser);
-    struct ast_node *right = primary(parser);
+    struct ast_node *right = unary(parser);
     struct ast_node *new_left = malloc(sizeof(struct ast_node));
     new_left->node_type = BINARY_NODE;
     new_left->left = left;
@@ -321,6 +338,16 @@ struct ast_node *multiplicative(struct parser_state *parser) {
     op = get_current_token(parser);
   }
   return left;
+}
+
+struct ast_node *unary(struct parser_state *parser) {
+  struct token *current_token = vector_at(parser->tokens, parser->current_token_index);
+  struct token *one_token_ahead = vector_at(parser->tokens, parser->current_token_index + 1);
+  if ((current_token->type == IDENTIFIER) && (one_token_ahead->type == LEFT_PAREN)) {
+    return fn_call(parser);
+  } else {
+    return primary(parser);
+  }
 }
 
 struct ast_node *primary(struct parser_state *parser) {
@@ -388,6 +415,29 @@ struct ast_node *primary(struct parser_state *parser) {
   }
   }
   return NULL;
+}
+
+struct ast_node *fn_call(struct parser_state *parser) {
+  struct ast_node *fn_call_expr = malloc(sizeof(struct ast_node));
+  fn_call_expr->node_type = FN_CALL_NODE; 
+  fn_call_expr->fn_call_parameters = vector_init();
+  fn_call_expr->fn_call_identifier = primary(parser);
+  if (get_current_token(parser)->type != LEFT_PAREN) {
+    printf("Function call expression should have '(' <expression> ')' after function identifier.\n");
+    exit(1);
+  }
+  increment_token_index(parser);
+  if (get_current_token(parser)->type != RIGHT_PAREN) {
+    do {
+      if (get_current_token(parser)->type == COMMA) {
+        increment_token_index(parser);
+      }
+      struct ast_node *parameter_expr = parse_expression(parser);
+      vector_push_back(fn_call_expr->fn_call_parameters, parameter_expr);
+    } while (get_current_token(parser)->type == COMMA);
+  }
+  increment_token_index(parser);
+  return fn_call_expr;
 }
 
 struct token *get_current_token(struct parser_state *parser) {
