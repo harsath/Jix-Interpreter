@@ -27,6 +27,12 @@ void print_ast_program_expr_stmt(struct ast_node *expr_stmt) {
   printf("\n");
 }
 
+void print_ast_program_return_stmt(struct ast_node *return_stmt) {
+  printf("return ");
+  print_ast_expr(return_stmt->return_stmt_expr);
+  printf("\n");
+}
+
 void print_ast_program_var_decl_stmt(struct ast_node *var_decl_stmt) {
   printf("%s ", get_string_from_token_atom(var_decl_stmt->var_decl_stmt_dtype));
   print_ast_expr(var_decl_stmt->var_decl_stmt_id);
@@ -92,6 +98,10 @@ void print_ast_statement(struct ast_node *statement, size_t indent_level) {
   }
   case EXPR_STMT: {
     print_ast_program_expr_stmt(statement);
+    break;
+  }
+  case RETURN_STMT: {
+    print_ast_program_return_stmt(statement);
     break;
   }
   case VARIABLE_DECL_STMT: {

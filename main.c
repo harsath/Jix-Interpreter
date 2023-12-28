@@ -22,9 +22,9 @@ int main(int argc, const char *argv[]) {
 
   struct vector *program = parse_program(tokens);
 
-  /* print_ast_program(program); */
+  print_ast_program(program);
   /*  */
-  struct object *interpreter_value = interpret(program);
+  // struct object *interpreter_value = interpret(program);
   /*  */
   /* printf("Result: %ld\n", interpreter_value); */
 

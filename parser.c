@@ -43,6 +43,9 @@ struct ast_node *parse_statement(struct parser_state *parser) {
   case WHILE: {
     return parse_while_statement(parser);
   }
+  case RETURN: {
+    return parse_return_statement(parser);
+  }
   case LEFT_BRACE: {
     return parse_block_statement(parser);
   }
@@ -137,6 +140,19 @@ parse_function_definition_statement(struct parser_state *parser) {
   increment_token_index(parser);
   fn_def_stmt->fn_def_stmt_block = parse_block_statement(parser);
   return fn_def_stmt;
+}
+
+struct ast_node *parse_return_statement(struct parser_state *parser) {
+  increment_token_index(parser);
+  struct ast_node *return_stmt = malloc(sizeof(struct ast_node));
+  return_stmt->node_type = RETURN_STMT;
+  return_stmt->return_stmt_expr = parse_expression(parser);
+  if (get_current_token(parser)->type != SEMICOLON) {
+    printf("Statement must end with ';'.\n");
+    exit(1);
+  }
+  increment_token_index(parser);
+  return return_stmt;
 }
 
 struct ast_node *parse_expression_statement(struct parser_state *parser) {

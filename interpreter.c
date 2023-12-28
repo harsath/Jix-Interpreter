@@ -159,7 +159,6 @@ void interpret_block_statement(struct ast_node *stmt_node,
     interpret_statement(vector_at(stmt_node->block_stmt_stmts, i), state,
                         return_code);
   }
-  // environment_free(state->env);
   state->env = parent_env;
 }
 

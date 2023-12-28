@@ -8,6 +8,7 @@
 enum ast_node_type {
   FN_DEF_STMT,
   EXPR_STMT,
+  RETURN_STMT,
   VARIABLE_DECL_STMT,
   VARIABLE_ASSIGN_STMT,
   IF_STMT,
@@ -45,6 +46,9 @@ struct ast_node {
 
   /* Expression statement */
   struct ast_node *expr_stmt_expr;
+
+  /* Return statement */
+  struct ast_node *return_stmt_expr;
 
   /* Variable decl statement */
   enum token_type var_decl_stmt_dtype;
