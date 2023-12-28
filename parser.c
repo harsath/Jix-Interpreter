@@ -426,6 +426,11 @@ struct ast_node *fn_call(struct parser_state *parser) {
   fn_call_expr->node_type = FN_CALL_NODE;
   fn_call_expr->fn_call_parameters = vector_init();
   fn_call_expr->fn_call_identifier = primary(parser);
+  if (fn_call_expr->fn_call_identifier->primary_node_type !=
+      IDENTIFIER_PRIMARY_NODE) {
+    printf("Function name must be an identifier.\n");
+    exit(1);
+  }
   if (get_current_token(parser)->type != LEFT_PAREN) {
     printf("Function call expression should have '(' <expression> ')' after "
            "function identifier.\n");

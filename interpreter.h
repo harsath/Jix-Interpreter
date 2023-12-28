@@ -25,8 +25,8 @@ struct object {
 
 struct function {
   enum token_type return_type;
-  struct vector *parameters;
-  struct ast_node *body;
+  struct vector *parameters; /* Vector of `struct ast_fn_def_parameter' type. */
+  struct ast_node *body;     /* Block statement */
 };
 
 struct object *interpret(struct vector *program);
@@ -34,6 +34,8 @@ void interpret_statement(struct ast_node *ast, struct interpreter_state *state,
                          struct object *return_code);
 void interpret_fn_def_statement(struct ast_node *stmt_node,
                                 struct interpreter_state *state);
+void interpret_expr_statement(struct ast_node *stmt_node,
+                              struct interpreter_state *state);
 void interpret_variable_decl_statement(struct ast_node *stmt_node,
                                        struct interpreter_state *state);
 void interpret_variable_assignment_statement(struct ast_node *stmt_node,

@@ -1,6 +1,7 @@
 #include "interpreter.h"
 #include "ast.h"
 #include "hash_table.h"
+#include "parser.h"
 #include "tokens.h"
 #include "utils.h"
 #include "vector.h"
@@ -25,6 +26,10 @@ void interpret_statement(struct ast_node *stmt_node,
   switch (stmt_node->node_type) {
   case FN_DEF_STMT: {
     interpret_fn_def_statement(stmt_node, state);
+    break;
+  }
+  case EXPR_STMT: {
+    interpret_expr_statement(stmt_node, state);
     break;
   }
   case VARIABLE_DECL_STMT: {
@@ -71,6 +76,11 @@ void interpret_fn_def_statement(struct ast_node *stmt_node,
   fn_stmt->parameters = stmt_node->fn_def_stmt_parameters;
   environment_insert_function(
       state->env, stmt_node->fn_def_stmt_id->identifier_value, fn_stmt);
+}
+
+void interpret_expr_statement(struct ast_node *stmt_node,
+                              struct interpreter_state *state) {
+  eval_expression(stmt_node->expr_stmt_expr, state);
 }
 
 void interpret_variable_decl_statement(struct ast_node *stmt_node,
@@ -149,7 +159,7 @@ void interpret_block_statement(struct ast_node *stmt_node,
     interpret_statement(vector_at(stmt_node->block_stmt_stmts, i), state,
                         return_code);
   }
-  environment_free(state->env);
+  // environment_free(state->env);
   state->env = parent_env;
 }
 
@@ -157,6 +167,49 @@ struct object *eval_expression(struct ast_node *ast,
                                struct interpreter_state *state) {
   struct object *returner = NULL;
   switch (ast->node_type) {
+  case FN_CALL_NODE: {
+    struct function *fn = environment_lookup_function(
+        state->env, ast->fn_call_identifier->identifier_value);
+    /* Check if function is defined. */
+    if (fn == NULL) {
+      printf("Function name '%s' is not defined",
+             ast->fn_call_identifier->identifier_value);
+      exit(1);
+    }
+    /* Check function arity. */
+    if (fn->parameters->size != ast->fn_call_parameters->size) {
+      printf("Function call to '%s' with arity %ld does not match arity of %ld",
+             ast->fn_call_identifier->identifier_value,
+             ast->fn_call_parameters->size, fn->parameters->size);
+      exit(1);
+    }
+    /* Check function parameter types with types passed in and put it in the
+     * environment. */
+    struct environment *parent_env = state->env;
+    struct environment *fn_call_env = environment_init_enclosed(state->env);
+    for (size_t i = 0; i < ast->fn_call_parameters->size; i++) {
+      struct object *parameter_eval =
+          eval_expression(vector_at(ast->fn_call_parameters, i), state);
+      struct ast_fn_def_parameter *fn_parameter = vector_at(fn->parameters, i);
+      if (parameter_eval->data_type != fn_parameter->parameter_type) {
+        printf("Parameter type '%s' does not match the type. Expecting %s, "
+               "received %s.\n",
+               fn_parameter->parameter_name,
+               get_string_from_token_atom(fn_parameter->parameter_type),
+               get_string_from_token_atom(fn_parameter->parameter_type));
+        exit(1);
+      }
+      environment_insert_variable(fn_call_env, fn_parameter->parameter_name,
+                                  parameter_eval);
+    }
+    /* Pass the parameters as environment to block statement and execute
+     * statement blocks of the function. */
+    returner = malloc(sizeof(struct object));
+    state->env = fn_call_env;
+    interpret_block_statement(fn->body, state, returner);
+    state->env = parent_env;
+    return returner;
+  }
   case BINARY_NODE: {
     struct object *lhs = eval_expression(ast->left, state);
     struct object *rhs = eval_expression(ast->right, state);
@@ -437,10 +490,12 @@ struct function *environment_lookup_function(struct environment *env,
   }
   return NULL;
 }
+
 struct function *
 environment_lookup_function_current_env(struct environment *env, char *key) {
   return hash_table_lookup(env->current_env_functions, key);
 }
+
 void environment_insert_function(struct environment *env, char *key,
                                  struct function *value) {
   hash_table_insert(env->current_env_functions, key, value);
