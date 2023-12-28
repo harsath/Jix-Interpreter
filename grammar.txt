@@ -2,6 +2,7 @@ program             :   statement* ;
 
 statement           :   fn_def_stmt
                     |   expression_stmt 
+                    |   return_stmt
                     |   variable_decl_stmt
                     |   assignment_stmt
                     |   if_else_stmt
@@ -11,6 +12,8 @@ statement           :   fn_def_stmt
 fn_def_stmt         :   data_type IDENTIFIER '(' fn_decl_parameters? ')' block_stmt ;
 
 expression_stmt     :   expr ';' ;
+
+return_stmt         :   'return' expr ';' ;
 
 variable_decl_stmt  :   data_type primary '=' expr ';' ;
 
