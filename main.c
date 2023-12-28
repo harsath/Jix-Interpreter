@@ -13,22 +13,17 @@ int main(int argc, const char *argv[]) {
   }
   struct vector *tokens = scan_tokens(input);
 
-  /* for (size_t i = 0; i < tokens->size; i++) { */
-  /*   token *tok = (token *)tokens->_internal_buffer[i]; */
-  /*   printf("type: %s, value: '%.*s'\n", */
-  /* get_string_from_token_atom(tok->type), */
-  /*          (int)tok->token_char_len, tok->token_char); */
-  /* }  */
-
   struct vector *program = parse_program(tokens);
 
   print_ast_program(program);
-  /*  */
-  // struct object *interpreter_value = interpret(program);
-  /*  */
-  /* printf("Result: %ld\n", interpreter_value); */
 
-  /* object *return_value = interpret(program); */
+  struct object *interpreter_value = interpret(program);
+
+  if (!interpreter_value) {
+    printf("Interpreter doesn't return a value.\n");
+  } else {
+    printf("Result: %ld\n", interpreter_value->int_value);
+  }
 
   vector_free(tokens);
 

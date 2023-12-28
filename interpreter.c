@@ -11,33 +11,41 @@ struct object *interpret(struct vector *program) {
     return NULL;
   }
   struct interpreter_state state = {.env = environment_init()};
-  struct object *return_code = malloc(sizeof(struct object));
+  struct return_value *return_code = malloc(sizeof(struct object));
+  return_code->is_set = false;
+  return_code->value = NULL;
   for (size_t i = 0; i < program->size; i++) {
     interpret_statement(vector_at(program, i), &state, return_code);
   }
-  struct object *xx = environment_lookup_variable(state.env, "i");
-  printf("Ret: %lu\n", xx->int_value);
-  return return_code;
+  /* struct object *xx = environment_lookup_variable(state.env, "i"); */
+  /* printf("Ret: %lu\n", xx->int_value); */
+  /* struct object *yy = environment_lookup_variable(state.env, "j"); */
+  /* printf("Ret: %s\n", yy->string_value); */
+  return return_code->value;
 }
 
 void interpret_statement(struct ast_node *stmt_node,
                          struct interpreter_state *state,
-                         struct object *return_code) {
+                         struct return_value *return_code) {
   switch (stmt_node->node_type) {
   case FN_DEF_STMT: {
     interpret_fn_def_statement(stmt_node, state);
     break;
   }
   case EXPR_STMT: {
-    interpret_expr_statement(stmt_node, state);
+    interpret_expr_statement(stmt_node, state, return_code);
+    break;
+  }
+  case RETURN_STMT: {
+    interpret_return_statement(stmt_node, state, return_code);
     break;
   }
   case VARIABLE_DECL_STMT: {
-    interpret_variable_decl_statement(stmt_node, state);
+    interpret_variable_decl_statement(stmt_node, state, return_code);
     break;
   }
   case VARIABLE_ASSIGN_STMT: {
-    interpret_variable_assignment_statement(stmt_node, state);
+    interpret_variable_assignment_statement(stmt_node, state, return_code);
     break;
   }
   case BLOCK_STMT: {
@@ -79,12 +87,23 @@ void interpret_fn_def_statement(struct ast_node *stmt_node,
 }
 
 void interpret_expr_statement(struct ast_node *stmt_node,
-                              struct interpreter_state *state) {
-  eval_expression(stmt_node->expr_stmt_expr, state);
+                              struct interpreter_state *state,
+                              struct return_value *return_code) {
+  eval_expression(stmt_node->expr_stmt_expr, state, return_code);
+}
+
+void interpret_return_statement(struct ast_node *stmt_node,
+                                struct interpreter_state *state,
+                                struct return_value *return_code) {
+  struct object *return_expr =
+      eval_expression(stmt_node->return_stmt_expr, state, return_code);
+  return_code->is_set = true;
+  return_code->value = return_expr;
 }
 
 void interpret_variable_decl_statement(struct ast_node *stmt_node,
-                                       struct interpreter_state *state) {
+                                       struct interpreter_state *state,
+                                       struct return_value *return_code) {
   /* Allow creating scope-local variable name of same name in a scope even if it
    * exists in previous scopes. */
   if (environment_lookup_variable_current_env(
@@ -94,14 +113,15 @@ void interpret_variable_decl_statement(struct ast_node *stmt_node,
     exit(1);
   }
   struct object *variable_value =
-      eval_expression(stmt_node->var_decl_stmt_expr, state);
+      eval_expression(stmt_node->var_decl_stmt_expr, state, return_code);
   environment_insert_variable(state->env,
                               stmt_node->var_decl_stmt_id->identifier_value,
                               variable_value);
 }
 
 void interpret_variable_assignment_statement(struct ast_node *stmt_node,
-                                             struct interpreter_state *state) {
+                                             struct interpreter_state *state,
+                                             struct return_value *return_code) {
   /* Check current scope, if not traverse to previous parent scope. */
   if (environment_lookup_variable(
           state->env, stmt_node->assign_stmt_id->identifier_value) == NULL) {
@@ -110,15 +130,16 @@ void interpret_variable_assignment_statement(struct ast_node *stmt_node,
     exit(1);
   }
   struct object *variable_value =
-      eval_expression(stmt_node->assign_stmt_expr, state);
+      eval_expression(stmt_node->assign_stmt_expr, state, return_code);
   environment_update_variable(
       state->env, stmt_node->assign_stmt_id->identifier_value, variable_value);
 }
 
 void interpret_if_statement(struct ast_node *stmt_node,
                             struct interpreter_state *state,
-                            struct object *return_code) {
-  struct object *if_expr = eval_expression(stmt_node->if_stmt_expr, state);
+                            struct return_value *return_code) {
+  struct object *if_expr =
+      eval_expression(stmt_node->if_stmt_expr, state, return_code);
   if (if_expr->data_type != BOOL_DATATYPE) {
     printf("The result of the <expression> inside 'if' statement should result "
            "in a boolean value.\n");
@@ -136,26 +157,33 @@ void interpret_if_statement(struct ast_node *stmt_node,
 
 void interpret_while_statement(struct ast_node *stmt_node,
                                struct interpreter_state *state,
-                               struct object *return_code) {
+                               struct return_value *return_code) {
   struct object *while_expr =
-      eval_expression(stmt_node->while_stmt_expr, state);
+      eval_expression(stmt_node->while_stmt_expr, state, return_code);
   if (while_expr->data_type != BOOL_DATATYPE) {
     printf("The <expression> of 'while' must return boolean.\n");
     exit(1);
   }
   while (while_expr->bool_value) {
     interpret_block_statement(stmt_node->while_stmt_block, state, return_code);
-    while_expr = eval_expression(stmt_node->while_stmt_expr, state);
+    if (return_code->is_set) {
+      break;
+    }
+    while_expr =
+        eval_expression(stmt_node->while_stmt_expr, state, return_code);
   }
 }
 
 void interpret_block_statement(struct ast_node *stmt_node,
                                struct interpreter_state *state,
-                               struct object *return_code) {
+                               struct return_value *return_code) {
   struct environment *parent_env = state->env;
   struct environment *block_env = environment_init_enclosed(state->env);
   state->env = block_env;
   for (size_t i = 0; i < stmt_node->block_stmt_stmts->size; i++) {
+    if (return_code->is_set) {
+      break;
+    }
     interpret_statement(vector_at(stmt_node->block_stmt_stmts, i), state,
                         return_code);
   }
@@ -163,7 +191,8 @@ void interpret_block_statement(struct ast_node *stmt_node,
 }
 
 struct object *eval_expression(struct ast_node *ast,
-                               struct interpreter_state *state) {
+                               struct interpreter_state *state,
+                               struct return_value *return_code) {
   struct object *returner = NULL;
   switch (ast->node_type) {
   case FN_CALL_NODE: {
@@ -187,8 +216,8 @@ struct object *eval_expression(struct ast_node *ast,
     struct environment *parent_env = state->env;
     struct environment *fn_call_env = environment_init_enclosed(state->env);
     for (size_t i = 0; i < ast->fn_call_parameters->size; i++) {
-      struct object *parameter_eval =
-          eval_expression(vector_at(ast->fn_call_parameters, i), state);
+      struct object *parameter_eval = eval_expression(
+          vector_at(ast->fn_call_parameters, i), state, return_code);
       struct ast_fn_def_parameter *fn_parameter = vector_at(fn->parameters, i);
       if (parameter_eval->data_type != fn_parameter->parameter_type) {
         printf("Parameter type '%s' does not match the type. Expecting %s, "
@@ -203,15 +232,17 @@ struct object *eval_expression(struct ast_node *ast,
     }
     /* Pass the parameters as environment to block statement and execute
      * statement blocks of the function. */
-    returner = malloc(sizeof(struct object));
     state->env = fn_call_env;
-    interpret_block_statement(fn->body, state, returner);
+    interpret_block_statement(fn->body, state, return_code);
+    returner = return_code->value;
+    return_code->is_set = false;
+    return_code->value = NULL;
     state->env = parent_env;
     return returner;
   }
   case BINARY_NODE: {
-    struct object *lhs = eval_expression(ast->left, state);
-    struct object *rhs = eval_expression(ast->right, state);
+    struct object *lhs = eval_expression(ast->left, state, return_code);
+    struct object *rhs = eval_expression(ast->right, state, return_code);
     switch (ast->op) {
     case PLUS:
     case MINUS:
@@ -504,3 +535,15 @@ void environment_free(struct environment *env) {
   hash_table_free(env->current_env_variables);
   free(env);
 }
+
+/* void set_return_value_from_object(struct return_value *ret, struct object
+ * *obj) { */
+/*   ret->value->data_type = obj->data_type; */
+/*   if (ret->value->data_type == INT_DATATYPE) { */
+/*     ret->value->int_value = obj->int_value; */
+/*   } else if (ret->value->data_type == STRING_DATATYPE) { */
+/*     ret->value->string_value = obj->string_value; */
+/*   } else { */
+/*     ret->value->bool_value = obj->bool_value; */
+/*   } */
+/* } */

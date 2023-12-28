@@ -23,6 +23,11 @@ struct object {
   char *string_value;
 };
 
+struct return_value {
+  bool is_set;
+  struct object *value;
+};
+
 struct function {
   enum token_type return_type;
   struct vector *parameters; /* Vector of `struct ast_fn_def_parameter' type. */
@@ -31,26 +36,33 @@ struct function {
 
 struct object *interpret(struct vector *program);
 void interpret_statement(struct ast_node *ast, struct interpreter_state *state,
-                         struct object *return_code);
+                         struct return_value *return_code);
 void interpret_fn_def_statement(struct ast_node *stmt_node,
                                 struct interpreter_state *state);
 void interpret_expr_statement(struct ast_node *stmt_node,
-                              struct interpreter_state *state);
+                              struct interpreter_state *state,
+                              struct return_value *return_code);
+void interpret_return_statement(struct ast_node *stmt_node,
+                                struct interpreter_state *state,
+                                struct return_value *return_code);
 void interpret_variable_decl_statement(struct ast_node *stmt_node,
-                                       struct interpreter_state *state);
+                                       struct interpreter_state *state,
+                                       struct return_value *return_code);
 void interpret_variable_assignment_statement(struct ast_node *stmt_node,
-                                             struct interpreter_state *state);
+                                             struct interpreter_state *state,
+                                             struct return_value *return_code);
 void interpret_if_statement(struct ast_node *stmt_node,
                             struct interpreter_state *state,
-                            struct object *return_code);
+                            struct return_value *return_code);
 void interpret_while_statement(struct ast_node *stmt_node,
                                struct interpreter_state *state,
-                               struct object *return_code);
+                               struct return_value *return_code);
 void interpret_block_statement(struct ast_node *stmt_node,
                                struct interpreter_state *state,
-                               struct object *return_code);
+                               struct return_value *return_code);
 struct object *eval_expression(struct ast_node *ast,
-                               struct interpreter_state *state);
+                               struct interpreter_state *state,
+                               struct return_value *return_value);
 struct object *eval_logical_expression(enum token_type op, struct object *lhs,
                                        struct object *rhs);
 struct object *eval_equality_expression(enum token_type op, struct object *lhs,
@@ -80,5 +92,8 @@ environment_lookup_function_current_env(struct environment *env, char *key);
 void environment_insert_function(struct environment *env, char *key,
                                  struct function *value);
 void environment_free(struct environment *env);
+
+// void set_return_value_from_object(struct return_value *ret, struct object
+// *obj);
 
 #endif
