@@ -43,7 +43,8 @@ additive            :   multiplicative ( ('+' | '-') multiplicative )* ;
 
 multiplicative      :   unary ( ('*' | '/') unary )* ;
 
-unary               :   primary
+unary               :   ( '-' | '!' ) unary
+                    |   primary
                     |   fn_call;
 
 primary             :   NUMBER | STRING | IDENTIFIER | 'true' | 'false' | 'nil'
