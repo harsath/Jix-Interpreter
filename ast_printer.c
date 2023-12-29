@@ -78,6 +78,9 @@ void print_ast_program_block_stmt(struct ast_node *block_stmt,
     print_ast_statement(vector_at(block_stmt->block_stmt_stmts, i),
                         indent_level + 1);
   }
+  for (size_t i = 0; i < indent_level; i++) {
+    printf("\t");
+  }
   printf("}");
 }
 
