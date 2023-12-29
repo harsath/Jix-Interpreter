@@ -31,6 +31,7 @@ enum token_type {
   STRING,
   NUMBER,
   FUNCTION,
+  LET,
   IF,
   ELSE,
   TRUE,
@@ -40,9 +41,6 @@ enum token_type {
   RETURN,
   WHILE,
   FOR,
-  STRING_DATATYPE,
-  INT_DATATYPE,
-  BOOL_DATATYPE,
   EOF_TOKEN,
   INVALID_TOKEN
 };

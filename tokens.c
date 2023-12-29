@@ -64,8 +64,11 @@ enum token_type get_token_atom_from_string(const char *key) {
   if (strcmp(key, "||") == 0) {
     return OR;
   }
-  if (strcmp(key, "function") == 0) {
+  if (strcmp(key, "fn") == 0) {
     return FUNCTION;
+  }
+  if (strcmp(key, "let") == 0) {
+    return LET;
   }
   if (strcmp(key, "if") == 0) {
     return IF;
@@ -93,22 +96,16 @@ enum token_type get_token_atom_from_string(const char *key) {
   }
   if (strcmp(key, "for") == 0) {
     return FOR;
-  }
-  if (strcmp(key, "int") == 0) {
-    return INT_DATATYPE;
-  }
-  if (strcmp(key, "string") == 0) {
-    return STRING_DATATYPE;
-  }
-  if (strcmp(key, "bool") == 0) {
-    return BOOL_DATATYPE;
   }
   return INVALID_TOKEN;
 }
 
 enum token_type get_keyword_token_from_string(const char *key) {
-  if (strcmp(key, "function") == 0) {
+  if (strcmp(key, "fn") == 0) {
     return FUNCTION;
+  }
+  if (strcmp(key, "let") == 0) {
+    return LET;
   }
   if (strcmp(key, "if") == 0) {
     return IF;
@@ -136,15 +133,6 @@ enum token_type get_keyword_token_from_string(const char *key) {
   }
   if (strcmp(key, "for") == 0) {
     return FOR;
-  }
-  if (strcmp(key, "int") == 0) {
-    return INT_DATATYPE;
-  }
-  if (strcmp(key, "string") == 0) {
-    return STRING_DATATYPE;
-  }
-  if (strcmp(key, "bool") == 0) {
-    return BOOL_DATATYPE;
   }
   return IDENTIFIER;
 }
@@ -200,7 +188,9 @@ const char *get_string_from_token_atom(enum token_type type) {
   case NUMBER:
     return "<number>";
   case FUNCTION:
-    return "function";
+    return "fn";
+  case LET:
+    return "let";
   case IF:
     return "if";
   case ELSE:
@@ -219,12 +209,6 @@ const char *get_string_from_token_atom(enum token_type type) {
     return "while";
   case FOR:
     return "for";
-  case INT_DATATYPE:
-    return "int";
-  case STRING_DATATYPE:
-    return "string";
-  case BOOL_DATATYPE:
-    return "bool";
   default:
     return "INVALID";
   }

@@ -27,21 +27,14 @@ enum ast_primary_node_type {
   NIL_PRIMARY_NODE
 };
 
-struct ast_fn_def_parameter {
-  enum token_type parameter_type;
-  char *parameter_name;
-};
-
 struct ast_node {
   enum ast_node_type node_type;
   enum ast_primary_node_type primary_node_type;
 
   /* Function definition statement */
-  enum token_type fn_def_stmt_return_type;
   struct ast_node *fn_def_stmt_id;
-  struct vector
-      *fn_def_stmt_parameters; /* Vector of `ast_fn_def_parameter'. The arity is
-                                  implied in vector `size'. */
+  struct vector *fn_def_stmt_parameters; /* Vector of `char*'. The arity is
+                                            implied in vector `size'. */
   struct ast_node *fn_def_stmt_block;
 
   /* Expression statement */
@@ -51,7 +44,6 @@ struct ast_node {
   struct ast_node *return_stmt_expr;
 
   /* Variable decl statement */
-  enum token_type var_decl_stmt_dtype;
   struct ast_node *var_decl_stmt_id;
   struct ast_node *var_decl_stmt_expr;
 

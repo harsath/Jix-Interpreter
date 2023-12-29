@@ -5,14 +5,10 @@
 
 void print_ast_program_fn_def_stmt(struct ast_node *fn_def_stmt,
                                    size_t indent_level) {
-  printf("%s %s ( ",
-         get_string_from_token_atom(fn_def_stmt->fn_def_stmt_return_type),
-         fn_def_stmt->fn_def_stmt_id->identifier_value);
+  printf("fn %s ( ", fn_def_stmt->fn_def_stmt_id->identifier_value);
   for (size_t i = 0; i < fn_def_stmt->fn_def_stmt_parameters->size; i++) {
-    struct ast_fn_def_parameter *parameter =
-        vector_at(fn_def_stmt->fn_def_stmt_parameters, i);
-    printf("%s %s", get_string_from_token_atom(parameter->parameter_type),
-           parameter->parameter_name);
+    char *parameter = vector_at(fn_def_stmt->fn_def_stmt_parameters, i);
+    printf("%s", parameter);
     if (fn_def_stmt->fn_def_stmt_parameters->size > (i + 1)) {
       printf(", ");
     }
@@ -34,7 +30,7 @@ void print_ast_program_return_stmt(struct ast_node *return_stmt) {
 }
 
 void print_ast_program_var_decl_stmt(struct ast_node *var_decl_stmt) {
-  printf("%s ", get_string_from_token_atom(var_decl_stmt->var_decl_stmt_dtype));
+  printf("let ");
   print_ast_expr(var_decl_stmt->var_decl_stmt_id);
   printf(" = ");
   print_ast_expr(var_decl_stmt->var_decl_stmt_expr);

@@ -17,17 +17,10 @@ struct vector *parse_program(struct vector *tokens) {
 struct ast_node *parse_statement(struct parser_state *parser) {
   struct token *stmt = get_current_token(parser);
   switch (stmt->type) {
-  case INT_DATATYPE:
-  case STRING_DATATYPE:
-  case BOOL_DATATYPE: {
-    struct token *two_tokens_ahead =
-        vector_at(parser->tokens, parser->current_token_index + 2);
-    if (two_tokens_ahead->type == LEFT_PAREN) {
-      return parse_function_definition_statement(parser);
-    } else {
-      return parse_variable_declaration_statement(parser);
-    }
-  }
+  case FUNCTION:
+    return parse_function_definition_statement(parser);
+  case LET:
+    return parse_variable_declaration_statement(parser);
   case IDENTIFIER: {
     struct token *one_token_ahead =
         vector_at(parser->tokens, parser->current_token_index + 1);
@@ -59,50 +52,31 @@ struct ast_node *parse_statement(struct parser_state *parser) {
 
 struct ast_node *
 parse_variable_declaration_statement(struct parser_state *parser) {
-  struct token *dtype = get_current_token(parser);
-  switch (dtype->type) {
-  case INT_DATATYPE:
-  case STRING_DATATYPE:
-  case BOOL_DATATYPE: {
-    increment_token_index(parser);
-    struct ast_node *var_decl_stmt = malloc(sizeof(struct ast_node));
-    var_decl_stmt->node_type = VARIABLE_DECL_STMT;
-    var_decl_stmt->var_decl_stmt_dtype = dtype->type;
-    var_decl_stmt->var_decl_stmt_id = primary(parser);
-    if (!check_index_bound(parser) ||
-        get_current_token(parser)->type != EQUAL) {
-      printf("Identifier must have '=' next\n");
-      exit(1);
-    }
-    increment_token_index(parser);
-    var_decl_stmt->var_decl_stmt_expr = parse_expression(parser);
-    if (!check_index_bound(parser) ||
-        get_current_token(parser)->type != SEMICOLON) {
-      printf("Statement must end with ';'\n");
-      exit(1);
-    }
-    increment_token_index(parser);
-    return var_decl_stmt;
-    break;
-  }
-  default: {
-    printf("Unsupported datatype in variable declaration statement");
+  increment_token_index(parser);
+  struct ast_node *var_decl_stmt = malloc(sizeof(struct ast_node));
+  var_decl_stmt->node_type = VARIABLE_DECL_STMT;
+  var_decl_stmt->var_decl_stmt_id = primary(parser);
+  if (!check_index_bound(parser) || get_current_token(parser)->type != EQUAL) {
+    printf("Identifier must have '=' next\n");
     exit(1);
   }
+  increment_token_index(parser);
+  var_decl_stmt->var_decl_stmt_expr = parse_expression(parser);
+  if (!check_index_bound(parser) ||
+      get_current_token(parser)->type != SEMICOLON) {
+    printf("Variable declaration must end with ';'\n");
+    exit(1);
   }
+  increment_token_index(parser);
+  return var_decl_stmt;
 }
 
 struct ast_node *
 parse_function_definition_statement(struct parser_state *parser) {
+  increment_token_index(parser);
   struct ast_node *fn_def_stmt = malloc(sizeof(struct ast_node));
   fn_def_stmt->node_type = FN_DEF_STMT;
   fn_def_stmt->fn_def_stmt_parameters = vector_init();
-  fn_def_stmt->fn_def_stmt_return_type = get_current_token(parser)->type;
-  if (invalid_data_type(fn_def_stmt->fn_def_stmt_return_type)) {
-    printf("Function return type must be either 'int', 'bool', or 'string'.\n");
-    exit(1);
-  }
-  increment_token_index(parser);
   fn_def_stmt->fn_def_stmt_id = primary(parser);
   if (fn_def_stmt->fn_def_stmt_id->primary_node_type !=
       IDENTIFIER_PRIMARY_NODE) {
@@ -119,21 +93,13 @@ parse_function_definition_statement(struct parser_state *parser) {
       if (get_current_token(parser)->type == COMMA) {
         increment_token_index(parser);
       }
-      struct ast_fn_def_parameter *parameter_decl =
-          malloc(sizeof(struct ast_fn_def_parameter));
-      parameter_decl->parameter_type = get_current_token(parser)->type;
-      if (invalid_data_type(parameter_decl->parameter_type)) {
-        printf("Function parameter type should be a valid datatype.\n");
-        exit(1);
-      }
-      increment_token_index(parser);
       struct ast_node *parameter_id = primary(parser);
       if (parameter_id->primary_node_type != IDENTIFIER_PRIMARY_NODE) {
         printf("Parameter name must be identifier string.\n");
         exit(1);
       }
-      parameter_decl->parameter_name = parameter_id->identifier_value;
-      vector_push_back(fn_def_stmt->fn_def_stmt_parameters, parameter_decl);
+      vector_push_back(fn_def_stmt->fn_def_stmt_parameters,
+                       parameter_id->identifier_value);
       /* free(parameter_id); */
     } while (get_current_token(parser)->type == COMMA);
   }
@@ -148,7 +114,7 @@ struct ast_node *parse_return_statement(struct parser_state *parser) {
   return_stmt->node_type = RETURN_STMT;
   return_stmt->return_stmt_expr = parse_expression(parser);
   if (get_current_token(parser)->type != SEMICOLON) {
-    printf("Statement must end with ';'.\n");
+    printf("Return statement must end with ';'.\n");
     exit(1);
   }
   increment_token_index(parser);
@@ -160,7 +126,7 @@ struct ast_node *parse_expression_statement(struct parser_state *parser) {
   expr_stmt->node_type = EXPR_STMT;
   expr_stmt->expr_stmt_expr = parse_expression(parser);
   if (get_current_token(parser)->type != SEMICOLON) {
-    printf("Statement must end with ';'.\n");
+    printf("Expression statement must end with ';'.\n");
     exit(1);
   }
   increment_token_index(parser);
@@ -180,7 +146,7 @@ parse_variable_assignment_statement(struct parser_state *parser) {
   var_assign_stmt->assign_stmt_expr = parse_expression(parser);
   if (!check_index_bound(parser) ||
       get_current_token(parser)->type != SEMICOLON) {
-    printf("Statement must end with ';'\n");
+    printf("Variable assignment must end with ';'\n");
     exit(1);
   }
   increment_token_index(parser);
@@ -486,9 +452,4 @@ void increment_token_index(struct parser_state *parser) {
 
 bool check_index_bound(struct parser_state *parser) {
   return parser->current_token_index < parser->tokens->size;
-}
-
-bool invalid_data_type(enum token_type type) {
-  return (type != INT_DATATYPE && type != BOOL_DATATYPE &&
-          type != STRING_DATATYPE);
 }

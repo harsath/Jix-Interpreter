@@ -17,10 +17,6 @@ struct object *interpret(struct vector *program) {
   for (size_t i = 0; i < program->size; i++) {
     interpret_statement(vector_at(program, i), &state, return_code);
   }
-  /* struct object *xx = environment_lookup_variable(state.env, "i"); */
-  /* printf("Ret: %lu\n", xx->int_value); */
-  /* struct object *yy = environment_lookup_variable(state.env, "j"); */
-  /* printf("Ret: %s\n", yy->string_value); */
   return return_code->value;
 }
 
@@ -79,7 +75,6 @@ void interpret_fn_def_statement(struct ast_node *stmt_node,
     exit(1);
   }
   struct function *fn_stmt = malloc(sizeof(struct function));
-  fn_stmt->return_type = stmt_node->fn_def_stmt_return_type;
   fn_stmt->body = stmt_node->fn_def_stmt_block;
   fn_stmt->parameters = stmt_node->fn_def_stmt_parameters;
   environment_insert_function(
@@ -140,7 +135,7 @@ void interpret_if_statement(struct ast_node *stmt_node,
                             struct return_value *return_code) {
   struct object *if_expr =
       eval_expression(stmt_node->if_stmt_expr, state, return_code);
-  if (if_expr->data_type != BOOL_DATATYPE) {
+  if (if_expr->data_type != BOOLEAN_VALUE) {
     printf("The result of the <expression> inside 'if' statement should result "
            "in a boolean value.\n");
     exit(1);
@@ -160,7 +155,7 @@ void interpret_while_statement(struct ast_node *stmt_node,
                                struct return_value *return_code) {
   struct object *while_expr =
       eval_expression(stmt_node->while_stmt_expr, state, return_code);
-  if (while_expr->data_type != BOOL_DATATYPE) {
+  if (while_expr->data_type != BOOLEAN_VALUE) {
     printf("The <expression> of 'while' must return boolean.\n");
     exit(1);
   }
@@ -218,33 +213,18 @@ struct object *eval_expression(struct ast_node *ast,
     for (size_t i = 0; i < ast->fn_call_parameters->size; i++) {
       struct object *parameter_eval = eval_expression(
           vector_at(ast->fn_call_parameters, i), state, return_code);
-      struct ast_fn_def_parameter *fn_parameter = vector_at(fn->parameters, i);
-      if (parameter_eval->data_type != fn_parameter->parameter_type) {
-        printf("Parameter type '%s' does not match the type. Expecting %s, "
-               "received %s.\n",
-               fn_parameter->parameter_name,
-               get_string_from_token_atom(fn_parameter->parameter_type),
-               get_string_from_token_atom(fn_parameter->parameter_type));
-        exit(1);
-      }
-      environment_insert_variable(fn_call_env, fn_parameter->parameter_name,
-                                  parameter_eval);
+      char *fn_parameter = vector_at(fn->parameters, i);
+      environment_insert_variable(fn_call_env, fn_parameter, parameter_eval);
     }
     /* Pass the parameters as environment to block statement and execute
      * statement blocks of the function. */
     state->env = fn_call_env;
     interpret_block_statement(fn->body, state, return_code);
-    if ((ast->unary_op != NIL) && (return_code->is_set)) {
-      if ((return_code->value->data_type == BOOL_DATATYPE) &&
-          (ast->unary_op == BANG)) {
+    if (return_code->is_set) {
+      if (ast->unary_op == BANG) {
         return_code->value->bool_value = !return_code->value->bool_value;
-      } else if ((return_code->value->data_type == INT_DATATYPE) &&
-                 (ast->unary_op == MINUS)) {
+      } else if (ast->unary_op == MINUS) {
         return_code->value->int_value = -return_code->value->int_value;
-      } else {
-        printf("Unary operator '!' must be applied to a boolean and '-' must "
-               "be applied to an integer.\n");
-        exit(1);
       }
     }
     returner = return_code->value;
@@ -304,33 +284,25 @@ struct object *eval_expression(struct ast_node *ast,
 struct object *eval_logical_expression(enum token_type op, struct object *lhs,
                                        struct object *rhs) {
   struct object *returner = malloc(sizeof(struct object));
-  returner->data_type = BOOL_DATATYPE;
-  if (lhs->data_type == BOOL_DATATYPE && rhs->data_type == BOOL_DATATYPE) {
-    returner->bool_value = (op == AND) ? (lhs->bool_value && rhs->bool_value)
-                                       : (lhs->bool_value || rhs->bool_value);
-  } else {
-    printf("Logical '&&' and '||' can only be performed between two operands "
-           "of booleans.\n");
-    exit(1);
-  }
+  returner->bool_value = (op == AND) ? (lhs->bool_value && rhs->bool_value)
+                                     : (lhs->bool_value || rhs->bool_value);
   return returner;
 }
 
 struct object *eval_equality_expression(enum token_type op, struct object *lhs,
                                         struct object *rhs) {
   struct object *returner = malloc(sizeof(struct object));
-  returner->data_type = BOOL_DATATYPE;
-  if (lhs->data_type == INT_DATATYPE && rhs->data_type == INT_DATATYPE) {
+  returner->data_type = BOOLEAN_VALUE;
+  if (lhs->data_type == INT_VALUE && rhs->data_type == INT_VALUE) {
     returner->bool_value = (op == EQUAL_EQUAL)
                                ? (lhs->int_value == rhs->int_value)
                                : (lhs->int_value != rhs->int_value);
-  } else if (lhs->data_type == BOOL_DATATYPE &&
-             rhs->data_type == BOOL_DATATYPE) {
+  } else if (lhs->data_type == BOOLEAN_VALUE &&
+             rhs->data_type == BOOLEAN_VALUE) {
     returner->bool_value = (op == EQUAL_EQUAL)
                                ? (lhs->bool_value == rhs->bool_value)
                                : (lhs->bool_value != rhs->bool_value);
-  } else if (lhs->data_type == STRING_DATATYPE &&
-             rhs->data_type == STRING_DATATYPE) {
+  } else if (lhs->data_type == STRING_VALUE && rhs->data_type == STRING_VALUE) {
     returner->bool_value =
         (op == EQUAL_EQUAL)
             ? (strcmp(lhs->string_value, rhs->string_value) == 0)
@@ -347,8 +319,8 @@ struct object *eval_comparitive_expression(enum token_type op,
                                            struct object *lhs,
                                            struct object *rhs) {
   struct object *returner = malloc(sizeof(struct object));
-  returner->data_type = BOOL_DATATYPE;
-  if (lhs->data_type != INT_DATATYPE || rhs->data_type != INT_DATATYPE) {
+  returner->data_type = BOOLEAN_VALUE;
+  if (lhs->data_type != INT_VALUE || rhs->data_type != INT_VALUE) {
     printf(
         "Comparitive expression can only be performed between two integers.\n");
     exit(1);
@@ -382,8 +354,8 @@ struct object *eval_additive_multiplicative_expression(enum token_type op,
                                                        struct object *lhs,
                                                        struct object *rhs) {
   struct object *returner = malloc(sizeof(struct object));
-  returner->data_type = INT_DATATYPE;
-  if (lhs->data_type != INT_DATATYPE || rhs->data_type != INT_DATATYPE) {
+  returner->data_type = INT_VALUE;
+  if (lhs->data_type != INT_VALUE || rhs->data_type != INT_VALUE) {
     printf("For additive and multiplicative expressions, both operands must be "
            "of integer type.\n");
     exit(1);
@@ -418,17 +390,17 @@ struct object *eval_primary_expression(struct ast_node *ast,
   struct object *returner = malloc(sizeof(struct object));
   switch (ast->primary_node_type) {
   case NUMBER_PRIMARY_NODE: {
-    returner->data_type = INT_DATATYPE;
+    returner->data_type = INT_VALUE;
     returner->int_value = ast->number_value;
     break;
   }
   case STRING_PRIMARY_NODE: {
-    returner->data_type = STRING_DATATYPE;
+    returner->data_type = STRING_VALUE;
     returner->string_value = ast->string_value;
     break;
   }
   case BOOLEAN_PRIMARY_NODE: {
-    returner->data_type = BOOL_DATATYPE;
+    returner->data_type = BOOLEAN_VALUE;
     returner->bool_value = ast->boolean_value;
     break;
   }
@@ -441,15 +413,15 @@ struct object *eval_primary_expression(struct ast_node *ast,
     }
     returner->data_type = identifier_lookup->data_type;
     switch (identifier_lookup->data_type) {
-    case INT_DATATYPE: {
+    case INT_VALUE: {
       returner->int_value = identifier_lookup->int_value;
       break;
     }
-    case STRING_DATATYPE: {
+    case STRING_VALUE: {
       returner->string_value = identifier_lookup->string_value;
       break;
     }
-    case BOOL_DATATYPE: {
+    case BOOLEAN_VALUE: {
       returner->bool_value = identifier_lookup->bool_value;
       break;
     }
@@ -460,7 +432,7 @@ struct object *eval_primary_expression(struct ast_node *ast,
     break;
   }
   case NIL_PRIMARY_NODE: {
-    returner->data_type = NIL;
+    returner->data_type = NIL_VALUE;
     break;
   }
   }
@@ -548,15 +520,3 @@ void environment_free(struct environment *env) {
   hash_table_free(env->current_env_variables);
   free(env);
 }
-
-/* void set_return_value_from_object(struct return_value *ret, struct object
- * *obj) { */
-/*   ret->value->data_type = obj->data_type; */
-/*   if (ret->value->data_type == INT_DATATYPE) { */
-/*     ret->value->int_value = obj->int_value; */
-/*   } else if (ret->value->data_type == STRING_DATATYPE) { */
-/*     ret->value->string_value = obj->string_value; */
-/*   } else { */
-/*     ret->value->bool_value = obj->bool_value; */
-/*   } */
-/* } */

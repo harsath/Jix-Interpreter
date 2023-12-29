@@ -16,8 +16,9 @@ struct interpreter_state {
   struct environment *env;
 };
 
+enum object_type { INT_VALUE, BOOLEAN_VALUE, STRING_VALUE, NIL_VALUE };
 struct object {
-  enum token_type data_type;
+  enum object_type data_type;
   long int_value;
   bool bool_value;
   char *string_value;
@@ -29,7 +30,6 @@ struct return_value {
 };
 
 struct function {
-  enum token_type return_type;
   struct vector *parameters; /* Vector of `struct ast_fn_def_parameter' type. */
   struct ast_node *body;     /* Block statement */
 };
