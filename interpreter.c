@@ -234,6 +234,19 @@ struct object *eval_expression(struct ast_node *ast,
      * statement blocks of the function. */
     state->env = fn_call_env;
     interpret_block_statement(fn->body, state, return_code);
+    if ((ast->unary_op != NIL) && (return_code->is_set)) {
+      if ((return_code->value->data_type == BOOL_DATATYPE) &&
+          (ast->unary_op == BANG)) {
+        return_code->value->bool_value = !return_code->value->bool_value;
+      } else if ((return_code->value->data_type == INT_DATATYPE) &&
+                 (ast->unary_op == MINUS)) {
+        return_code->value->int_value = -return_code->value->int_value;
+      } else {
+        printf("Unary operator '!' must be applied to a boolean and '-' must "
+               "be applied to an integer.\n");
+        exit(1);
+      }
+    }
     returner = return_code->value;
     return_code->is_set = false;
     return_code->value = NULL;

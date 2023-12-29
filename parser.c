@@ -358,16 +358,26 @@ struct ast_node *multiplicative(struct parser_state *parser) {
 }
 
 struct ast_node *unary(struct parser_state *parser) {
-  struct token *current_token =
-      vector_at(parser->tokens, parser->current_token_index);
+  struct token *current_token = get_current_token(parser);
+  enum token_type optional_unary_op = NIL;
+
+  if (current_token->type == BANG || current_token->type == MINUS) {
+    optional_unary_op = current_token->type;
+
+    increment_token_index(parser);
+    current_token = get_current_token(parser);
+  }
   struct token *one_token_ahead =
       vector_at(parser->tokens, parser->current_token_index + 1);
+  struct ast_node *returner = NULL;
   if ((current_token->type == IDENTIFIER) &&
       (one_token_ahead->type == LEFT_PAREN)) {
-    return fn_call(parser);
+    returner = fn_call(parser);
   } else {
-    return primary(parser);
+    returner = primary(parser);
   }
+  returner->unary_op = optional_unary_op;
+  return returner;
 }
 
 struct ast_node *primary(struct parser_state *parser) {

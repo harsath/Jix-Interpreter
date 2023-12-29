@@ -88,6 +88,9 @@ struct ast_node {
   struct ast_node *right;
   enum token_type op;
 
+  /* Optional unary operator */
+  enum token_type unary_op;
+
   /* Function call */
   struct ast_node *fn_call_identifier;
   struct vector *fn_call_parameters; /* Vector of `ast_node' that will be passed

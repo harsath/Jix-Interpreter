@@ -22,7 +22,7 @@ int main(int argc, const char *argv[]) {
   if (!interpreter_value) {
     printf("Interpreter doesn't return a value.\n");
   } else {
-    printf("Result: %ld\n", interpreter_value->int_value);
+    printf("Resultx: %li\n", interpreter_value->int_value);
   }
 
   vector_free(tokens);
