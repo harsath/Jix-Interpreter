@@ -9,13 +9,13 @@ statement           :   fn_def_stmt
                     |   while_stmt
                     |   block_stmt ;
 
-fn_def_stmt         :   data_type IDENTIFIER '(' fn_decl_parameters? ')' block_stmt ;
+fn_def_stmt         :   'fn' IDENTIFIER '(' fn_decl_parameters? ')' block_stmt ;
 
 expression_stmt     :   expr ';' ;
 
 return_stmt         :   'return' expr ';' ;
 
-variable_decl_stmt  :   data_type primary '=' expr ';' ;
+variable_decl_stmt  :   'let' primary '=' expr ';' ;
 
 assignment_stmt     :   primary '=' expr ';' ;
 
@@ -25,9 +25,7 @@ while_stmt          :   'while' '(' expr ')' block_stmt ;
 
 block_stmt          :   '{' statement* '}' ;
 
-fn_decl_parameters  :   data_type expr ( ',' data_type expr )* ;
-
-data_type           :   'int' | 'string' | 'bool' ;
+fn_decl_parameters  :   IDENTIFIER ( ',' IDENTIFIER )* ;
 
 expr                :   logical_or ;
 
