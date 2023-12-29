@@ -7,6 +7,7 @@ statement           :   fn_def_stmt
                     |   assignment_stmt
                     |   if_else_stmt
                     |   while_stmt
+                    |   break_stmt
                     |   block_stmt ;
 
 fn_def_stmt         :   'fn' IDENTIFIER '(' fn_decl_parameters? ')' block_stmt ;
@@ -22,6 +23,8 @@ assignment_stmt     :   primary '=' expr ';' ;
 if_else_stmt        :   'if' '(' expr ')' block_stmt ( 'else' block_stmt )? ;
 
 while_stmt          :   'while' '(' expr ')' block_stmt ;
+
+break_stmt          :   'break' ';' ;
 
 block_stmt          :   '{' statement* '}' ;
 
