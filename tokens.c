@@ -94,6 +94,9 @@ enum token_type get_token_atom_from_string(const char *key) {
   if (strcmp(key, "while") == 0) {
     return WHILE;
   }
+  if (strcmp(key, "break") == 0) {
+    return BREAK;
+  }
   if (strcmp(key, "for") == 0) {
     return FOR;
   }
@@ -130,6 +133,9 @@ enum token_type get_keyword_token_from_string(const char *key) {
   }
   if (strcmp(key, "while") == 0) {
     return WHILE;
+  }
+  if (strcmp(key, "break") == 0) {
+    return BREAK;
   }
   if (strcmp(key, "for") == 0) {
     return FOR;
@@ -207,6 +213,8 @@ const char *get_string_from_token_atom(enum token_type type) {
     return "return";
   case WHILE:
     return "while";
+  case BREAK:
+    return "break";
   case FOR:
     return "for";
   default:

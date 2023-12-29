@@ -65,6 +65,11 @@ void print_ast_program_while_stmt(struct ast_node *while_stmt,
   printf("\n");
 }
 
+void print_ast_program_break_stmt(struct ast_node *break_stmt,
+                                  size_t indent_level) {
+  printf("break ;\n");
+}
+
 void print_ast_program_block_stmt(struct ast_node *block_stmt,
                                   size_t indent_level) {
   printf("{ ");
@@ -118,6 +123,10 @@ void print_ast_statement(struct ast_node *statement, size_t indent_level) {
   }
   case WHILE_STMT: {
     print_ast_program_while_stmt(statement, indent_level);
+    break;
+  }
+  case BREAK_STMT: {
+    print_ast_program_break_stmt(statement, indent_level);
     break;
   }
   default: {

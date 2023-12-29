@@ -56,6 +56,10 @@ void interpret_statement(struct ast_node *stmt_node,
     interpret_while_statement(stmt_node, state, return_code);
     break;
   }
+  case BREAK_STMT: {
+    interpret_break_statement(stmt_node, state, return_code);
+    break;
+  }
   default: {
     printf("Invalid statement\n");
     exit(1);
@@ -162,11 +166,18 @@ void interpret_while_statement(struct ast_node *stmt_node,
   while (while_expr->bool_value) {
     interpret_block_statement(stmt_node->while_stmt_block, state, return_code);
     if (return_code->is_set) {
+      return_code->is_set = false;
       break;
     }
     while_expr =
         eval_expression(stmt_node->while_stmt_expr, state, return_code);
   }
+}
+
+void interpret_break_statement(struct ast_node *stmt_node,
+                               struct interpreter_state *state,
+                               struct return_value *return_code) {
+  return_code->is_set = true;
 }
 
 void interpret_block_statement(struct ast_node *stmt_node,

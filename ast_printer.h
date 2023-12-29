@@ -15,6 +15,8 @@ void print_ast_program_var_assign_stmt(struct ast_node *var_assign_stmt);
 void print_ast_program_if_stmt(struct ast_node *if_stmt, size_t indent_level);
 void print_ast_program_while_stmt(struct ast_node *while_stmt,
                                   size_t indent_level);
+void print_ast_program_break_stmt(struct ast_node *break_stmt,
+                                  size_t indent_level);
 void print_ast_program_block_stmt(struct ast_node *var_decl_stmt,
                                   size_t indent_level);
 

@@ -36,6 +36,9 @@ struct ast_node *parse_statement(struct parser_state *parser) {
   case WHILE: {
     return parse_while_statement(parser);
   }
+  case BREAK: {
+    return parse_break_statement(parser);
+  }
   case RETURN: {
     return parse_return_statement(parser);
   }
@@ -193,6 +196,18 @@ struct ast_node *parse_while_statement(struct parser_state *parser) {
   increment_token_index(parser);
   while_stmt->while_stmt_block = parse_block_statement(parser);
   return while_stmt;
+}
+
+struct ast_node *parse_break_statement(struct parser_state *parser) {
+  increment_token_index(parser);
+  struct ast_node *break_stmt = malloc(sizeof(struct ast_node));
+  break_stmt->node_type = BREAK_STMT;
+  if (get_current_token(parser)->type != SEMICOLON) {
+    printf("Semicolon expected at break statement.\n");
+    exit(1);
+  }
+  increment_token_index(parser);
+  return break_stmt;
 }
 
 struct ast_node *parse_block_statement(struct parser_state *parser) {

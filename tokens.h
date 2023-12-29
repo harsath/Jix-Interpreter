@@ -40,6 +40,7 @@ enum token_type {
   VAR,
   RETURN,
   WHILE,
+  BREAK,
   FOR,
   EOF_TOKEN,
   INVALID_TOKEN
