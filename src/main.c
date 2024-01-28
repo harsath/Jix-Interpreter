@@ -6,7 +6,11 @@
 #include "utils.h"
 
 int main(int argc, const char *argv[]) {
-  const char *file_name = "foo.jix";
+  if (argc < 2) {
+    printf("Usage: ./lox [script]\n");
+    return -1;
+  }
+  const char *file_name = argv[1];
   char *input = read_file(file_name);
   if (!input) {
     return -1;
