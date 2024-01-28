@@ -4,3 +4,4 @@ compile_commands.json
 .vscode/
 cmake-build-debug/
 .idea/
+todo.txt
