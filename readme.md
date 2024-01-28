@@ -1,6 +1,6 @@
 ### Jix Interpreter
 
-Jix is a [dynamically typed](https://en.wikipedia.org/wiki/Dynamic_programming_language) programming language. This project implements an interpreter for the Jix programming language. This repository is under active development.
+This project implements an interpreter for Jix, a [dynamically typed](https://en.wikipedia.org/wiki/Dynamic_programming_language) programming language. This repository is under active development.
 
 See `examples` directory for examples of programs Jix supports.
 
