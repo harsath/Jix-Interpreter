@@ -9,7 +9,6 @@ Features:
 - Functions
 - Statements
     - If-else
-    - For
     - While
     - Return
     - Break
@@ -21,3 +20,4 @@ Todo features:
 - Builtin-data structures (Arrays and Hashtables)
 - User-defined datatypes
 - Import statement
+- For loop
