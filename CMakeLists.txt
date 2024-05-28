@@ -6,6 +6,16 @@ project(jix_interpreter C)
 
 include_directories(includes)
 
-file(GLOB SOURCES "src/*.c")
+# Source files for main program
+file(GLOB MAIN_SOURCES "src/*.c")
 
-add_executable(jix_interpreter ${SOURCES})
+# Source files for test runner
+file(GLOB TEST_SRC_SOURCES "src/*.c")
+list(REMOVE_ITEM TEST_SRC_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/src/main.c")
+set(TEST_SOURCES ${TEST_SRC_SOURCES} "tests/test_runner.c")
+
+# Executable for main interpreter
+add_executable(jix ${MAIN_SOURCES})
+
+# Executable for test runner
+add_executable(jix_tests ${TEST_SOURCES})

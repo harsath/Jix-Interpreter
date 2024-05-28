@@ -7,7 +7,7 @@
 
 int main(int argc, const char *argv[]) {
   if (argc < 2) {
-    printf("Usage: ./lox [script]\n");
+    printf("Usage: ./jix [script]\n");
     return -1;
   }
   const char *file_name = argv[1];
@@ -26,8 +26,8 @@ int main(int argc, const char *argv[]) {
   if (!interpreter_value) {
     printf("Interpreter doesn't return a value.\n");
   } else {
+    // Interpreter can also return string_value or bool_value
     printf("Resultx: %li\n", interpreter_value->int_value);
-    /* printf("Resultx: %s\n", interpreter_value->string_value); */
   }
 
   vector_free(tokens);
