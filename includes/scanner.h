@@ -7,6 +7,9 @@
 #include <ctype.h>
 #include <stdlib.h>
 
+/*
+Returns vector of `struct token`
+*/
 struct vector *scan_tokens(const char *source_code);
 
 #endif

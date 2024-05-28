@@ -24,7 +24,7 @@ struct ast_node *parse_statement(struct parser_state *parser) {
   case IDENTIFIER: {
     struct token *one_token_ahead =
         vector_at(parser->tokens, parser->current_token_index + 1);
-    if (one_token_ahead->type == LEFT_PAREN) {
+    if (one_token_ahead->type != EQUAL) {
       return parse_expression_statement(parser);
     } else {
       return parse_variable_assignment_statement(parser);
@@ -35,6 +35,9 @@ struct ast_node *parse_statement(struct parser_state *parser) {
   }
   case WHILE: {
     return parse_while_statement(parser);
+  }
+  case FOR: {
+    return parse_for_statement(parser);
   }
   case BREAK: {
     return parse_break_statement(parser);
@@ -196,6 +199,39 @@ struct ast_node *parse_while_statement(struct parser_state *parser) {
   increment_token_index(parser);
   while_stmt->while_stmt_block = parse_block_statement(parser);
   return while_stmt;
+}
+
+struct ast_node *parse_for_statement(struct parser_state *parser) {
+  increment_token_index(parser);
+  struct ast_node *for_stmt = malloc(sizeof(struct ast_node));
+  for_stmt->node_type = FOR_STMT;
+  if (get_current_token(parser)->type != LEFT_PAREN) {
+    printf("Keyword 'for' must be followed by '(' <init stmt> <expr stmt> <update stmt> ')'.\n");
+    exit(1);
+  }
+  increment_token_index(parser);
+  for_stmt->for_stmt_init_stmt = parse_statement(parser);
+  if (for_stmt->for_stmt_init_stmt->node_type != VARIABLE_DECL_STMT) {
+    printf("First statement in 'for' loop must be variable declaration statement.\n");
+    exit(1);
+  }
+  for_stmt->for_stmt_expr = parse_statement(parser);
+  if (for_stmt->for_stmt_expr->node_type != EXPR_STMT) {
+    printf("Second statement in 'for' loop must be an expression statement.\n");
+    exit(1);
+  }
+  for_stmt->for_stmt_update_stmt = parse_statement(parser);
+  if (for_stmt->for_stmt_update_stmt->node_type != VARIABLE_ASSIGN_STMT) {
+    printf("Third statement in 'for' loop must be variable assignment statement.\n");
+    exit(1);
+  }
+  if (get_current_token(parser)->type != RIGHT_PAREN) {
+    printf("Keyword 'for' loop missing ending ')'.\n");
+    exit(1);
+  }
+  increment_token_index(parser);
+  for_stmt->for_stmt_block = parse_block_statement(parser);
+  return for_stmt;
 }
 
 struct ast_node *parse_break_statement(struct parser_state *parser) {

@@ -13,6 +13,7 @@ enum ast_node_type {
   VARIABLE_ASSIGN_STMT,
   IF_STMT,
   WHILE_STMT,
+  FOR_STMT,
   BREAK_STMT,
   BLOCK_STMT,
   BINARY_NODE,
@@ -60,6 +61,12 @@ struct ast_node {
   /* While statement */
   struct ast_node *while_stmt_expr;
   struct ast_node *while_stmt_block;
+
+  /* For statement */
+  struct ast_node *for_stmt_init_stmt;
+  struct ast_node *for_stmt_expr;
+  struct ast_node *for_stmt_update_stmt;
+  struct ast_node *for_stmt_block;
 
   /* Block statement */
   struct vector *block_stmt_stmts;

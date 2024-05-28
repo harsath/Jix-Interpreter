@@ -57,6 +57,9 @@ void interpret_if_statement(struct ast_node *stmt_node,
 void interpret_while_statement(struct ast_node *stmt_node,
                                struct interpreter_state *state,
                                struct return_value *return_code);
+void interpret_for_statement(struct ast_node *stmt_node,
+                             struct interpreter_state *state,
+                             struct return_value *return_code);
 void interpret_break_statement(struct ast_node *stmt_node,
                                struct interpreter_state *state,
                                struct return_value *return_code);
