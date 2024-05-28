@@ -65,6 +65,18 @@ void print_ast_program_while_stmt(struct ast_node *while_stmt,
   printf("\n");
 }
 
+void print_ast_program_for_stmt(struct ast_node *for_stmt,
+                                  size_t indent_level) {
+  printf("for ( ");
+  print_ast_program_var_decl_stmt(for_stmt->for_stmt_init_stmt);
+  printf("; ");
+  print_ast_program_expr_stmt(for_stmt->for_stmt_expr);
+  printf("; ");
+  print_ast_program_var_assign_stmt(for_stmt->for_stmt_update_stmt);
+  print_ast_program_block_stmt(for_stmt->for_stmt_block, indent_level);
+  printf("\n");
+}
+
 void print_ast_program_break_stmt(struct ast_node *break_stmt,
                                   size_t indent_level) {
   printf("break ;\n");
@@ -128,6 +140,10 @@ void print_ast_statement(struct ast_node *statement, size_t indent_level) {
     print_ast_program_while_stmt(statement, indent_level);
     break;
   }
+  case FOR_STMT: {
+                   print_ast_program_for_stmt(statement, indent_level);
+                   break;
+                 }
   case BREAK_STMT: {
     print_ast_program_break_stmt(statement, indent_level);
     break;

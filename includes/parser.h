@@ -24,6 +24,7 @@ struct ast_node *
 parse_variable_assignment_statement(struct parser_state *parser);
 struct ast_node *parse_if_else_statement(struct parser_state *parser);
 struct ast_node *parse_while_statement(struct parser_state *parser);
+struct ast_node *parse_for_statement(struct parser_state *parser);
 struct ast_node *parse_break_statement(struct parser_state *parser);
 struct ast_node *parse_block_statement(struct parser_state *parser);
 struct ast_node *parse_expression(struct parser_state *parser);

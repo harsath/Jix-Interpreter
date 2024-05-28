@@ -56,6 +56,10 @@ void interpret_statement(struct ast_node *stmt_node,
     interpret_while_statement(stmt_node, state, return_code);
     break;
   }
+  case FOR_STMT: {
+    interpret_for_statement(stmt_node, state, return_code);
+    break;
+  }
   case BREAK_STMT: {
     interpret_break_statement(stmt_node, state, return_code);
     break;
@@ -174,6 +178,28 @@ void interpret_while_statement(struct ast_node *stmt_node,
   }
 }
 
+void interpret_for_statement(struct ast_node *stmt_node,
+                             struct interpreter_state *state,
+                             struct return_value *return_code) {
+  struct environment *parent_env = state->env;
+  struct environment *block_env = environment_init_enclosed(state->env);
+  state->env = block_env;
+  interpret_variable_decl_statement(stmt_node->for_stmt_init_stmt, state, return_code);
+  struct object *for_expr = eval_expression(stmt_node->for_stmt_expr->expr_stmt_expr, state, return_code);
+  if (for_expr->data_type != BOOLEAN_VALUE) {
+    printf("The expression of 'for' loop must result in a boolean value.\n");
+    exit(1);
+  }
+  while (for_expr->bool_value) {
+    interpret_block_statement(stmt_node->for_stmt_block, state, return_code);
+    if (return_code->is_set) {
+      break;
+    }
+    interpret_variable_assignment_statement(stmt_node->for_stmt_update_stmt, state, return_code);
+    for_expr = eval_expression(stmt_node->for_stmt_expr->expr_stmt_expr, state, return_code);
+  }
+}
+
 void interpret_break_statement(struct ast_node *stmt_node,
                                struct interpreter_state *state,
                                struct return_value *return_code) {
@@ -194,6 +220,20 @@ void interpret_block_statement(struct ast_node *stmt_node,
                         return_code);
   }
   state->env = parent_env;
+}
+
+void interpret_block_statement_env(struct ast_node *stmt_node,
+                                   struct interpreter_state *state,
+                                   struct environment *block_env,
+                                   struct return_value *return_code) {
+  state->env = block_env;
+  for (size_t i = 0; i < stmt_node->block_stmt_stmts->size; i++) {
+    if (return_code->is_set) {
+      break;
+    }
+    interpret_statement(vector_at(stmt_node->block_stmt_stmts, i), state,
+                        return_code);
+  }
 }
 
 struct object *eval_expression(struct ast_node *ast,
