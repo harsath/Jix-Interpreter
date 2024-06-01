@@ -27,5 +27,9 @@ int main(int argc, const char *argv[]) {
 
 	JIX_TEST_STATS();
 
+	if (total_fail_count_ > 0) {
+		return -1;
+	}
+
 	return 0;
 }
