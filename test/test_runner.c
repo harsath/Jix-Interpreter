@@ -1,4 +1,4 @@
-#include "test-helper.h"
+#include "test_helper.h"
 #include "utils.h"
 
 int main(int argc, const char *argv[]) {
