@@ -4,6 +4,7 @@
 #include "ast.h"
 #include "tokens.h"
 #include "vector.h"
+#include "interpreter.h"
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -15,5 +16,6 @@
 char *read_file(const char *file_path);
 char *create_token_string_copy(const char *char_ptr, size_t start_index,
                                size_t current_index);
+struct object *interpreter_pipeline(const char *file_name);
 
 #endif
