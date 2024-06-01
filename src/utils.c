@@ -1,4 +1,8 @@
 #include "utils.h"
+#include "scanner.h"
+#include "parser.h"
+#include "tokens.h"
+#include "interpreter.h"
 
 char *read_file(const char *file_path) {
   if (!file_path) {
@@ -36,4 +40,16 @@ char *create_token_string_copy(const char *char_ptr, size_t start_index,
   char *iden_buffer = calloc(IDENTIFIER_BUFFER_SIZE, sizeof(char));
   memcpy(iden_buffer, (char_ptr + start_index), (end_index - start_index));
   return iden_buffer;
+}
+
+struct object *interpreter_pipeline(const char *file_name) {
+  char *input = read_file(file_name);
+  if (!input) {
+    return NULL;
+  }
+  struct vector *tokens = scan_tokens(input);
+  struct vector *program = parse_program(tokens);
+  struct object *interpreter_return_value = interpret(program);
+  vector_free(tokens);
+  return interpreter_return_value;
 }
