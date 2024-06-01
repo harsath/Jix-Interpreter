@@ -4,6 +4,7 @@
 #include "ast.h"
 #include "tokens.h"
 #include "vector.h"
+#include "interpreter.h"
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
