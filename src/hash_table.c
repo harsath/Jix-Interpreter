@@ -31,7 +31,7 @@ void *hash_table_lookup(struct hash_table *table, const char *key) {
   return NULL;
 }
 
-void hash_table_insert(struct hash_table *table, char *key, void *value) {
+void hash_table_insert(struct hash_table *table, const char *key, void *value) {
   unsigned int index = hash(key);
   struct hash_node *new_node = malloc(sizeof(struct hash_node));
   if (!new_node) {
@@ -44,7 +44,7 @@ void hash_table_insert(struct hash_table *table, char *key, void *value) {
   table->buckets[index] = new_node;
 }
 
-void hash_table_update(struct hash_table *table, char *key, void *value) {
+void hash_table_update(struct hash_table *table, const char *key, void *value) {
   unsigned int index = hash(key);
   struct hash_node *node = table->buckets[index];
   while (node) {
@@ -67,7 +67,6 @@ void hash_table_delete(struct hash_table *table, const char *key) {
       } else {
         table->buckets[index] = node->next;
       }
-      free(node->key);
       free(node);
       return;
     }
@@ -81,7 +80,6 @@ void hash_table_free(struct hash_table *table) {
     struct hash_node *node = table->buckets[i];
     while (node) {
       struct hash_node *next = node->next;
-      free(node->key);
       free(node);
       node = next;
     }

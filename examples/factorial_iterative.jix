@@ -7,4 +7,9 @@ fn factorial(n) {
     return result;
 }
 
-return factorial(10);
+let val = factorial(10);
+
+print("Value of the factorial is:");
+print(val);
+
+return val;

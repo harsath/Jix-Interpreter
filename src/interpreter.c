@@ -1,5 +1,6 @@
 #include "interpreter.h"
 #include "ast.h"
+#include "builtin_functions.h"
 #include "hash_table.h"
 #include "parser.h"
 #include "tokens.h"
@@ -10,7 +11,9 @@ struct object *interpret(struct vector *program) {
   if (!program) {
     return NULL;
   }
-  struct interpreter_state state = {.env = environment_init()};
+  struct interpreter_state state = {.env = environment_init(),
+                                    .builtin_fns =
+                                        init_and_register_builtin_fns()};
   struct return_value *return_code = malloc(sizeof(struct object));
   return_code->is_set = false;
   return_code->value = NULL;
@@ -184,8 +187,10 @@ void interpret_for_statement(struct ast_node *stmt_node,
   struct environment *parent_env = state->env;
   struct environment *block_env = environment_init_enclosed(state->env);
   state->env = block_env;
-  interpret_variable_decl_statement(stmt_node->for_stmt_init_stmt, state, return_code);
-  struct object *for_expr = eval_expression(stmt_node->for_stmt_expr->expr_stmt_expr, state, return_code);
+  interpret_variable_decl_statement(stmt_node->for_stmt_init_stmt, state,
+                                    return_code);
+  struct object *for_expr = eval_expression(
+      stmt_node->for_stmt_expr->expr_stmt_expr, state, return_code);
   if (for_expr->data_type != BOOLEAN_VALUE) {
     printf("The expression of 'for' loop must result in a boolean value.\n");
     exit(1);
@@ -195,8 +200,10 @@ void interpret_for_statement(struct ast_node *stmt_node,
     if (return_code->is_set) {
       break;
     }
-    interpret_variable_assignment_statement(stmt_node->for_stmt_update_stmt, state, return_code);
-    for_expr = eval_expression(stmt_node->for_stmt_expr->expr_stmt_expr, state, return_code);
+    interpret_variable_assignment_statement(stmt_node->for_stmt_update_stmt,
+                                            state, return_code);
+    for_expr = eval_expression(stmt_node->for_stmt_expr->expr_stmt_expr, state,
+                               return_code);
   }
 }
 
@@ -245,10 +252,36 @@ struct object *eval_expression(struct ast_node *ast,
     struct function *fn = environment_lookup_function(
         state->env, ast->fn_call_identifier->identifier_value);
     /* Check if function is defined. */
-    if (fn == NULL) {
-      printf("Function name '%s' is not defined",
-             ast->fn_call_identifier->identifier_value);
-      exit(1);
+    if (!fn) {
+      struct builtin_fn *builtin_fn_ = lookup_builtin_fns(
+          state->builtin_fns, ast->fn_call_identifier->identifier_value);
+      if (!builtin_fn_) {
+        printf("Function name '%s' is not defined",
+               ast->fn_call_identifier->identifier_value);
+        exit(1);
+      }
+      if (ast->fn_call_parameters->size != builtin_fn_->num_parameters) {
+        printf(
+            "Function call to '%s' with arity %ld does not match arity of %ld",
+            ast->fn_call_identifier->identifier_value,
+            ast->fn_call_parameters->size, builtin_fn_->num_parameters);
+        exit(1);
+      }
+      if (builtin_fn_->num_parameters == 1) {
+        void *(*fn_ptr)(void *) = builtin_fn_->fn_ptr;
+        fn_ptr(eval_expression(vector_at(ast->fn_call_parameters, 0), state,
+                               return_code));
+      } else if (builtin_fn_->num_parameters == 2) {
+        void *(*fn_ptr)(void *, void *) = builtin_fn_->fn_ptr;
+        fn_ptr(eval_expression(vector_at(ast->fn_call_parameters, 0), state,
+                               return_code),
+               eval_expression(vector_at(ast->fn_call_parameters, 1), state,
+                               return_code));
+      } else {
+        printf("Unsupported number of parameters\n");
+        exit(1);
+      }
+      return returner;
     }
     /* Check function arity. */
     if (fn->parameters->size != ast->fn_call_parameters->size) {
