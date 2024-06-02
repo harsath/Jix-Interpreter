@@ -1,0 +1,11 @@
+let x = 10;
+let y = 20;
+if (x > y) {
+	x = 100;
+} else {
+	x = 200;
+	if (x > 150) {
+		x = 50;
+	}
+}
+return x;

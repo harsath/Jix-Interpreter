@@ -1,0 +1,9 @@
+let x = 20;
+let y = 0;
+for (let i = 0; i < 30; i = i + 1;) {
+	if (i == x) {
+		break;
+	}
+	y = y + 1;
+}
+return y;
