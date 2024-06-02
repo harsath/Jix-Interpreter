@@ -14,6 +14,7 @@ struct environment {
 
 struct interpreter_state {
   struct environment *env;
+  struct hash_table *builtin_fns;
 };
 
 enum object_type { INT_VALUE, BOOLEAN_VALUE, STRING_VALUE, NIL_VALUE };
