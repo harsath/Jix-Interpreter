@@ -1,0 +1,12 @@
+fn fun1() {
+	return 20;
+}
+
+fn fun2(val1, val2) {
+	if ((val1 + val2) == fun1()) {
+		return 10;
+	}
+	return 20;
+}
+
+return fun2(10, 10);
