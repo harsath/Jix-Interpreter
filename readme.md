@@ -1,13 +1,15 @@
-### Jix Interpreter
+# Jix Interpreter
 ![Ubuntu build status](https://github.com/harsath/Jix-Interpreter/actions/workflows/jix_tests_ubuntu.yml/badge.svg)
 
 This project implements an interpreter for Jix, a [dynamically typed](https://en.wikipedia.org/wiki/Dynamic_programming_language) programming language. This repository is under active development.
 
 See `examples` directory for examples of programs Jix supports.
 
-Features: 
+## Features: 
 - Dynamic types (int, bool, and string)
 - Functions
+- Builtin functions
+    - Print()
 - Statements
     - If-else
     - While
@@ -17,8 +19,7 @@ Features:
     - Variable declaration and assignment
 - Nested blocks / statements
 
-Todo features:
-- Builtin-functions
+### Todo features:
 - Builtin-data structures (Arrays and Hashtables)
 - User-defined datatypes
 - Import statement
