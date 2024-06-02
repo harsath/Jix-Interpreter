@@ -255,11 +255,13 @@ struct object *eval_expression(struct ast_node *ast,
     if (!fn) {
       struct builtin_fn *builtin_fn_ = lookup_builtin_fns(
           state->builtin_fns, ast->fn_call_identifier->identifier_value);
+      /* Check if it is a bultin function. */
       if (!builtin_fn_) {
         printf("Function name '%s' is not defined",
                ast->fn_call_identifier->identifier_value);
         exit(1);
       }
+      /* Check builtin function's arity. */
       if (ast->fn_call_parameters->size != builtin_fn_->num_parameters) {
         printf(
             "Function call to '%s' with arity %ld does not match arity of %ld",
@@ -267,6 +269,7 @@ struct object *eval_expression(struct ast_node *ast,
             ast->fn_call_parameters->size, builtin_fn_->num_parameters);
         exit(1);
       }
+      /* Invoke the builtin function based on their arity. */
       if (builtin_fn_->num_parameters == 1) {
         void *(*fn_ptr)(void *) = builtin_fn_->fn_ptr;
         fn_ptr(eval_expression(vector_at(ast->fn_call_parameters, 0), state,
@@ -278,7 +281,7 @@ struct object *eval_expression(struct ast_node *ast,
                eval_expression(vector_at(ast->fn_call_parameters, 1), state,
                                return_code));
       } else {
-        printf("Unsupported number of parameters\n");
+        printf("Unsupported number of parameters for builtin functions.\n");
         exit(1);
       }
       return returner;
