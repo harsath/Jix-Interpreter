@@ -13,6 +13,7 @@ struct environment {
 };
 
 struct interpreter_state {
+  bool is_break;
   struct environment *env;
   struct hash_table *builtin_fns;
 };
