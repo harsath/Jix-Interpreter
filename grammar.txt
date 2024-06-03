@@ -43,20 +43,26 @@ equality            :   comparitive ( ( '==' | '!=' ) comparitive )* ;
 
 comparitive         :   additive ( ( '>' | '>=' | '<' | '<=' ) additive )* ;
 
-additive            :   multiplicative ( ('+' | '-') multiplicative )* ;
+additive            :   multiplicative ( ( '+' | '-' ) multiplicative )* ;
 
-multiplicative      :   unary ( ('*' | '/') unary )* ;
+multiplicative      :   unary ( ( '*' | '/' ) unary )* ;
 
 unary               :   ( '-' | '!' ) unary
                     |   primary
                     |   fn_call;
 
-primary             :   NUMBER | STRING | IDENTIFIER | 'true' | 'false' | 'nil'
+primary             :   NUMBER 
+                    |   STRING 
+                    |   IDENTIFIER 
+                    |   'true' 
+                    |   'false' 
+                    |   'nil'
+                    |   '[' ( expr ( ',' expr )* )? ']'
                     |   '(' expr ')' ;
 
 fn_call             :   IDENTIFIER '(' parameters? ')' ;
 
-parameters          :   expr (',' expr)* ;
+parameters          :   expr ( ',' expr )* ;
 
 NUMBER              :   [0-9]+ ;
 
