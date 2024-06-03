@@ -16,14 +16,13 @@ static size_t total_pass_count_ = 0;
     total_test_count_++;                                                       \
     if (expected_value == test_value) {                                        \
       total_pass_count_++;                                                     \
-      printf("TEST: %s, STATUS: %s[ OK ]%s, LINE: %d\n", test_name,            \
-             GREEN_COLOR, RESET_COLOR, __LINE__);                              \
+      printf("TEST: %s, STATUS: %s[ OK ]%s\n", test_name, GREEN_COLOR,         \
+             RESET_COLOR);                                                     \
     } else {                                                                   \
       total_fail_count_++;                                                     \
-      printf("TEST: %s, STATUS: %s[ FAIL ]%s, LINE: %d, EXPECTED: %li, GOT: "  \
+      printf("TEST: %s, STATUS: %s[ FAIL ]%s, EXPECTED: %li, GOT: "            \
              "%li\n",                                                          \
-             test_name, RED_COLOR, RESET_COLOR, __LINE__, expected_value,      \
-             test_value);                                                      \
+             test_name, RED_COLOR, RESET_COLOR, expected_value, test_value);   \
     }                                                                          \
   } while (0)
 
