@@ -171,11 +171,11 @@ void interpret_while_statement(struct ast_node *stmt_node,
     exit(1);
   }
   while (while_expr->bool_value) {
-    interpret_block_statement(stmt_node->while_stmt_block, state, return_code);
-    if (return_code->is_set) {
-      return_code->is_set = false;
+    if (state->is_break) {
+      state->is_break = false;
       break;
     }
+    interpret_block_statement(stmt_node->while_stmt_block, state, return_code);
     while_expr =
         eval_expression(stmt_node->while_stmt_expr, state, return_code);
   }
@@ -196,10 +196,11 @@ void interpret_for_statement(struct ast_node *stmt_node,
     exit(1);
   }
   while (for_expr->bool_value) {
-    interpret_block_statement(stmt_node->for_stmt_block, state, return_code);
-    if (return_code->is_set) {
+    if (state->is_break) {
+      state->is_break = false;
       break;
     }
+    interpret_block_statement(stmt_node->for_stmt_block, state, return_code);
     interpret_variable_assignment_statement(stmt_node->for_stmt_update_stmt,
                                             state, return_code);
     for_expr = eval_expression(stmt_node->for_stmt_expr->expr_stmt_expr, state,
@@ -210,7 +211,7 @@ void interpret_for_statement(struct ast_node *stmt_node,
 void interpret_break_statement(struct ast_node *stmt_node,
                                struct interpreter_state *state,
                                struct return_value *return_code) {
-  return_code->is_set = true;
+  state->is_break = true;
 }
 
 void interpret_block_statement(struct ast_node *stmt_node,
@@ -220,27 +221,13 @@ void interpret_block_statement(struct ast_node *stmt_node,
   struct environment *block_env = environment_init_enclosed(state->env);
   state->env = block_env;
   for (size_t i = 0; i < stmt_node->block_stmt_stmts->size; i++) {
-    if (return_code->is_set) {
+    if (return_code->is_set || state->is_break) {
       break;
     }
     interpret_statement(vector_at(stmt_node->block_stmt_stmts, i), state,
                         return_code);
   }
   state->env = parent_env;
-}
-
-void interpret_block_statement_env(struct ast_node *stmt_node,
-                                   struct interpreter_state *state,
-                                   struct environment *block_env,
-                                   struct return_value *return_code) {
-  state->env = block_env;
-  for (size_t i = 0; i < stmt_node->block_stmt_stmts->size; i++) {
-    if (return_code->is_set) {
-      break;
-    }
-    interpret_statement(vector_at(stmt_node->block_stmt_stmts, i), state,
-                        return_code);
-  }
 }
 
 struct object *eval_expression(struct ast_node *ast,
@@ -284,6 +271,7 @@ struct object *eval_expression(struct ast_node *ast,
         printf("Unsupported number of parameters for builtin functions.\n");
         exit(1);
       }
+      return_code->is_set = false;
       return returner;
     }
     /* Check function arity. */
@@ -316,7 +304,6 @@ struct object *eval_expression(struct ast_node *ast,
     }
     returner = return_code->value;
     return_code->is_set = false;
-    return_code->value = NULL;
     state->env = parent_env;
     return returner;
   }
