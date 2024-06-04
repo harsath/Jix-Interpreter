@@ -49,6 +49,7 @@ multiplicative      :   unary ( ( '*' | '/' ) unary )* ;
 
 unary               :   ( '-' | '!' ) unary
                     |   primary
+                    |   array_access
                     |   fn_call ;
 
 primary             :   NUMBER 
@@ -57,13 +58,12 @@ primary             :   NUMBER
                     |   'true' 
                     |   'false' 
                     |   'nil'
-                    |   array_creation
-                    |   array_access
+                    |   sequence
                     |   '(' expr ')' ;
 
-array_creation      :   '[' ( expr ( ',' expr )* )? ']' ;
+sequence            :   '[' ( expr ( ',' expr )* )? ']' ;
 
-array_access        :   primary '[' expr ']' ;
+array_access        :   unary '[' expr ']' ;
 
 fn_call             :   IDENTIFIER '(' parameters? ')' ;
 
