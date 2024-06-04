@@ -17,9 +17,9 @@ expression_stmt     :   expr ';' ;
 
 return_stmt         :   'return' expr ';' ;
 
-variable_decl_stmt  :   'let' primary '=' expr ';' ;
+variable_decl_stmt  :   'let' IDENTIFIER '=' expr ';' ;
 
-assignment_stmt     :   primary '=' expr ';' ;
+assignment_stmt     :   ( IDENTIFIER | array_access ) '=' expr ';' ;
 
 if_else_stmt        :   'if' '(' expr ')' block_stmt ( 'else' block_stmt )? ;
 
@@ -39,9 +39,9 @@ logical_or          :   logical_and ( '||' logical_and )* ;
 
 logical_and         :   equality ( '&&' equality )* ;
 
-equality            :   comparitive ( ( '==' | '!=' ) comparitive )* ;
+equality            :   comparative ( ( '==' | '!=' ) comparative )* ;
 
-comparitive         :   additive ( ( '>' | '>=' | '<' | '<=' ) additive )* ;
+comparative         :   additive ( ( '>' | '>=' | '<' | '<=' ) additive )* ;
 
 additive            :   multiplicative ( ( '+' | '-' ) multiplicative )* ;
 
