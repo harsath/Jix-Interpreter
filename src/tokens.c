@@ -13,6 +13,12 @@ enum token_type get_token_atom_from_string(const char *key) {
   if (strcmp(key, "}") == 0) {
     return RIGHT_BRACE;
   }
+  if (strcmp(key, "[") == 0) {
+    return LEFT_BRACKET;
+  }
+  if (strcmp(key, "]") == 0) {
+    return RIGHT_BRACKET;
+  }
   if (strcmp(key, ",") == 0) {
     return COMMA;
   }
@@ -153,6 +159,10 @@ const char *get_string_from_token_atom(enum token_type type) {
     return "{";
   case RIGHT_BRACE:
     return "}";
+  case LEFT_BRACKET:
+    return "[";
+  case RIGHT_BRACKET:
+    return "]";
   case COMMA:
     return ",";
   case DOT:

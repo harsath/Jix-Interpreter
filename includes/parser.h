@@ -39,6 +39,7 @@ struct ast_node *primary(struct parser_state *parser);
 struct ast_node *fn_call(struct parser_state *parser);
 
 struct token *get_current_token(struct parser_state *parser);
+struct token *peek_current_token(struct parser_state *parser);
 void increment_token_index(struct parser_state *parser);
 bool check_index_bound(struct parser_state *parser);
 bool invalid_data_type(enum token_type type);
