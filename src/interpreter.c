@@ -31,24 +31,12 @@ void interpret_statement(struct ast_node *stmt_node,
     interpret_fn_def_statement(stmt_node, state);
     break;
   }
-  case EXPR_STMT: {
-    interpret_expr_statement(stmt_node, state, return_code);
-    break;
-  }
-  case RETURN_STMT: {
-    interpret_return_statement(stmt_node, state, return_code);
-    break;
-  }
   case VARIABLE_DECL_STMT: {
     interpret_variable_decl_statement(stmt_node, state, return_code);
     break;
   }
   case VARIABLE_ASSIGN_STMT: {
     interpret_variable_assignment_statement(stmt_node, state, return_code);
-    break;
-  }
-  case BLOCK_STMT: {
-    interpret_block_statement(stmt_node, state, return_code);
     break;
   }
   case IF_STMT: {
@@ -67,6 +55,18 @@ void interpret_statement(struct ast_node *stmt_node,
     interpret_break_statement(stmt_node, state, return_code);
     break;
   }
+  case RETURN_STMT: {
+    interpret_return_statement(stmt_node, state, return_code);
+    break;
+  }
+  case BLOCK_STMT: {
+    interpret_block_statement(stmt_node, state, return_code);
+    break;
+  }
+  case EXPR_STMT: {
+    interpret_expr_statement(stmt_node, state, return_code);
+    break;
+  }
   default: {
     printf("Invalid statement\n");
     exit(1);
@@ -79,32 +79,16 @@ void interpret_fn_def_statement(struct ast_node *stmt_node,
   /* Functions are local to environment. Child environments have access to
    * parent environment, but not vice versa. Works much like variable
    * declaration statements. */
-  if (environment_lookup_function_current_env(
-          state->env, stmt_node->fn_def_stmt_id->identifier_value)) {
+  if (environment_lookup_function_current_env(state->env,
+                                              stmt_node->fn_def_stmt.id)) {
     printf("Function '%s' already exists in current scope.\n",
-           stmt_node->fn_def_stmt_id->identifier_value);
+           stmt_node->fn_def_stmt.id);
     exit(1);
   }
   struct function *fn_stmt = malloc(sizeof(struct function));
-  fn_stmt->body = stmt_node->fn_def_stmt_block;
-  fn_stmt->parameters = stmt_node->fn_def_stmt_parameters;
-  environment_insert_function(
-      state->env, stmt_node->fn_def_stmt_id->identifier_value, fn_stmt);
-}
-
-void interpret_expr_statement(struct ast_node *stmt_node,
-                              struct interpreter_state *state,
-                              struct return_value *return_code) {
-  eval_expression(stmt_node->expr_stmt_expr, state, return_code);
-}
-
-void interpret_return_statement(struct ast_node *stmt_node,
-                                struct interpreter_state *state,
-                                struct return_value *return_code) {
-  struct object *return_expr =
-      eval_expression(stmt_node->return_stmt_expr, state, return_code);
-  return_code->is_set = true;
-  return_code->value = return_expr;
+  fn_stmt->body = stmt_node->fn_def_stmt.block;
+  fn_stmt->parameters = stmt_node->fn_def_stmt.parameters;
+  environment_insert_function(state->env, stmt_node->fn_def_stmt.id, fn_stmt);
 }
 
 void interpret_variable_decl_statement(struct ast_node *stmt_node,
@@ -112,16 +96,15 @@ void interpret_variable_decl_statement(struct ast_node *stmt_node,
                                        struct return_value *return_code) {
   /* Allow creating scope-local variable name of same name in a scope even if it
    * exists in previous scopes. */
-  if (environment_lookup_variable_current_env(
-          state->env, stmt_node->var_decl_stmt_id->identifier_value)) {
+  if (environment_lookup_variable_current_env(state->env,
+                                              stmt_node->var_decl_stmt.id)) {
     printf("Variable '%s' already exists in current scope.\n",
-           stmt_node->var_decl_stmt_id->identifier_value);
+           stmt_node->var_decl_stmt.id);
     exit(1);
   }
   struct object *variable_value =
-      eval_expression(stmt_node->var_decl_stmt_expr, state, return_code);
-  environment_insert_variable(state->env,
-                              stmt_node->var_decl_stmt_id->identifier_value,
+      eval_expression(stmt_node->var_decl_stmt.expr, state, return_code);
+  environment_insert_variable(state->env, stmt_node->var_decl_stmt.id,
                               variable_value);
 }
 
@@ -129,33 +112,33 @@ void interpret_variable_assignment_statement(struct ast_node *stmt_node,
                                              struct interpreter_state *state,
                                              struct return_value *return_code) {
   /* Check current scope, if not traverse to previous parent scope. */
-  if (environment_lookup_variable(
-          state->env, stmt_node->assign_stmt_id->identifier_value) == NULL) {
-    printf("Variable '%s' does not exist\n",
-           stmt_node->assign_stmt_id->identifier_value);
+  if (environment_lookup_variable(state->env, stmt_node->var_assign_stmt.id) ==
+      NULL) {
+    printf("Variable '%s' does not exist\n", stmt_node->var_assign_stmt.id);
     exit(1);
   }
   struct object *variable_value =
-      eval_expression(stmt_node->assign_stmt_expr, state, return_code);
-  environment_update_variable(
-      state->env, stmt_node->assign_stmt_id->identifier_value, variable_value);
+      eval_expression(stmt_node->var_assign_stmt.expr, state, return_code);
+  environment_update_variable(state->env, stmt_node->var_assign_stmt.id,
+                              variable_value);
 }
 
 void interpret_if_statement(struct ast_node *stmt_node,
                             struct interpreter_state *state,
                             struct return_value *return_code) {
   struct object *if_expr =
-      eval_expression(stmt_node->if_stmt_expr, state, return_code);
+      eval_expression(stmt_node->if_else_stmt.expr, state, return_code);
   if (if_expr->data_type != BOOLEAN_VALUE) {
     printf("The result of the <expression> inside 'if' statement should result "
            "in a boolean value.\n");
     exit(1);
   }
   if (if_expr->bool_value) {
-    interpret_block_statement(stmt_node->if_stmt_block, state, return_code);
+    interpret_block_statement(stmt_node->if_else_stmt.if_block, state,
+                              return_code);
   } else {
-    if (stmt_node->if_else_stmt_block != NULL) {
-      interpret_block_statement(stmt_node->if_else_stmt_block, state,
+    if (stmt_node->if_else_stmt.else_block != NULL) {
+      interpret_block_statement(stmt_node->if_else_stmt.else_block, state,
                                 return_code);
     }
   }
@@ -165,7 +148,7 @@ void interpret_while_statement(struct ast_node *stmt_node,
                                struct interpreter_state *state,
                                struct return_value *return_code) {
   struct object *while_expr =
-      eval_expression(stmt_node->while_stmt_expr, state, return_code);
+      eval_expression(stmt_node->while_stmt.expr, state, return_code);
   if (while_expr->data_type != BOOLEAN_VALUE) {
     printf("The <expression> of 'while' must return boolean.\n");
     exit(1);
@@ -175,9 +158,9 @@ void interpret_while_statement(struct ast_node *stmt_node,
       state->is_break = false;
       break;
     }
-    interpret_block_statement(stmt_node->while_stmt_block, state, return_code);
+    interpret_block_statement(stmt_node->while_stmt.block, state, return_code);
     while_expr =
-        eval_expression(stmt_node->while_stmt_expr, state, return_code);
+        eval_expression(stmt_node->while_stmt.expr, state, return_code);
   }
 }
 
@@ -187,10 +170,10 @@ void interpret_for_statement(struct ast_node *stmt_node,
   struct environment *parent_env = state->env;
   struct environment *block_env = environment_init_enclosed(state->env);
   state->env = block_env;
-  interpret_variable_decl_statement(stmt_node->for_stmt_init_stmt, state,
+  interpret_variable_decl_statement(stmt_node->for_stmt.init_stmt, state,
                                     return_code);
   struct object *for_expr = eval_expression(
-      stmt_node->for_stmt_expr->expr_stmt_expr, state, return_code);
+      stmt_node->for_stmt.expr_stmt->expr_stmt_expr, state, return_code);
   if (for_expr->data_type != BOOLEAN_VALUE) {
     printf("The expression of 'for' loop must result in a boolean value.\n");
     exit(1);
@@ -200,11 +183,11 @@ void interpret_for_statement(struct ast_node *stmt_node,
       state->is_break = false;
       break;
     }
-    interpret_block_statement(stmt_node->for_stmt_block, state, return_code);
-    interpret_variable_assignment_statement(stmt_node->for_stmt_update_stmt,
+    interpret_block_statement(stmt_node->for_stmt.block, state, return_code);
+    interpret_variable_assignment_statement(stmt_node->for_stmt.update_stmt,
                                             state, return_code);
-    for_expr = eval_expression(stmt_node->for_stmt_expr->expr_stmt_expr, state,
-                               return_code);
+    for_expr = eval_expression(stmt_node->for_stmt.expr_stmt->expr_stmt_expr,
+                               state, return_code);
   }
 }
 
@@ -212,6 +195,15 @@ void interpret_break_statement(struct ast_node *stmt_node,
                                struct interpreter_state *state,
                                struct return_value *return_code) {
   state->is_break = true;
+}
+
+void interpret_return_statement(struct ast_node *stmt_node,
+                                struct interpreter_state *state,
+                                struct return_value *return_code) {
+  struct object *return_expr =
+      eval_expression(stmt_node->return_stmt_expr, state, return_code);
+  return_code->is_set = true;
+  return_code->value = return_expr;
 }
 
 void interpret_block_statement(struct ast_node *stmt_node,
@@ -230,129 +222,96 @@ void interpret_block_statement(struct ast_node *stmt_node,
   state->env = parent_env;
 }
 
+void interpret_expr_statement(struct ast_node *stmt_node,
+                              struct interpreter_state *state,
+                              struct return_value *return_code) {
+  eval_expression(stmt_node->expr_stmt_expr, state, return_code);
+}
+
 struct object *eval_expression(struct ast_node *ast,
                                struct interpreter_state *state,
                                struct return_value *return_code) {
-  struct object *returner = NULL;
   switch (ast->node_type) {
-  case FN_CALL_NODE: {
-    struct function *fn = environment_lookup_function(
-        state->env, ast->fn_call_identifier->identifier_value);
-    /* Check if function is defined. */
-    if (!fn) {
-      struct builtin_fn *builtin_fn_ = lookup_builtin_fns(
-          state->builtin_fns, ast->fn_call_identifier->identifier_value);
-      /* Check if it is a bultin function. */
-      if (!builtin_fn_) {
-        printf("Function name '%s' is not defined",
-               ast->fn_call_identifier->identifier_value);
-        exit(1);
-      }
-      /* Check builtin function's arity. */
-      if (ast->fn_call_parameters->size != builtin_fn_->num_parameters) {
-        printf(
-            "Function call to '%s' with arity %ld does not match arity of %ld",
-            ast->fn_call_identifier->identifier_value,
-            ast->fn_call_parameters->size, builtin_fn_->num_parameters);
-        exit(1);
-      }
-      /* Invoke the builtin function based on their arity. */
-      if (builtin_fn_->num_parameters == 1) {
-        void *(*fn_ptr)(void *) = builtin_fn_->fn_ptr;
-        fn_ptr(eval_expression(vector_at(ast->fn_call_parameters, 0), state,
-                               return_code));
-      } else if (builtin_fn_->num_parameters == 2) {
-        void *(*fn_ptr)(void *, void *) = builtin_fn_->fn_ptr;
-        fn_ptr(eval_expression(vector_at(ast->fn_call_parameters, 0), state,
-                               return_code),
-               eval_expression(vector_at(ast->fn_call_parameters, 1), state,
-                               return_code));
-      } else {
-        printf("Unsupported number of parameters for builtin functions.\n");
-        exit(1);
-      }
-      return_code->is_set = false;
-      return returner;
-    }
-    /* Check function arity. */
-    if (fn->parameters->size != ast->fn_call_parameters->size) {
-      printf("Function call to '%s' with arity %ld does not match arity of %ld",
-             ast->fn_call_identifier->identifier_value,
-             ast->fn_call_parameters->size, fn->parameters->size);
-      exit(1);
-    }
-    /* Check function parameter types with types passed in and put it in the
-     * environment. */
-    struct environment *parent_env = state->env;
-    struct environment *fn_call_env = environment_init_enclosed(state->env);
-    for (size_t i = 0; i < ast->fn_call_parameters->size; i++) {
-      struct object *parameter_eval = eval_expression(
-          vector_at(ast->fn_call_parameters, i), state, return_code);
-      char *fn_parameter = vector_at(fn->parameters, i);
-      environment_insert_variable(fn_call_env, fn_parameter, parameter_eval);
-    }
-    /* Pass the parameters as environment to block statement and execute
-     * statement blocks of the function. */
-    state->env = fn_call_env;
-    interpret_block_statement(fn->body, state, return_code);
-    if (return_code->is_set) {
-      if (ast->unary_op == BANG) {
-        return_code->value->bool_value = !return_code->value->bool_value;
-      } else if (ast->unary_op == MINUS) {
-        return_code->value->int_value = -return_code->value->int_value;
-      }
-    }
-    returner = return_code->value;
-    return_code->is_set = false;
-    state->env = parent_env;
-    return returner;
-  }
   case BINARY_NODE: {
-    struct object *lhs = eval_expression(ast->left, state, return_code);
-    struct object *rhs = eval_expression(ast->right, state, return_code);
-    switch (ast->op) {
-    case PLUS:
-    case MINUS:
-    case STAR:
-    case SLASH: {
-      returner = eval_additive_multiplicative_expression(ast->op, lhs, rhs);
-      break;
-    }
-    case OR:
-    case AND: {
-      returner = eval_logical_expression(ast->op, lhs, rhs);
-      break;
-    }
-    case EQUAL_EQUAL:
-    case BANG_EQUAL: {
-      returner = eval_equality_expression(ast->op, lhs, rhs);
-      break;
-    }
-    case GREATER:
-    case GREATER_EQUAL:
-    case LESS:
-    case LESS_EQUAL: {
-      returner = eval_comparitive_expression(ast->op, lhs, rhs);
-      break;
-    }
-    default: {
-      printf("Invalid operation '%s' in binary node\n",
-             get_string_from_token_atom(ast->op));
-      exit(1);
-    }
-    }
-    break;
+    return eval_binary_expression(ast, state, return_code);
+  }
+  case UNARY_NODE: {
+    return eval_unary_expression(ast, state, return_code);
   }
   case PRIMARY_NODE: {
-    returner = eval_primary_expression(ast, state);
-    break;
+    return eval_primary_expression(ast, state, return_code);
   }
   default: {
-    printf("Invalid expression type in eval_expression\n");
+    printf("Invalid expression type inside `eval_expression`.\n");
     exit(1);
   }
   }
-  return returner;
+}
+
+struct object *eval_binary_expression(struct ast_node *ast,
+                                      struct interpreter_state *state,
+                                      struct return_value *return_code) {
+  struct object *lhs = eval_expression(ast->binary.left, state, return_code);
+  struct object *rhs = eval_expression(ast->binary.right, state, return_code);
+  switch (ast->binary.op) {
+  case OR:
+  case AND: {
+    return eval_logical_expression(ast->binary.op, lhs, rhs);
+  }
+  case EQUAL_EQUAL:
+  case BANG_EQUAL: {
+    return eval_equality_expression(ast->binary.op, lhs, rhs);
+  }
+  case GREATER:
+  case GREATER_EQUAL:
+  case LESS:
+  case LESS_EQUAL: {
+    return eval_comparitive_expression(ast->binary.op, lhs, rhs);
+  }
+  case PLUS:
+  case MINUS:
+  case STAR:
+  case SLASH: {
+    return eval_additive_multiplicative_expression(ast->binary.op, lhs, rhs);
+  }
+  default: {
+    printf("Invalid operation '%s' in binary node\n",
+           get_string_from_token_atom(ast->binary.op));
+    exit(1);
+  }
+  }
+}
+
+struct object *eval_unary_expression(struct ast_node *ast,
+                                     struct interpreter_state *state,
+                                     struct return_value *return_code) {
+  struct object *primary_expr =
+      eval_primary_expression(ast->unary.primary, state, return_code);
+  if (ast->unary.op != NIL) {
+    switch (ast->unary.op) {
+    case MINUS: {
+      if (primary_expr->data_type != INT_VALUE) {
+        printf("Unary '-' can only be applied to integers.\n");
+        exit(1);
+      }
+      primary_expr->int_value = -primary_expr->int_value;
+      break;
+    }
+    case BANG: {
+      if (primary_expr->data_type != BOOLEAN_VALUE) {
+        printf("Unary '-' can only be applied to integers.\n");
+        exit(1);
+      }
+      primary_expr->bool_value = !primary_expr->bool_value;
+      break;
+    }
+    default: {
+      printf("Invalid unary operation.\n");
+      exit(1);
+    }
+    }
+  }
+  return primary_expr;
 }
 
 struct object *eval_logical_expression(enum token_type op, struct object *lhs,
@@ -395,8 +354,8 @@ struct object *eval_comparitive_expression(enum token_type op,
   struct object *returner = malloc(sizeof(struct object));
   returner->data_type = BOOLEAN_VALUE;
   if (lhs->data_type != INT_VALUE || rhs->data_type != INT_VALUE) {
-    printf(
-        "Comparitive expression can only be performed between two integers.\n");
+    printf("Comparitive expression can only be performed between two "
+           "integers.\n");
     exit(1);
   }
   long lhs_value = lhs->int_value;
@@ -452,7 +411,8 @@ struct object *eval_additive_multiplicative_expression(enum token_type op,
     break;
   }
   default: {
-    /* The `op' check is already performed by `eval_expression' parent function.
+    /* The 'op' check is already performed by `eval_expression' parent
+     * function.
      */
   }
   }
@@ -460,56 +420,74 @@ struct object *eval_additive_multiplicative_expression(enum token_type op,
 }
 
 struct object *eval_primary_expression(struct ast_node *ast,
-                                       struct interpreter_state *state) {
+                                       struct interpreter_state *state,
+                                       struct return_value *return_code) {
   struct object *returner = malloc(sizeof(struct object));
   switch (ast->primary_node_type) {
   case NUMBER_PRIMARY_NODE: {
     returner->data_type = INT_VALUE;
-    returner->int_value = ast->number_value;
+    returner->int_value = ast->number;
     break;
   }
   case STRING_PRIMARY_NODE: {
     returner->data_type = STRING_VALUE;
-    returner->string_value = ast->string_value;
+    returner->string_value = ast->string;
     break;
   }
   case BOOLEAN_PRIMARY_NODE: {
     returner->data_type = BOOLEAN_VALUE;
-    returner->bool_value = ast->boolean_value;
+    returner->bool_value = ast->boolean;
     break;
   }
   case IDENTIFIER_PRIMARY_NODE: {
     struct object *identifier_lookup =
-        environment_lookup_variable(state->env, ast->identifier_value);
+        environment_lookup_variable(state->env, ast->id);
     if (!identifier_lookup) {
-      printf("Identifier '%s' does not exist\n", ast->identifier_value);
+      printf("Identifier '%s' does not exist\n", ast->id);
       exit(1);
     }
-    returner->data_type = identifier_lookup->data_type;
-    switch (identifier_lookup->data_type) {
-    case INT_VALUE: {
-      returner->int_value = identifier_lookup->int_value;
-      break;
-    }
-    case STRING_VALUE: {
-      returner->string_value = identifier_lookup->string_value;
-      break;
-    }
-    case BOOLEAN_VALUE: {
-      returner->bool_value = identifier_lookup->bool_value;
-      break;
-    }
-    default: {
-      printf("Unsupported data type on identifier lookup\n");
-    }
-    }
+    returner = identifier_lookup;
     break;
   }
   case NIL_PRIMARY_NODE: {
     returner->data_type = NIL_VALUE;
     break;
   }
+  case FN_CALL_PRIMARY_NODE: {
+    returner = eval_fn_call_primary_expression(ast, state, return_code);
+    break;
   }
+  default: {
+    printf("Unimplemented primary expression.\n");
+    exit(1);
+  }
+  }
+  return returner;
+}
+
+struct object *
+eval_fn_call_primary_expression(struct ast_node *ast,
+                                struct interpreter_state *state,
+                                struct return_value *return_code) {
+  // TODO: handle builtin functions
+  struct function *fn =
+      environment_lookup_function(state->env, ast->fn_call.id);
+  struct environment *parent_env = state->env;
+  struct environment *fn_call_env = environment_init_enclosed(parent_env);
+  for (size_t i = 0; i < ast->fn_call.parameters->size; i++) {
+    struct object *parameter_eval = eval_expression(
+        vector_at(ast->fn_call.parameters, i), state, return_code);
+    char *parameter_id = vector_at(fn->parameters, i);
+    environment_insert_variable(fn_call_env, parameter_id, parameter_eval);
+  }
+  state->env = fn_call_env;
+  interpret_block_statement(fn->body, state, return_code);
+  struct object *returner = NULL;
+  if (return_code->is_set) {
+    return_code->is_set = false;
+    returner = return_code->value;
+  }
+  state->env = parent_env;
   return returner;
 }
 

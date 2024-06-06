@@ -68,9 +68,16 @@ void interpret_break_statement(struct ast_node *stmt_node,
 void interpret_block_statement(struct ast_node *stmt_node,
                                struct interpreter_state *state,
                                struct return_value *return_code);
+
 struct object *eval_expression(struct ast_node *ast,
                                struct interpreter_state *state,
-                               struct return_value *return_value);
+                               struct return_value *return_code);
+struct object *eval_binary_expression(struct ast_node *ast,
+                                      struct interpreter_state *state,
+                                      struct return_value *return_code);
+struct object *eval_unary_expression(struct ast_node *ast,
+                                     struct interpreter_state *state,
+                                     struct return_value *return_code);
 struct object *eval_logical_expression(enum token_type op, struct object *lhs,
                                        struct object *rhs);
 struct object *eval_equality_expression(enum token_type op, struct object *lhs,
@@ -82,7 +89,12 @@ struct object *eval_additive_multiplicative_expression(enum token_type op,
                                                        struct object *lhs,
                                                        struct object *rhs);
 struct object *eval_primary_expression(struct ast_node *ast,
-                                       struct interpreter_state *state);
+                                       struct interpreter_state *state,
+                                       struct return_value *return_code);
+struct object *
+eval_fn_call_primary_expression(struct ast_node *ast,
+                                struct interpreter_state *state,
+                                struct return_value *return_code);
 
 struct environment *environment_init();
 struct environment *environment_init_enclosed(struct environment *enclosed_env);
