@@ -472,6 +472,32 @@ eval_fn_call_primary_expression(struct ast_node *ast,
   // TODO: handle builtin functions
   struct function *fn =
       environment_lookup_function(state->env, ast->fn_call.id);
+  if (!fn) {
+    struct builtin_fn *builtin_fn_ = lookup_builtin_fns(state->builtin_fns, ast->fn_call.id);
+    /* Check if it's a builtin function */
+    if (!builtin_fn_) {
+      printf("Function name '%s' is not defined.\n", ast->fn_call.id);
+      exit(1);
+    }
+    /* Check builtin function's arity */
+    if (ast->fn_call.parameters->size != builtin_fn_->num_parameters) {
+      printf("Function '%s' takes %ld, gut given %ld\n", ast->fn_call.id, builtin_fn_->num_parameters, ast->fn_call.parameters->size);
+      exit(1);
+    }
+    /* Invoke the builtin function based on arity */
+    if (builtin_fn_->num_parameters == 1) {
+      void *(*fn_ptr)(void*) = builtin_fn_->fn_ptr;
+      fn_ptr(eval_expression(vector_at(ast->fn_call.parameters, 0), state, return_code));
+    } else if (builtin_fn_->num_parameters == 2) {
+      void *(*fn_ptr)(void *, void*) = builtin_fn_->fn_ptr;
+      fn_ptr(eval_expression(vector_at(ast->fn_call.parameters, 0), state, return_code), eval_expression(vector_at(ast->fn_call.parameters, 1), state, return_code));
+    } else {
+      printf("Unsupported number of parameters to bulitn function.\n");
+      exit(1);
+    }
+    return_code->is_set = false;
+    return NULL;
+  }
   struct environment *parent_env = state->env;
   struct environment *fn_call_env = environment_init_enclosed(parent_env);
   for (size_t i = 0; i < ast->fn_call.parameters->size; i++) {

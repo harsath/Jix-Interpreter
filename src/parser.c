@@ -128,9 +128,7 @@ struct ast_node *
 parse_variable_assignment_statement(struct parser_state *parser) {
   struct ast_node *var_assign_stmt = malloc(sizeof(struct ast_node));
   var_assign_stmt->node_type = VARIABLE_ASSIGN_STMT;
-  printf("here 3");
   struct ast_node *var_id = parse_primary(parser);
-  printf("here 4");
   if (var_id->primary_node_type != IDENTIFIER_PRIMARY_NODE) {
     printf("Variable assignment identifier string.\n");
     exit(1);
