@@ -1,10 +1,10 @@
 // Tokens
-IDENTIFIER : [a-zA-Z_][a-zA-Z0-9_]*
-NUMBER : [0-9]+
-STRING : '"' .* '"
-OPERATOR : '+' | '-' | '*' | '/' | '==' | '!=' | '<' | '>' | '<=' | '>='
-BOOLEAN : 'true' | 'false'
-NIL : 'nil'
+IDENTIFIER          : [a-zA-Z_][a-zA-Z0-9_]*
+NUMBER              : [0-9]+
+STRING              : '"' .* '"
+OPERATOR            : '+' | '-' | '*' | '/' | '==' | '!=' | '<' | '>' | '<=' | '>='
+BOOLEAN             : 'true' | 'false'
+NIL                 : 'nil'
 
 // Grammar rules
 program             :   statement_list
@@ -53,5 +53,5 @@ primary             :   NUMBER
 
 fn_call             :   IDENTIFIER '(' parameters? ')' ;
 parameters          :   expr ( ',' expr )* ;
-array_creation      :   '[' ( expression ( ',' expression)* )? ']'
-array_access        :   primary '[' expression ']' ( '[' expression ']' )*
+array_creation      :   '[' ( expr ( ',' expr )* )? ']'
+array_access        :   ( IDENTIFIER | fn_call | array_creation ) '[' expr ']' ( '[' expr ']' )*

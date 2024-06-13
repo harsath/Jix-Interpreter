@@ -35,8 +35,10 @@ struct ast_node *comparitive(struct parser_state *parser);
 struct ast_node *additive(struct parser_state *parser);
 struct ast_node *multiplicative(struct parser_state *parser);
 struct ast_node *parse_unary(struct parser_state *parser);
+struct ast_node *parse_extended_primary(struct parser_state *parser);
 struct ast_node *parse_primary(struct parser_state *parser);
 struct ast_node *parse_fn_call(struct parser_state *parser);
+struct ast_node *parse_array_creation(struct parser_state *parser);
 
 struct token *get_previous_token(struct parser_state *parser);
 struct token *get_current_token(struct parser_state *parser);

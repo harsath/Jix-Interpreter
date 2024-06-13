@@ -11,5 +11,6 @@
 Returns vector of `struct token`
 */
 struct vector *scan_tokens(const char *source_code);
+char *parse_escape_sequences(const char *input);
 
 #endif

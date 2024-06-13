@@ -116,6 +116,15 @@ struct ast_node {
       char *id;
       struct vector *parameters; /* Vector of `ast_node` of expressions */
     } fn_call;
+
+    /* Array node */
+    struct vector *array; /* Vector of `ast_node` of expressions */
+
+    /* Array access node */
+    struct {
+      struct ast_node *primary; /* One of 3 from grammar */
+      struct ast_node *index;
+    } array_access;
   };
 };
 

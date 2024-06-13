@@ -1,6 +1,7 @@
 #include "parser.h"
 #include "ast.h"
 #include "hash_table.h"
+#include "interpreter.h"
 #include "tokens.h"
 #include "utils.h"
 #include "vector.h"
@@ -106,7 +107,7 @@ parse_variable_declaration_statement(struct parser_state *parser) {
     exit(1);
   }
   char *id = create_token_string_copy(current_token->token_char, 0,
-                                                current_token->token_char_len);
+                                      current_token->token_char_len);
   var_decl_stmt->var_decl_stmt.id = id;
   increment_token_index(parser);
   if (!check_index_bound(parser) || get_current_token(parser)->type != EQUAL) {
@@ -405,7 +406,33 @@ struct ast_node *parse_unary(struct parser_state *parser) {
     increment_token_index(parser);
     return unary;
   }
-  return parse_primary(parser);
+  return parse_extended_primary(parser);
+}
+
+struct ast_node *parse_extended_primary(struct parser_state *parser) {
+  struct ast_node *primary = parse_primary(parser);
+  while (get_current_token(parser)->type == LEFT_PAREN || get_current_token(parser)->type == LEFT_BRACKET) {
+    if (get_current_token(parser)->type == LEFT_BRACKET) {
+      increment_token_index(parser);
+      struct ast_node *index = parse_expression(parser);
+      if (get_current_token(parser)->type != RIGHT_BRACKET) {
+        printf("Array access must have right bracket. Malformed statement.\n");
+        exit(1);
+      }
+      increment_token_index(parser);
+      struct ast_node *array_access_primary = malloc(sizeof(struct ast_node));
+      array_access_primary->node_type = PRIMARY_NODE;
+      array_access_primary->primary_node_type = ARRAY_ACCESS_PRIMARY_NODE;
+      array_access_primary->array_access.primary = primary;
+      array_access_primary->array_access.index = index;
+      primary = array_access_primary;
+    } else {
+      increment_token_index(parser);
+      printf("Function pointer-style calling not yet supported.\n");
+      exit(1);
+    }
+  }
+  return primary;
 }
 
 struct ast_node *parse_primary(struct parser_state *parser) {
@@ -434,10 +461,7 @@ struct ast_node *parse_primary(struct parser_state *parser) {
   case IDENTIFIER: {
     if (get_next_token(parser)->type == LEFT_PAREN) {
       return parse_fn_call(parser);
-    } else if (get_next_token(parser)->type == LEFT_BRACKET) {
-      printf("Array not implemented\n");
-      exit(1);
-    }
+    } 
     struct ast_node *identifier_node = malloc(sizeof(struct ast_node));
     identifier_node->node_type = PRIMARY_NODE;
     identifier_node->primary_node_type = IDENTIFIER_PRIMARY_NODE;
@@ -461,6 +485,9 @@ struct ast_node *parse_primary(struct parser_state *parser) {
     nil_node->primary_node_type = NIL_PRIMARY_NODE;
     increment_token_index(parser);
     return nil_node;
+  }
+  case LEFT_BRACKET: {
+    return parse_array_creation(parser);
   }
   case LEFT_PAREN: {
     increment_token_index(parser);
@@ -486,10 +513,14 @@ struct ast_node *parse_fn_call(struct parser_state *parser) {
   fn_call->node_type = PRIMARY_NODE;
   fn_call->primary_node_type = FN_CALL_PRIMARY_NODE;
   fn_call->fn_call.parameters = vector_init();
-  //TODO: Change this to accept arrays and others
+  // TODO: Change this to accept arrays and others
   struct token *current_token = get_current_token(parser);
+  if (current_token->type != IDENTIFIER) {
+      printf("Currently only accepts functions calls with `id` of type IDENTIFIER.\n");
+      exit(1);
+  }
   fn_call->fn_call.id = create_token_string_copy(current_token->token_char, 0,
-                                                   current_token->token_char_len);
+                                                 current_token->token_char_len);
   increment_token_index(parser);
   if (get_current_token(parser)->type != LEFT_PAREN) {
     printf("Function call expression should have '(' <expression> ')' after "
@@ -507,6 +538,24 @@ struct ast_node *parse_fn_call(struct parser_state *parser) {
   }
   increment_token_index(parser);
   return fn_call;
+}
+
+struct ast_node *parse_array_creation(struct parser_state *parser) {
+  increment_token_index(parser);
+  struct vector *array = vector_init();
+  if (get_current_token(parser)->type != RIGHT_BRACKET) {
+      vector_push_back(array, parse_expression(parser));
+    do {
+      increment_token_index(parser);
+      vector_push_back(array, parse_expression(parser));
+    } while(get_current_token(parser)->type == COMMA);
+  }
+  increment_token_index(parser);
+  struct ast_node *array_node = malloc(sizeof(struct ast_node));
+  array_node->node_type = PRIMARY_NODE;
+  array_node->primary_node_type = ARRAY_CREATION_PRIMARY_NODE;
+  array_node->array = array;
+  return array_node;
 }
 
 struct token *get_previous_token(struct parser_state *parser) {

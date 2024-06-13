@@ -457,6 +457,14 @@ struct object *eval_primary_expression(struct ast_node *ast,
     returner = eval_fn_call_primary_expression(ast, state, return_code);
     break;
   }
+  case ARRAY_CREATION_PRIMARY_NODE: {
+    returner = eval_array_creation_primary_expression(ast, state, return_code);
+    break;
+  }
+  case ARRAY_ACCESS_PRIMARY_NODE: {
+    returner = eval_array_access_primary_expression(ast, state, return_code);
+    break;
+  }
   default: {
     printf("Unimplemented primary expression.\n");
     exit(1);
@@ -473,7 +481,8 @@ eval_fn_call_primary_expression(struct ast_node *ast,
   struct function *fn =
       environment_lookup_function(state->env, ast->fn_call.id);
   if (!fn) {
-    struct builtin_fn *builtin_fn_ = lookup_builtin_fns(state->builtin_fns, ast->fn_call.id);
+    struct builtin_fn *builtin_fn_ =
+        lookup_builtin_fns(state->builtin_fns, ast->fn_call.id);
     /* Check if it's a builtin function */
     if (!builtin_fn_) {
       printf("Function name '%s' is not defined.\n", ast->fn_call.id);
@@ -481,16 +490,21 @@ eval_fn_call_primary_expression(struct ast_node *ast,
     }
     /* Check builtin function's arity */
     if (ast->fn_call.parameters->size != builtin_fn_->num_parameters) {
-      printf("Function '%s' takes %ld, gut given %ld\n", ast->fn_call.id, builtin_fn_->num_parameters, ast->fn_call.parameters->size);
+      printf("Function '%s' takes %ld, gut given %ld\n", ast->fn_call.id,
+             builtin_fn_->num_parameters, ast->fn_call.parameters->size);
       exit(1);
     }
     /* Invoke the builtin function based on arity */
     if (builtin_fn_->num_parameters == 1) {
-      void *(*fn_ptr)(void*) = builtin_fn_->fn_ptr;
-      fn_ptr(eval_expression(vector_at(ast->fn_call.parameters, 0), state, return_code));
+      void *(*fn_ptr)(void *) = builtin_fn_->fn_ptr;
+      fn_ptr(eval_expression(vector_at(ast->fn_call.parameters, 0), state,
+                             return_code));
     } else if (builtin_fn_->num_parameters == 2) {
-      void *(*fn_ptr)(void *, void*) = builtin_fn_->fn_ptr;
-      fn_ptr(eval_expression(vector_at(ast->fn_call.parameters, 0), state, return_code), eval_expression(vector_at(ast->fn_call.parameters, 1), state, return_code));
+      void *(*fn_ptr)(void *, void *) = builtin_fn_->fn_ptr;
+      fn_ptr(eval_expression(vector_at(ast->fn_call.parameters, 0), state,
+                             return_code),
+             eval_expression(vector_at(ast->fn_call.parameters, 1), state,
+                             return_code));
     } else {
       printf("Unsupported number of parameters to bulitn function.\n");
       exit(1);
@@ -516,6 +530,41 @@ eval_fn_call_primary_expression(struct ast_node *ast,
   state->env = parent_env;
   return returner;
 }
+
+struct object *
+eval_array_creation_primary_expression(struct ast_node *ast,
+                                struct interpreter_state *state,
+                                struct return_value *return_code) {
+    struct object *array_obj = malloc(sizeof(struct object));
+    array_obj->data_type = ARRAY_VALUE;
+    array_obj->array_value = vector_init();
+    for (size_t i = 0; i < ast->array->size; i++) {
+        vector_push_back(array_obj->array_value, eval_expression(vector_at(ast->array, i), state, return_code));
+    }
+    return array_obj;
+}
+
+struct object *
+eval_array_access_primary_expression(struct ast_node *ast,
+                                struct interpreter_state *state,
+                                struct return_value *return_code) {
+    struct object *array_obj = eval_primary_expression(ast->array_access.primary, state, return_code);
+    if (array_obj->data_type != ARRAY_VALUE) {
+        printf("Array access can only be used for arrays\n");
+        exit(1);
+    }
+    struct object *array_index = eval_expression(ast->array_access.index, state, return_code);
+    if (array_index->data_type != INT_VALUE) {
+        printf("Array index must be an integer\n");
+        exit(1);
+    }
+    if (array_index->int_value >= array_obj->array_value->size) {
+        printf("Index out of bound\n");
+        exit(1);
+    }
+    return vector_at(array_obj->array_value, array_index->int_value);
+}
+
 
 struct environment *environment_init() {
   struct environment *env = malloc(sizeof(struct environment));

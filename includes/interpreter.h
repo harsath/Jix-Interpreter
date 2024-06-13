@@ -18,12 +18,13 @@ struct interpreter_state {
   struct hash_table *builtin_fns;
 };
 
-enum object_type { INT_VALUE, BOOLEAN_VALUE, STRING_VALUE, NIL_VALUE };
+enum object_type { INT_VALUE, BOOLEAN_VALUE, STRING_VALUE, ARRAY_VALUE, NIL_VALUE };
 struct object {
   enum object_type data_type;
   long int_value;
   bool bool_value;
   char *string_value;
+  struct vector *array_value; /* Vector of type `object` */
 };
 
 struct return_value {
@@ -95,6 +96,16 @@ struct object *
 eval_fn_call_primary_expression(struct ast_node *ast,
                                 struct interpreter_state *state,
                                 struct return_value *return_code);
+struct object *
+eval_array_creation_primary_expression(struct ast_node *ast,
+                                struct interpreter_state *state,
+                                struct return_value *return_code);
+struct object *
+eval_array_access_primary_expression(struct ast_node *ast,
+                                struct interpreter_state *state,
+                                struct return_value *return_code);
+
+
 
 struct environment *environment_init();
 struct environment *environment_init_enclosed(struct environment *enclosed_env);

@@ -23,13 +23,24 @@ struct builtin_fn *lookup_builtin_fns(struct hash_table *table,
 void *builtin_print(struct object *value) {
   switch (value->data_type) {
   case INT_VALUE:
-    printf("%li\n", value->int_value);
+    printf("%li", value->int_value);
     break;
   case BOOLEAN_VALUE:
-    printf("%b\n", value->bool_value);
+    printf("%b", value->bool_value);
     break;
   case STRING_VALUE:
-    printf("%s\n", value->string_value);
+      printf("%s", value->string_value);
+    break;
+  case ARRAY_VALUE:
+    printf("[ ");
+    for (size_t i = 0; i < value->array_value->size; i++) {
+      builtin_print(vector_at(value->array_value, i));
+      if(i != value->array_value->size-1) {
+        printf(",");
+      }
+      printf(" ");
+    }
+    printf("]");
     break;
   default:
     printf("Invalid datatype in print() function.");
