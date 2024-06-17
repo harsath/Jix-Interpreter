@@ -15,7 +15,7 @@ void string_builder_append(struct string_builder *str_builder, const char *str) 
     str_builder->capacity = (new_builder_len + 1) * 2;
     str_builder->str = realloc(str_builder->str, str_builder->capacity);
   }
-  strlcat(str_builder->str, str, str_builder->capacity);
+  strncat(str_builder->str, str, str_builder->capacity - str_builder->length);
   str_builder->length = new_builder_len;
 }
 
