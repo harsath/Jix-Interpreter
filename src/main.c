@@ -12,6 +12,8 @@ int main(int argc, const char *argv[]) {
   const char *file_name = argv[1];
   // print_ast_program(program);
 
+ print_ast_pipeline(file_name); 
+  /*
   struct object *interpreter_value = interpreter_pipeline(file_name);
 
   if (!interpreter_value) {
@@ -20,6 +22,7 @@ int main(int argc, const char *argv[]) {
     // Interpreter can also return string_value or bool_value
     printf("Return: %li\n", interpreter_value->int_value);
   }
+  */
 
   return 0;
 }

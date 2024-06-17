@@ -244,3 +244,9 @@ struct token *create_token(enum token_type type, const char *token_char,
   token_->token_char_len = token_char_len;
   return token_;
 }
+
+char *number_to_char(long number) {
+  char *buffer = malloc(20);
+  sprintf(buffer, "%ld", number);
+  return buffer;
+}

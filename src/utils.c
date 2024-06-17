@@ -1,6 +1,7 @@
 #include "utils.h"
 #include "scanner.h"
 #include "parser.h"
+#include "ast_printer.h"
 #include "tokens.h"
 #include "interpreter.h"
 
@@ -52,4 +53,14 @@ struct object *interpreter_pipeline(const char *file_name) {
   struct object *interpreter_return_value = interpret(program);
   vector_free(tokens);
   return interpreter_return_value;
+}
+
+void print_ast_pipeline(const char *file_name) {
+  char *input = read_file(file_name);
+  if (!input) {
+    return;
+  }
+  struct vector *tokens = scan_tokens(input);
+  struct vector *program = parse_program(tokens);
+  printf("%s", print_ast(program)->str);
 }
