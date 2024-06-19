@@ -49,9 +49,11 @@ primary             :   NUMBER
                     |   fn_call
                     |   array_creation
                     |   array_access  
+                    |   method_call
                     |   '(' expr ')'
 
 fn_call             :   IDENTIFIER '(' parameters? ')' ;
 parameters          :   expr ( ',' expr )* ;
 array_creation      :   '[' ( expr ( ',' expr )* )? ']'
 array_access        :   ( IDENTIFIER | fn_call | array_creation ) '[' expr ']' ( '[' expr ']' )*
+method_call         :   primary '.' IDENTIFIER '(' parameters? ')' ;
