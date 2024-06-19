@@ -11,6 +11,7 @@ int main(int argc, const char *argv[]) {
 		"for_stmt.jix",
 		"break_stmt.jix",
 		"functions.jix",
+		"array_test1.jix",
 	};
 
 	long expected_results[] = {
@@ -21,6 +22,7 @@ int main(int argc, const char *argv[]) {
 		10,
 		20,
 		10,
+		7,
 	};
 
 	const char *test_name[] = {
@@ -31,6 +33,7 @@ int main(int argc, const char *argv[]) {
 		"For statement",
 		"Break statement",
 		"Functions",
+		"Array test 1",
 	};
 
 	size_t total_tests = sizeof(test_files) / sizeof(test_files[0]);
