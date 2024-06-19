@@ -10,6 +10,8 @@ enum token_type {
   RIGHT_PAREN,
   LEFT_BRACE,
   RIGHT_BRACE,
+  LEFT_BRACKET,
+  RIGHT_BRACKET,
   COMMA,
   DOT,
   MINUS,
@@ -57,5 +59,6 @@ enum token_type get_keyword_token_from_string(const char *key);
 const char *get_string_from_token_atom(enum token_type type);
 struct token *create_token(enum token_type type, const char *token_char,
                            size_t token_char_len);
+char *number_to_char(long number);
 
 #endif

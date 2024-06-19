@@ -8,6 +8,7 @@ include_directories(includes)
 
 # Source files for main program
 file(GLOB MAIN_SOURCES "src/*.c")
+list(REMOVE_ITEM TEST_SRC_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/src/ast_printer.c")
 
 # Source files for test runner
 file(GLOB TEST_SRC_SOURCES "src/*.c")

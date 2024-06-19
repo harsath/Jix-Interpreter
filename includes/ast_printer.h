@@ -2,26 +2,26 @@
 #define AST_PRINTER_H
 
 #include "ast.h"
-#include "vector.h"
+#include "string_builder.h"
 
-void print_ast_program(struct vector *program);
-void print_ast_statement(struct ast_node *statement, size_t indent_level);
-void print_ast_program_fn_def_stmt(struct ast_node *fn_def_stmt,
-                                   size_t indent_level);
-void print_ast_program_expr_stmt(struct ast_node *expr_stmt);
-void print_ast_program_return_stmt(struct ast_node *return_stmt);
-void print_ast_program_var_decl_stmt(struct ast_node *var_decl_stmt);
-void print_ast_program_var_assign_stmt(struct ast_node *var_assign_stmt);
-void print_ast_program_if_stmt(struct ast_node *if_stmt, size_t indent_level);
-void print_ast_program_while_stmt(struct ast_node *while_stmt,
-                                  size_t indent_level);
-void print_ast_program_for_stmt(struct ast_node *for_stmt,
-                                  size_t indent_level);
-void print_ast_program_break_stmt(struct ast_node *break_stmt,
-                                  size_t indent_level);
-void print_ast_program_block_stmt(struct ast_node *var_decl_stmt,
-                                  size_t indent_level);
+struct string_builder *print_ast(struct vector *program);
+void print_statement(struct ast_node *node, struct string_builder *str, size_t indent_level);
+void print_fn_def_stmt(struct ast_node *node, struct string_builder *str, size_t indent_level);
+void print_expr_stmt(struct ast_node *node, struct string_builder *str, size_t indent_level);
+void print_return_stmt(struct ast_node *node, struct string_builder *str, size_t indent_level);
+void print_var_decl_stmt(struct ast_node *node, struct string_builder *str, size_t indent_level);
+void print_var_assign_stmt(struct ast_node *node, struct string_builder *str, size_t indent_level);
+void print_if_stmt(struct ast_node *node, struct string_builder *str, size_t indent_level);
+void print_while_stmt(struct ast_node *node, struct string_builder *str, size_t indent_level);
+void print_for_stmt(struct ast_node *node, struct string_builder *str, size_t indent_level);
+void print_break_stmt(struct ast_node *node, struct string_builder *str, size_t indent_level);
+void print_block_stmt(struct ast_node *node, struct string_builder *str, size_t indent_level);
 
-void print_ast_expr(struct ast_node *node);
+void print_expression(struct ast_node *node, struct string_builder *str);
+void print_binary_expression(struct ast_node *node, struct string_builder *str);
+void print_unary_expression(struct ast_node *node, struct string_builder *str);
+void print_primary_expression(struct ast_node *node, struct string_builder *str);
+
+char *get_indent_str(size_t indent_level);
 
 #endif

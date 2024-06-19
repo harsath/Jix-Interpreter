@@ -1,4 +1,3 @@
-#include "ast_printer.h"
 #include "interpreter.h"
 #include "parser.h"
 #include "scanner.h"
@@ -11,8 +10,8 @@ int main(int argc, const char *argv[]) {
     return -1;
   }
   const char *file_name = argv[1];
-  // print_ast_program(program);
 
+  //print_ast_pipeline(file_name); 
   struct object *interpreter_value = interpreter_pipeline(file_name);
 
   if (!interpreter_value) {

@@ -7,6 +7,7 @@ See `examples` directory for examples of programs Jix supports.
 
 ## Features: 
 - Dynamic types (int, bool, and string)
+- Arrays
 - Functions
 - Builtin functions
     - Print()
@@ -20,6 +21,6 @@ See `examples` directory for examples of programs Jix supports.
 - Nested blocks / statements
 
 ### Todo features:
-- Builtin-data structures (Arrays and Hashtables)
+- Builtin Hashtables
 - User-defined datatypes
 - Import statement

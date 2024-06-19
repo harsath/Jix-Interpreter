@@ -1,4 +1,5 @@
 #include "scanner.h"
+#include "tokens.h"
 #include "utils.h"
 
 struct vector *scan_tokens(const char *source_code) {
@@ -40,6 +41,18 @@ struct vector *scan_tokens(const char *source_code) {
       current_index++;
       struct token *token_ =
           create_token(RIGHT_BRACE, (source_code + start_index),
+                       (current_index - start_index));
+      vector_push_back(tokens, token_);
+    } else if (source_code[current_index] == '[') {
+      current_index++;
+      struct token *token_ =
+          create_token(LEFT_BRACKET, (source_code + start_index),
+                       (current_index - start_index));
+      vector_push_back(tokens, token_);
+    } else if (source_code[current_index] == ']') {
+      current_index++;
+      struct token *token_ =
+          create_token(RIGHT_BRACKET, (source_code + start_index),
                        (current_index - start_index));
       vector_push_back(tokens, token_);
     } else if (source_code[current_index] == ',') {
@@ -195,9 +208,10 @@ struct vector *scan_tokens(const char *source_code) {
       }
       if (source_code[current_index] == '"') {
         current_index++;
-        struct token *token_ =
-            create_token(STRING, (source_code + start_index + 1),
-                         (current_index - start_index - 2));
+        char *string_literal = create_token_string_copy(source_code, start_index + 1, current_index - 1);
+        char *parsed_string = parse_escape_sequences(string_literal);
+        free(string_literal);
+        struct token *token_ = create_token(STRING, parsed_string, strlen(parsed_string));
         vector_push_back(tokens, token_);
       } else {
         perror("Non-terminating string");
@@ -216,4 +230,35 @@ struct vector *scan_tokens(const char *source_code) {
     start_index = current_index;
   }
   return tokens;
+}
+
+char *parse_escape_sequences(const char *input) {
+  size_t len = strlen(input);
+  char *result = malloc(len + 1);
+  size_t j = 0;
+  for (size_t i = 0; i < len; i++) {
+    if (input[i] == '\\' && i + 1 < len) {
+      switch (input[i + 1]) {
+        case 'n':
+          result[j++] = '\n';
+          i++; // skipping the 'n'
+          break;
+        case 't':
+          result[j++] = '\t';
+          i++; // skipping the 't'
+          break;
+        case '\\':
+          result[j++] = '\\';
+          i++; // skipping the '\'
+          break;
+        default:
+          result[j++] = input[i];
+          break;
+      }
+    } else {
+      result[j++] = input[i];
+    }
+  }
+  result[j] = '\0';
+  return result;
 }

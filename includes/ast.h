@@ -17,8 +17,8 @@ enum ast_node_type {
   BREAK_STMT,
   BLOCK_STMT,
   BINARY_NODE,
+  UNARY_NODE,
   PRIMARY_NODE,
-  FN_CALL_NODE
 };
 
 enum ast_primary_node_type {
@@ -26,76 +26,106 @@ enum ast_primary_node_type {
   STRING_PRIMARY_NODE,
   IDENTIFIER_PRIMARY_NODE,
   BOOLEAN_PRIMARY_NODE,
-  NIL_PRIMARY_NODE
+  NIL_PRIMARY_NODE,
+  FN_CALL_PRIMARY_NODE,
+  ARRAY_CREATION_PRIMARY_NODE,
+  ARRAY_ACCESS_PRIMARY_NODE
 };
 
 struct ast_node {
   enum ast_node_type node_type;
   enum ast_primary_node_type primary_node_type;
 
-  /* Function definition statement */
-  struct ast_node *fn_def_stmt_id;
-  struct vector *fn_def_stmt_parameters; /* Vector of `char*'. The arity is
-                                            implied in vector `size'. */
-  struct ast_node *fn_def_stmt_block;
+  union {
+    /* Function definition statement */
+    struct {
+      char *id;
+      struct vector *parameters; /* Vector of `char*` */
+      struct ast_node *block;
+    } fn_def_stmt;
 
-  /* Expression statement */
-  struct ast_node *expr_stmt_expr;
+    /* Variable declaration statement */
+    struct {
+      char *id;
+      struct ast_node *expr;
+    } var_decl_stmt;
 
-  /* Return statement */
-  struct ast_node *return_stmt_expr;
+    /* Variable assignment statement */
+    struct {
+      char *id;
+      struct ast_node *expr;
+    } var_assign_stmt;
 
-  /* Variable decl statement */
-  struct ast_node *var_decl_stmt_id;
-  struct ast_node *var_decl_stmt_expr;
+    /* If-else statement */
+    struct {
+      struct ast_node *expr;
+      struct ast_node *if_block;
+      struct ast_node *else_block;
+    } if_else_stmt;
 
-  /* Variable assign statement */
-  struct ast_node *assign_stmt_id;
-  struct ast_node *assign_stmt_expr;
+    /* While statement */
+    struct {
+      struct ast_node *expr;
+      struct ast_node *block;
+    } while_stmt;
 
-  /* If statement */
-  struct ast_node *if_stmt_expr;
-  struct ast_node *if_stmt_block;
-  struct ast_node *if_else_stmt_block;
+    /* For statement */
+    struct {
+      struct ast_node *init_stmt;
+      struct ast_node *expr_stmt;
+      struct ast_node *update_stmt;
+      struct ast_node *block;
+    } for_stmt;
 
-  /* While statement */
-  struct ast_node *while_stmt_expr;
-  struct ast_node *while_stmt_block;
+    /* Return statement */
+    struct ast_node *return_stmt_expr;
 
-  /* For statement */
-  struct ast_node *for_stmt_init_stmt;
-  struct ast_node *for_stmt_expr;
-  struct ast_node *for_stmt_update_stmt;
-  struct ast_node *for_stmt_block;
+    /* Block statement */
+    struct vector *block_stmt_stmts;
 
-  /* Block statement */
-  struct vector *block_stmt_stmts;
+    /* Expression statement */
+    struct ast_node *expr_stmt_expr;
 
-  /* Number node */
-  long number_value;
+    /* Binary node */
+    struct {
+      struct ast_node *left;
+      struct ast_node *right;
+      enum token_type op;
+    } binary;
 
-  /* String node */
-  char *string_value;
+    /* Unary node */
+    struct {
+      enum token_type op;
+      struct ast_node *primary;
+    } unary;
 
-  /* Identifier node */
-  char *identifier_value;
+    /* Number node */
+    long number;
 
-  /* Boolean node */
-  bool boolean_value;
+    /* String node */
+    char *string;
 
-  /* Binary node */
-  struct ast_node *left;
-  struct ast_node *right;
-  enum token_type op;
+    /* Identifier node */
+    char *id;
 
-  /* Optional unary operator */
-  enum token_type unary_op;
+    /* Boolean node*/
+    bool boolean;
 
-  /* Function call */
-  struct ast_node *fn_call_identifier;
-  struct vector *fn_call_parameters; /* Vector of `ast_node' that will be passed
-                                        to the function `fn_call_identifier'.
-                                        Interpreter handles arity checks. */
+    /* Function call */
+    struct {
+      char *id;
+      struct vector *parameters; /* Vector of `ast_node` of expressions */
+    } fn_call;
+
+    /* Array node */
+    struct vector *array; /* Vector of `ast_node` of expressions */
+
+    /* Array access node */
+    struct {
+      struct ast_node *primary; /* One of 3 from grammar */
+      struct ast_node *index;
+    } array_access;
+  };
 };
 
 #endif
