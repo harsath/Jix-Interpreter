@@ -23,5 +23,6 @@ void print_unary_expression(struct ast_node *node, struct string_builder *str);
 void print_primary_expression(struct ast_node *node, struct string_builder *str);
 
 char *get_indent_str(size_t indent_level);
+char *escape_special_characters(const char *input);
 
 #endif

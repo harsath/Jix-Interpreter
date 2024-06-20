@@ -18,7 +18,13 @@ struct interpreter_state {
   struct hash_table *builtin_fns;
 };
 
-enum object_type { INT_VALUE, BOOLEAN_VALUE, STRING_VALUE, ARRAY_VALUE, NIL_VALUE };
+enum object_type {
+  INT_VALUE,
+  BOOLEAN_VALUE,
+  STRING_VALUE,
+  ARRAY_VALUE,
+  NIL_VALUE
+};
 struct object {
   enum object_type data_type;
   long int_value;
@@ -97,15 +103,17 @@ eval_fn_call_primary_expression(struct ast_node *ast,
                                 struct interpreter_state *state,
                                 struct return_value *return_code);
 struct object *
+eval_method_call_primary_expression(struct ast_node *ast,
+                                    struct interpreter_state *state,
+                                    struct return_value *return_code);
+struct object *
 eval_array_creation_primary_expression(struct ast_node *ast,
-                                struct interpreter_state *state,
-                                struct return_value *return_code);
+                                       struct interpreter_state *state,
+                                       struct return_value *return_code);
 struct object *
 eval_array_access_primary_expression(struct ast_node *ast,
-                                struct interpreter_state *state,
-                                struct return_value *return_code);
-
-
+                                     struct interpreter_state *state,
+                                     struct return_value *return_code);
 
 struct environment *environment_init();
 struct environment *environment_init_enclosed(struct environment *enclosed_env);
@@ -123,8 +131,5 @@ environment_lookup_function_current_env(struct environment *env, char *key);
 void environment_insert_function(struct environment *env, char *key,
                                  struct function *value);
 void environment_free(struct environment *env);
-
-// void set_return_value_from_object(struct return_value *ret, struct object
-// *obj);
 
 #endif

@@ -457,6 +457,10 @@ struct object *eval_primary_expression(struct ast_node *ast,
     returner = eval_fn_call_primary_expression(ast, state, return_code);
     break;
   }
+  case METHOD_CALL_PRIMARY_NODE: {
+    returner = eval_method_call_primary_expression(ast, state, return_code);
+    break;
+  }
   case ARRAY_CREATION_PRIMARY_NODE: {
     returner = eval_array_creation_primary_expression(ast, state, return_code);
     break;
@@ -532,39 +536,77 @@ eval_fn_call_primary_expression(struct ast_node *ast,
 }
 
 struct object *
-eval_array_creation_primary_expression(struct ast_node *ast,
-                                struct interpreter_state *state,
-                                struct return_value *return_code) {
-    struct object *array_obj = malloc(sizeof(struct object));
-    array_obj->data_type = ARRAY_VALUE;
-    array_obj->array_value = vector_init();
-    for (size_t i = 0; i < ast->array->size; i++) {
-        vector_push_back(array_obj->array_value, eval_expression(vector_at(ast->array, i), state, return_code));
+eval_method_call_primary_expression(struct ast_node *ast,
+                                    struct interpreter_state *state,
+                                    struct return_value *return_code) {
+  /* Method calls are currently only supported for arrays. This will change once
+   * we add support for user-defined types. */
+  struct object *returner = NULL;
+  struct object *array_obj =
+      eval_primary_expression(ast->array_access.primary, state, return_code);
+  if (array_obj->data_type == ARRAY_VALUE) {
+    if (strcmp(ast->method_call.member->fn_call.id, "add") == 0) {
+      for (size_t i = 0; i < ast->method_call.member->fn_call.parameters->size;
+           i++) {
+        vector_push_back(
+            array_obj->array_value,
+            eval_expression(
+                vector_at(ast->method_call.member->fn_call.parameters, i),
+                state, return_code));
+      }
+    } else if (strcmp(ast->method_call.member->fn_call.id, "len") == 0) {
+      returner = malloc(sizeof(struct object));
+      returner->data_type = INT_VALUE;
+      returner->int_value = array_obj->array_value->size;
+    } else {
+      printf("Invalid method '%s' for array operation.\n",
+             ast->method_call.member->fn_call.id);
+      exit(1);
     }
-    return array_obj;
+  } else {
+    printf("Method calls are only supported for arrays for now.\n");
+    exit(1);
+  }
+  return returner;
+}
+
+struct object *
+eval_array_creation_primary_expression(struct ast_node *ast,
+                                       struct interpreter_state *state,
+                                       struct return_value *return_code) {
+  struct object *array_obj = malloc(sizeof(struct object));
+  array_obj->data_type = ARRAY_VALUE;
+  array_obj->array_value = vector_init();
+  for (size_t i = 0; i < ast->array->size; i++) {
+    vector_push_back(
+        array_obj->array_value,
+        eval_expression(vector_at(ast->array, i), state, return_code));
+  }
+  return array_obj;
 }
 
 struct object *
 eval_array_access_primary_expression(struct ast_node *ast,
-                                struct interpreter_state *state,
-                                struct return_value *return_code) {
-    struct object *array_obj = eval_primary_expression(ast->array_access.primary, state, return_code);
-    if (array_obj->data_type != ARRAY_VALUE) {
-        printf("Array access can only be used for arrays\n");
-        exit(1);
-    }
-    struct object *array_index = eval_expression(ast->array_access.index, state, return_code);
-    if (array_index->data_type != INT_VALUE) {
-        printf("Array index must be an integer\n");
-        exit(1);
-    }
-    if (array_index->int_value >= array_obj->array_value->size) {
-        printf("Index out of bound\n");
-        exit(1);
-    }
-    return vector_at(array_obj->array_value, array_index->int_value);
+                                     struct interpreter_state *state,
+                                     struct return_value *return_code) {
+  struct object *array_obj =
+      eval_primary_expression(ast->array_access.primary, state, return_code);
+  if (array_obj->data_type != ARRAY_VALUE) {
+    printf("Array access can only be used for arrays\n");
+    exit(1);
+  }
+  struct object *array_index =
+      eval_expression(ast->array_access.index, state, return_code);
+  if (array_index->data_type != INT_VALUE) {
+    printf("Array index must be an integer\n");
+    exit(1);
+  }
+  if (array_index->int_value >= array_obj->array_value->size) {
+    printf("Index out of bound\n");
+    exit(1);
+  }
+  return vector_at(array_obj->array_value, array_index->int_value);
 }
-
 
 struct environment *environment_init() {
   struct environment *env = malloc(sizeof(struct environment));

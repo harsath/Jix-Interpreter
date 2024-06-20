@@ -398,12 +398,12 @@ struct ast_node *multiplicative(struct parser_state *parser) {
 struct ast_node *parse_unary(struct parser_state *parser) {
   enum token_type current_token_type = get_current_token(parser)->type;
   if (current_token_type == MINUS || current_token_type == BANG) {
-    struct ast_node *unary = malloc(sizeof(struct ast_node));
-    unary->node_type = UNARY_NODE;
-    unary->unary.op = NIL;
-    unary->unary.primary = parse_primary(parser);
-    unary->unary.op = current_token_type;
     increment_token_index(parser);
+    struct ast_node *unary = malloc(sizeof(struct ast_node));
+    unary->unary.op = current_token_type;
+    unary->node_type = UNARY_NODE;
+    unary->unary.op = current_token_type;
+    unary->unary.primary = parse_primary(parser);
     return unary;
   }
   return parse_extended_primary(parser);
@@ -431,6 +431,20 @@ struct ast_node *parse_extended_primary(struct parser_state *parser) {
       printf("Function pointer-style calling not yet supported.\n");
       exit(1);
     }
+  }
+  if (get_current_token(parser)->type == DOT) {
+    increment_token_index(parser);
+    struct ast_node *method_call_primary = malloc(sizeof(struct ast_node));
+    method_call_primary->node_type = PRIMARY_NODE;
+    method_call_primary->primary_node_type = METHOD_CALL_PRIMARY_NODE;
+    method_call_primary->method_call.object = primary;
+    struct ast_node *method_call_member = parse_fn_call(parser);
+    if (method_call_member->primary_node_type != FN_CALL_PRIMARY_NODE) {
+      printf("Method call must be a function call.\n");
+      exit(1);
+    }
+    method_call_primary->method_call.member = method_call_member;
+    primary = method_call_primary;
   }
   return primary;
 }
@@ -494,8 +508,9 @@ struct ast_node *parse_primary(struct parser_state *parser) {
     struct ast_node *expr = parse_expression(parser);
     cur_tok = get_current_token(parser);
     if (cur_tok->type != RIGHT_PAREN) {
-      printf("Expecting ')' after the expression, got '%s'\n",
-             get_string_from_token_atom(cur_tok->type));
+      printf("Expecting ')' after the expression, got '%.*s'\n", cur_tok->token_char_len,
+             cur_tok->token_char);
+      exit(1);
     }
     increment_token_index(parser);
     return expr;
@@ -503,6 +518,7 @@ struct ast_node *parse_primary(struct parser_state *parser) {
   default: {
     printf("Unsupported primary '%s'\n",
            get_string_from_token_atom(cur_tok->type));
+    exit(1);
   }
   }
   return NULL;
@@ -529,15 +545,22 @@ struct ast_node *parse_fn_call(struct parser_state *parser) {
   }
   increment_token_index(parser);
   if (get_current_token(parser)->type != RIGHT_PAREN) {
-    do {
-      if (get_current_token(parser)->type == COMMA) {
-        increment_token_index(parser);
-      }
-      vector_push_back(fn_call->fn_call.parameters, parse_expression(parser));
-    } while (get_current_token(parser)->type == COMMA);
+    parse_parameters(parser, fn_call->fn_call.parameters);
+  }
+  if (get_current_token(parser)->type != RIGHT_PAREN) {
+    printf("Function call must end with ')'\n");
+    exit(1);
   }
   increment_token_index(parser);
   return fn_call;
+}
+
+void parse_parameters(struct parser_state *parser, struct vector *parameters) {
+  vector_push_back(parameters, parse_expression(parser));
+  while (get_current_token(parser)->type == COMMA) {
+    increment_token_index(parser);
+    vector_push_back(parameters, parse_expression(parser));
+  }
 }
 
 struct ast_node *parse_array_creation(struct parser_state *parser) {

@@ -28,8 +28,9 @@ enum ast_primary_node_type {
   BOOLEAN_PRIMARY_NODE,
   NIL_PRIMARY_NODE,
   FN_CALL_PRIMARY_NODE,
+  METHOD_CALL_PRIMARY_NODE,
   ARRAY_CREATION_PRIMARY_NODE,
-  ARRAY_ACCESS_PRIMARY_NODE
+  ARRAY_ACCESS_PRIMARY_NODE,
 };
 
 struct ast_node {
@@ -116,6 +117,12 @@ struct ast_node {
       char *id;
       struct vector *parameters; /* Vector of `ast_node` of expressions */
     } fn_call;
+
+    /* Method call */
+    struct {
+      struct ast_node *object;
+      struct ast_node *member; /* Function call */
+    } method_call;
 
     /* Array node */
     struct vector *array; /* Vector of `ast_node` of expressions */
