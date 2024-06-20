@@ -12,6 +12,9 @@ int main(int argc, const char *argv[]) {
 		"break_stmt.jix",
 		"functions.jix",
 		"array_test1.jix",
+		"array_test2.jix",
+		"array_add.jix",
+		"array_len.jix",
 	};
 
 	long expected_results[] = {
@@ -23,6 +26,9 @@ int main(int argc, const char *argv[]) {
 		20,
 		10,
 		7,
+		10,
+		1,
+		1,
 	};
 
 	const char *test_name[] = {
@@ -34,6 +40,9 @@ int main(int argc, const char *argv[]) {
 		"Break statement",
 		"Functions",
 		"Array test 1",
+		"Array test 2",
+		"Array add() test",
+		"Array len() test",
 	};
 
 	size_t total_tests = sizeof(test_files) / sizeof(test_files[0]);

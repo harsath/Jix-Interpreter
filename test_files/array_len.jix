@@ -1,0 +1,12 @@
+let x = [10, 20, 30];
+let y = [1, [2, x, 4], 5];
+
+let length_before = y[1][1].len();
+y[1][1].add(40, 50);
+let length_after = y[1][1].len();
+
+if ((length_before == 3) && (length_after == 5)) {
+    return 1;
+} 
+
+return 0;

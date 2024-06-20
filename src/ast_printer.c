@@ -208,7 +208,9 @@ void print_primary_expression(struct ast_node *node,
     break;
   }
   case STRING_PRIMARY_NODE: {
-    string_builder_append(str, node->string);
+    string_builder_append(str, "\"");
+    string_builder_append(str, escape_special_characters(node->string));
+    string_builder_append(str, "\"");
     break;
   }
   case IDENTIFIER_PRIMARY_NODE: {
@@ -237,6 +239,12 @@ void print_primary_expression(struct ast_node *node,
       }
     }
     string_builder_append(str, " ) ");
+    break;
+  }
+  case METHOD_CALL_PRIMARY_NODE: {
+    print_primary_expression(node->method_call.object, str);
+    string_builder_append(str, ".");
+    print_primary_expression(node->method_call.member, str);
     break;
   }
   case ARRAY_CREATION_PRIMARY_NODE: {
@@ -268,4 +276,41 @@ char *get_indent_str(size_t indent_level) {
     return buffer;
   }
   return "";
+}
+
+char *escape_special_characters(const char *input) {
+  size_t len = strlen(input);
+  size_t new_len = len * 2 + 1; /* Estimated worst case new string length */
+  char *escaped_str = malloc(new_len);
+  size_t j = 0;
+  for (size_t i = 0; i < len; i++) {
+    switch (input[i]) {
+    case '\n': {
+      escaped_str[j++] = '\\';
+      escaped_str[j++] = 'n';
+      break;
+    }
+    case '\t': {
+      escaped_str[j++] = '\\';
+      escaped_str[j++] = 't';
+      break;
+    }
+    case '\\': {
+      escaped_str[j++] = '\\';
+      escaped_str[j++] = '\\';
+      break;
+    }
+    case '\"': {
+      escaped_str[j++] = '\\';
+      escaped_str[j++] = '\"';
+      break;
+    }
+    default: {
+      escaped_str[j++] = input[i];
+      break;
+    }
+    }
+  }
+  escaped_str[j] = 0;
+  return escaped_str;
 }

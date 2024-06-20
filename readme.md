@@ -8,6 +8,8 @@ See `examples` directory for examples of programs Jix supports.
 ## Features: 
 - Dynamic types (int, bool, and string)
 - Arrays
+    - `add()`
+    - `len()`
 - Functions
 - Builtin functions
     - Print()
