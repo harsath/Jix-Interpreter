@@ -319,6 +319,7 @@ struct object *eval_unary_expression(struct ast_node *ast,
 struct object *eval_logical_expression(enum token_type op, struct object *lhs,
                                        struct object *rhs) {
   struct object *returner = malloc(sizeof(struct object));
+  returner->data_type = BOOLEAN_VALUE;
   returner->bool_value = (op == AND) ? (lhs->bool_value && rhs->bool_value)
                                      : (lhs->bool_value || rhs->bool_value);
   return returner;
