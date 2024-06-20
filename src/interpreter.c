@@ -26,51 +26,53 @@ struct object *interpret(struct vector *program) {
 void interpret_statement(struct ast_node *stmt_node,
                          struct interpreter_state *state,
                          struct return_value *return_code) {
-  switch (stmt_node->node_type) {
-  case FN_DEF_STMT: {
-    interpret_fn_def_statement(stmt_node, state);
-    break;
-  }
-  case VARIABLE_DECL_STMT: {
-    interpret_variable_decl_statement(stmt_node, state, return_code);
-    break;
-  }
-  case VARIABLE_ASSIGN_STMT: {
-    interpret_variable_assignment_statement(stmt_node, state, return_code);
-    break;
-  }
-  case IF_STMT: {
-    interpret_if_statement(stmt_node, state, return_code);
-    break;
-  }
-  case WHILE_STMT: {
-    interpret_while_statement(stmt_node, state, return_code);
-    break;
-  }
-  case FOR_STMT: {
-    interpret_for_statement(stmt_node, state, return_code);
-    break;
-  }
-  case BREAK_STMT: {
-    interpret_break_statement(stmt_node, state, return_code);
-    break;
-  }
-  case RETURN_STMT: {
-    interpret_return_statement(stmt_node, state, return_code);
-    break;
-  }
-  case BLOCK_STMT: {
-    interpret_block_statement(stmt_node, state, return_code);
-    break;
-  }
-  case EXPR_STMT: {
-    interpret_expr_statement(stmt_node, state, return_code);
-    break;
-  }
-  default: {
-    printf("Invalid statement\n");
-    exit(1);
-  }
+  if (!return_code->is_set) {
+    switch (stmt_node->node_type) {
+    case FN_DEF_STMT: {
+      interpret_fn_def_statement(stmt_node, state);
+      break;
+    }
+    case VARIABLE_DECL_STMT: {
+      interpret_variable_decl_statement(stmt_node, state, return_code);
+      break;
+    }
+    case VARIABLE_ASSIGN_STMT: {
+      interpret_variable_assignment_statement(stmt_node, state, return_code);
+      break;
+    }
+    case IF_STMT: {
+      interpret_if_statement(stmt_node, state, return_code);
+      break;
+    }
+    case WHILE_STMT: {
+      interpret_while_statement(stmt_node, state, return_code);
+      break;
+    }
+    case FOR_STMT: {
+      interpret_for_statement(stmt_node, state, return_code);
+      break;
+    }
+    case BREAK_STMT: {
+      interpret_break_statement(stmt_node, state, return_code);
+      break;
+    }
+    case RETURN_STMT: {
+      interpret_return_statement(stmt_node, state, return_code);
+      break;
+    }
+    case BLOCK_STMT: {
+      interpret_block_statement(stmt_node, state, return_code);
+      break;
+    }
+    case EXPR_STMT: {
+      interpret_expr_statement(stmt_node, state, return_code);
+      break;
+    }
+    default: {
+      printf("Invalid statement\n");
+      exit(1);
+    }
+    }
   }
 }
 
