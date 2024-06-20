@@ -47,5 +47,7 @@ struct token *get_next_token(struct parser_state *parser);
 void increment_token_index(struct parser_state *parser);
 bool check_index_bound(struct parser_state *parser);
 bool invalid_data_type(enum token_type type);
+void consume_token(struct token *current_token, enum token_type expected_token, struct parser_state *parser);
+void check_token(struct token *current_token, enum token_type expected_token, const char *error_message);
 
 #endif

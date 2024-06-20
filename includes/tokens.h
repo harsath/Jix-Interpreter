@@ -52,13 +52,14 @@ struct token {
   enum token_type type;
   const char *token_char;
   size_t token_char_len;
+  size_t token_line;
 };
 
 enum token_type get_token_atom_from_string(const char *key);
 enum token_type get_keyword_token_from_string(const char *key);
 const char *get_string_from_token_atom(enum token_type type);
 struct token *create_token(enum token_type type, const char *token_char,
-                           size_t token_char_len);
+                           size_t token_char_len, size_t token_line);
 char *number_to_char(long number);
 
 #endif

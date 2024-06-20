@@ -411,7 +411,8 @@ struct ast_node *parse_unary(struct parser_state *parser) {
 
 struct ast_node *parse_extended_primary(struct parser_state *parser) {
   struct ast_node *primary = parse_primary(parser);
-  while (get_current_token(parser)->type == LEFT_PAREN || get_current_token(parser)->type == LEFT_BRACKET) {
+  while (get_current_token(parser)->type == LEFT_PAREN ||
+         get_current_token(parser)->type == LEFT_BRACKET) {
     if (get_current_token(parser)->type == LEFT_BRACKET) {
       increment_token_index(parser);
       struct ast_node *index = parse_expression(parser);
@@ -475,7 +476,7 @@ struct ast_node *parse_primary(struct parser_state *parser) {
   case IDENTIFIER: {
     if (get_next_token(parser)->type == LEFT_PAREN) {
       return parse_fn_call(parser);
-    } 
+    }
     struct ast_node *identifier_node = malloc(sizeof(struct ast_node));
     identifier_node->node_type = PRIMARY_NODE;
     identifier_node->primary_node_type = IDENTIFIER_PRIMARY_NODE;
@@ -508,8 +509,8 @@ struct ast_node *parse_primary(struct parser_state *parser) {
     struct ast_node *expr = parse_expression(parser);
     cur_tok = get_current_token(parser);
     if (cur_tok->type != RIGHT_PAREN) {
-      printf("Expecting ')' after the expression, got '%.*s'\n", cur_tok->token_char_len,
-             cur_tok->token_char);
+      printf("Expecting ')' after the expression, got '%.*s'\n",
+             cur_tok->token_char_len, cur_tok->token_char);
       exit(1);
     }
     increment_token_index(parser);
@@ -532,8 +533,9 @@ struct ast_node *parse_fn_call(struct parser_state *parser) {
   // TODO: Change this to accept arrays and others
   struct token *current_token = get_current_token(parser);
   if (current_token->type != IDENTIFIER) {
-      printf("Currently only accepts functions calls with `id` of type IDENTIFIER.\n");
-      exit(1);
+    printf("Currently only accepts functions calls with `id` of type "
+           "IDENTIFIER.\n");
+    exit(1);
   }
   fn_call->fn_call.id = create_token_string_copy(current_token->token_char, 0,
                                                  current_token->token_char_len);
@@ -567,11 +569,11 @@ struct ast_node *parse_array_creation(struct parser_state *parser) {
   increment_token_index(parser);
   struct vector *array = vector_init();
   if (get_current_token(parser)->type != RIGHT_BRACKET) {
-      vector_push_back(array, parse_expression(parser));
+    vector_push_back(array, parse_expression(parser));
     do {
       increment_token_index(parser);
       vector_push_back(array, parse_expression(parser));
-    } while(get_current_token(parser)->type == COMMA);
+    } while (get_current_token(parser)->type == COMMA);
   }
   increment_token_index(parser);
   struct ast_node *array_node = malloc(sizeof(struct ast_node));
@@ -599,4 +601,27 @@ void increment_token_index(struct parser_state *parser) {
 
 bool check_index_bound(struct parser_state *parser) {
   return parser->current_token_index < parser->tokens->size;
+}
+
+void consume_token(struct token *current_token, enum token_type expected_token,
+                   struct parser_state *parser) {
+  if (current_token->type != expected_token) {
+    printf("Line %li:\tExpected %s, got %s (%.*s)", current_token->token_line,
+           get_string_from_token_atom(expected_token),
+           get_string_from_token_atom(current_token->type),
+           (int)current_token->token_char_len, current_token->token_char);
+  }
+  increment_token_index(parser);
+}
+
+void check_token(struct token *current_token, enum token_type expected_token,
+                 const char *error_message) {
+  if (current_token->type != expected_token) {
+    printf("Line %li:\tExpected %s, got %s (%.*s). %s",
+           current_token->token_line,
+           get_string_from_token_atom(expected_token),
+           get_string_from_token_atom(current_token->type),
+           (int)current_token->token_char_len, current_token->token_char,
+           error_message);
+  }
 }
