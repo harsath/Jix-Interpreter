@@ -8,6 +8,7 @@ struct vector *scan_tokens(const char *source_code) {
   }
   struct vector *tokens = vector_init();
   size_t current_index = 0;
+  size_t current_line = 1;
   size_t start_index = 0;
   size_t source_code_len = strlen(source_code);
   while (current_index != source_code_len) {
@@ -16,70 +17,75 @@ struct vector *scan_tokens(const char *source_code) {
       while (isdigit(source_code[current_index])) {
         current_index++;
       }
-      struct token *token_ = create_token(NUMBER, (source_code + start_index),
-                                          (current_index - start_index));
+      struct token *token_ =
+          create_token(NUMBER, (source_code + start_index),
+                       (current_index - start_index), current_line);
       vector_push_back(tokens, token_);
     } else if (source_code[current_index] == '(') {
       current_index++;
       struct token *token_ =
           create_token(LEFT_PAREN, (source_code + start_index),
-                       (current_index - start_index));
+                       (current_index - start_index), current_line);
       vector_push_back(tokens, token_);
     } else if (source_code[current_index] == ')') {
       current_index++;
       struct token *token_ =
           create_token(RIGHT_PAREN, (source_code + start_index),
-                       (current_index - start_index));
+                       (current_index - start_index), current_line);
       vector_push_back(tokens, token_);
     } else if (source_code[current_index] == '{') {
       current_index++;
       struct token *token_ =
           create_token(LEFT_BRACE, (source_code + start_index),
-                       (current_index - start_index));
+                       (current_index - start_index), current_line);
       vector_push_back(tokens, token_);
     } else if (source_code[current_index] == '}') {
       current_index++;
       struct token *token_ =
           create_token(RIGHT_BRACE, (source_code + start_index),
-                       (current_index - start_index));
+                       (current_index - start_index), current_line);
       vector_push_back(tokens, token_);
     } else if (source_code[current_index] == '[') {
       current_index++;
       struct token *token_ =
           create_token(LEFT_BRACKET, (source_code + start_index),
-                       (current_index - start_index));
+                       (current_index - start_index), current_line);
       vector_push_back(tokens, token_);
     } else if (source_code[current_index] == ']') {
       current_index++;
       struct token *token_ =
           create_token(RIGHT_BRACKET, (source_code + start_index),
-                       (current_index - start_index));
+                       (current_index - start_index), current_line);
       vector_push_back(tokens, token_);
     } else if (source_code[current_index] == ',') {
       current_index++;
-      struct token *token_ = create_token(COMMA, (source_code + start_index),
-                                          (current_index - start_index));
+      struct token *token_ =
+          create_token(COMMA, (source_code + start_index),
+                       (current_index - start_index), current_line);
       vector_push_back(tokens, token_);
     } else if (source_code[current_index] == '.') {
       current_index++;
-      struct token *token_ = create_token(DOT, (source_code + start_index),
-                                          (current_index - start_index));
+      struct token *token_ =
+          create_token(DOT, (source_code + start_index),
+                       (current_index - start_index), current_line);
       vector_push_back(tokens, token_);
     } else if (source_code[current_index] == '-') {
       current_index++;
-      struct token *token_ = create_token(MINUS, (source_code + start_index),
-                                          (current_index - start_index));
+      struct token *token_ =
+          create_token(MINUS, (source_code + start_index),
+                       (current_index - start_index), current_line);
       vector_push_back(tokens, token_);
     } else if (source_code[current_index] == '+') {
       current_index++;
-      struct token *token_ = create_token(PLUS, (source_code + start_index),
-                                          (current_index - start_index));
+      struct token *token_ =
+          create_token(PLUS, (source_code + start_index),
+                       (current_index - start_index), current_line);
       vector_push_back(tokens, token_);
     } else if (source_code[current_index] == ';') {
       current_index++;
       struct token *token_ =
           create_token(SEMICOLON, (source_code + start_index),
-                       (current_index - start_index));
+                       (current_index - start_index), current_line);
       vector_push_back(tokens, token_);
     } else if (source_code[current_index] == '/') {
       current_index++;
@@ -88,15 +94,18 @@ struct vector *scan_tokens(const char *source_code) {
         while (source_code[current_index] != '\n') {
           current_index++;
         }
+        current_line++;
       } else {
-        struct token *token_ = create_token(SLASH, (source_code + start_index),
-                                            (current_index - start_index));
+        struct token *token_ =
+            create_token(SLASH, (source_code + start_index),
+                         (current_index - start_index), current_line);
         vector_push_back(tokens, token_);
       }
     } else if (source_code[current_index] == '*') {
       current_index++;
-      struct token *token_ = create_token(STAR, (source_code + start_index),
-                                          (current_index - start_index));
+      struct token *token_ =
+          create_token(STAR, (source_code + start_index),
+                       (current_index - start_index), current_line);
       vector_push_back(tokens, token_);
     } else if (source_code[current_index] == '=') {
       current_index++;
@@ -104,11 +113,12 @@ struct vector *scan_tokens(const char *source_code) {
         current_index++;
         struct token *token_ =
             create_token(EQUAL_EQUAL, (source_code + start_index),
-                         (current_index - start_index));
+                         (current_index - start_index), current_line);
         vector_push_back(tokens, token_);
       } else {
-        struct token *token_ = create_token(EQUAL, (source_code + start_index),
-                                            (current_index - start_index));
+        struct token *token_ =
+            create_token(EQUAL, (source_code + start_index),
+                         (current_index - start_index), current_line);
         vector_push_back(tokens, token_);
       }
 
@@ -118,11 +128,12 @@ struct vector *scan_tokens(const char *source_code) {
         current_index++;
         struct token *token_ =
             create_token(BANG_EQUAL, (source_code + start_index),
-                         (current_index - start_index));
+                         (current_index - start_index), current_line);
         vector_push_back(tokens, token_);
       } else {
-        struct token *token_ = create_token(BANG, (source_code + start_index),
-                                            (current_index - start_index));
+        struct token *token_ =
+            create_token(BANG, (source_code + start_index),
+                         (current_index - start_index), current_line);
         vector_push_back(tokens, token_);
       }
     } else if (source_code[current_index] == '>') {
@@ -131,12 +142,12 @@ struct vector *scan_tokens(const char *source_code) {
         current_index++;
         struct token *token_ =
             create_token(GREATER_EQUAL, (source_code + start_index),
-                         (current_index - start_index));
+                         (current_index - start_index), current_line);
         vector_push_back(tokens, token_);
       } else {
         struct token *token_ =
             create_token(GREATER, (source_code + start_index),
-                         (current_index - start_index));
+                         (current_index - start_index), current_line);
         vector_push_back(tokens, token_);
       }
     } else if (source_code[current_index] == '<') {
@@ -145,19 +156,21 @@ struct vector *scan_tokens(const char *source_code) {
         current_index++;
         struct token *token_ =
             create_token(LESS_EQUAL, (source_code + start_index),
-                         (current_index - start_index));
+                         (current_index - start_index), current_line);
         vector_push_back(tokens, token_);
       } else {
-        struct token *token_ = create_token(LESS, (source_code + start_index),
-                                            (current_index - start_index));
+        struct token *token_ =
+            create_token(LESS, (source_code + start_index),
+                         (current_index - start_index), current_line);
         vector_push_back(tokens, token_);
       }
     } else if (source_code[current_index] == '&') {
       current_index++;
       if (source_code[current_index] == '&') {
         current_index++;
-        struct token *token_ = create_token(AND, (source_code + start_index),
-                                            (current_index - start_index));
+        struct token *token_ =
+            create_token(AND, (source_code + start_index),
+                         (current_index - start_index), current_line);
         vector_push_back(tokens, token_);
       } else {
         perror("Invalid token '&'\n");
@@ -167,8 +180,9 @@ struct vector *scan_tokens(const char *source_code) {
       current_index++;
       if (source_code[current_index] == '|') {
         current_index++;
-        struct token *token_ = create_token(OR, (source_code + start_index),
-                                            (current_index - start_index));
+        struct token *token_ =
+            create_token(OR, (source_code + start_index),
+                         (current_index - start_index), current_line);
         vector_push_back(tokens, token_);
       } else {
         perror("Invalid token '|'\n");
@@ -186,8 +200,9 @@ struct vector *scan_tokens(const char *source_code) {
           create_token_string_copy(source_code, start_index, current_index);
       enum token_type tok_type = get_keyword_token_from_string(iden_buffer);
       free(iden_buffer);
-      struct token *token_ = create_token(tok_type, (source_code + start_index),
-                                          (current_index - start_index));
+      struct token *token_ =
+          create_token(tok_type, (source_code + start_index),
+                       (current_index - start_index), current_line);
       vector_push_back(tokens, token_);
     } else if (source_code[current_index] == '"') {
       current_index++;
@@ -201,8 +216,8 @@ struct vector *scan_tokens(const char *source_code) {
             source_code, start_index + 1, current_index - 1);
         char *parsed_string = parse_escape_sequences(string_literal);
         free(string_literal);
-        struct token *token_ =
-            create_token(STRING, parsed_string, strlen(parsed_string));
+        struct token *token_ = create_token(
+            STRING, parsed_string, strlen(parsed_string), current_line);
         vector_push_back(tokens, token_);
       } else {
         perror("Non-terminating string");
@@ -211,6 +226,9 @@ struct vector *scan_tokens(const char *source_code) {
                source_code[current_index] == '\n' ||
                source_code[current_index] == '\t' ||
                source_code[current_index] == '\r') {
+      if (source_code[current_index] == '\n') {
+        current_line++;
+      }
       current_index++;
     }
 
