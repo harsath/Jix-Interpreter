@@ -52,7 +52,7 @@ primary             :   NUMBER
                     |   array_access  
                     |   '(' expr ')'
 
-fn_call             :   IDENTIFIER '(' parameters? ')' ;
+fn_call             :   primary '(' parameters? ')' ;
 method_call         :   primary '.' fn_call;
 parameters          :   expr ( ',' expr )* ;
 array_creation      :   '[' ( expr ( ',' expr )* )? ']'
