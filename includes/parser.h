@@ -9,6 +9,7 @@
 
 struct parser_state {
   size_t current_token_index;
+  size_t current_line; /* Current line in source file */
   struct vector *tokens;
 };
 
@@ -16,6 +17,8 @@ struct vector *parse_program(struct vector *tokens);
 struct ast_node *parse_statement(struct parser_state *parser);
 struct ast_node *
 parse_function_definition_statement(struct parser_state *parser);
+void parse_function_definition_parameters(struct vector *parameters,
+                                          struct parser_state *parser);
 struct ast_node *parse_return_statement(struct parser_state *parser);
 struct ast_node *parse_expression_statement(struct parser_state *parser);
 struct ast_node *
@@ -47,7 +50,17 @@ struct token *get_next_token(struct parser_state *parser);
 void increment_token_index(struct parser_state *parser);
 bool check_index_bound(struct parser_state *parser);
 bool invalid_data_type(enum token_type type);
-void consume_token(struct token *current_token, enum token_type expected_token, struct parser_state *parser);
-void check_token(struct token *current_token, enum token_type expected_token, const char *error_message);
+void consume_token(enum token_type expected_token, struct parser_state *parser);
+void check_current_token_type(enum token_type expected_token,
+                              const char *error_message,
+                              struct parser_state *parser);
+void check_ast_node_type(struct ast_node *node,
+                         enum ast_node_type expected_node_type,
+                         const char *error_message,
+                         struct parser_state *parser);
+void check_primary_ast_node_type(struct ast_node *node,
+                                 enum ast_primary_node_type expected_node_type,
+                                 const char *error_message,
+                                 struct parser_state *parser);
 
 #endif

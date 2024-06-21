@@ -8,6 +8,7 @@
 
 struct vector *parse_program(struct vector *tokens) {
   struct parser_state parser = {.tokens = tokens, .current_token_index = 0};
+  parser.current_line = get_current_token(&parser)->token_line;
   struct vector *program = vector_init();
   while (parser.current_token_index < tokens->size) {
     vector_push_back(program, parse_statement(&parser));
@@ -61,39 +62,41 @@ parse_function_definition_statement(struct parser_state *parser) {
   struct ast_node *fn_def_stmt = malloc(sizeof(struct ast_node));
   fn_def_stmt->node_type = FN_DEF_STMT;
   struct token *current_token = get_current_token(parser);
-  if (current_token->type != IDENTIFIER) {
-    printf("Function name must be identifier string.\n");
-    exit(1);
-  }
+  check_current_token_type(IDENTIFIER, "Function name must be identifier",
+                           parser);
   fn_def_stmt->fn_def_stmt.id = create_token_string_copy(
       current_token->token_char, 0, current_token->token_char_len);
   increment_token_index(parser);
   fn_def_stmt->fn_def_stmt.parameters = vector_init();
-  if (get_current_token(parser)->type != LEFT_PAREN) {
-    printf("Function name must be followed by '(' parameters ')'.\n");
-    exit(1);
-  }
-  increment_token_index(parser);
+  consume_token(LEFT_PAREN, parser);
   if (get_current_token(parser)->type != RIGHT_PAREN) {
-    do {
-      /* Fix: fn foo(,bar) {} */
-      if (get_current_token(parser)->type == COMMA) {
-        increment_token_index(parser);
-      }
-      current_token = get_current_token(parser);
-      if (current_token->type != IDENTIFIER) {
-        printf("Parameter name must be identifier string.\n");
-        exit(1);
-      }
-      char *parameter_id = create_token_string_copy(
-          current_token->token_char, 0, current_token->token_char_len);
-      increment_token_index(parser);
-      vector_push_back(fn_def_stmt->fn_def_stmt.parameters, parameter_id);
-    } while (get_current_token(parser)->type == COMMA);
+    parse_function_definition_parameters(fn_def_stmt->fn_def_stmt.parameters,
+                                         parser);
   }
-  increment_token_index(parser);
+  consume_token(RIGHT_PAREN, parser);
   fn_def_stmt->fn_def_stmt.block = parse_block_statement(parser);
   return fn_def_stmt;
+}
+
+void parse_function_definition_parameters(struct vector *parameters,
+                                          struct parser_state *parser) {
+  struct token *current_token = get_current_token(parser);
+  check_current_token_type(IDENTIFIER,
+                           "Parameter name must be identifier string", parser);
+  char *parameter_id = create_token_string_copy(current_token->token_char, 0,
+                                                current_token->token_char_len);
+  vector_push_back(parameters, parameter_id);
+  increment_token_index(parser);
+  while (get_current_token(parser)->type == COMMA) {
+    increment_token_index(parser);
+    current_token = get_current_token(parser);
+    check_current_token_type(
+        IDENTIFIER, "Parameter name must be identifier string", parser);
+    char *parameter_id = create_token_string_copy(
+        current_token->token_char, 0, current_token->token_char_len);
+    vector_push_back(parameters, parameter_id);
+    increment_token_index(parser);
+  }
 }
 
 struct ast_node *
@@ -102,26 +105,16 @@ parse_variable_declaration_statement(struct parser_state *parser) {
   struct ast_node *var_decl_stmt = malloc(sizeof(struct ast_node));
   var_decl_stmt->node_type = VARIABLE_DECL_STMT;
   struct token *current_token = get_current_token(parser);
-  if (current_token->type != IDENTIFIER) {
-    printf("Variable declaration name must be identifier string.\n");
-    exit(1);
-  }
+  check_current_token_type(
+      IDENTIFIER, "Variable declaration name must be identifier string",
+      parser);
   char *id = create_token_string_copy(current_token->token_char, 0,
                                       current_token->token_char_len);
   var_decl_stmt->var_decl_stmt.id = id;
   increment_token_index(parser);
-  if (!check_index_bound(parser) || get_current_token(parser)->type != EQUAL) {
-    printf("Identifier must have '=' next\n");
-    exit(1);
-  }
-  increment_token_index(parser);
+  consume_token(EQUAL, parser);
   var_decl_stmt->var_decl_stmt.expr = parse_expression(parser);
-  if (!check_index_bound(parser) ||
-      get_current_token(parser)->type != SEMICOLON) {
-    printf("Variable declaration must end with ';'\n");
-    exit(1);
-  }
-  increment_token_index(parser);
+  consume_token(SEMICOLON, parser);
   return var_decl_stmt;
 }
 
@@ -130,24 +123,13 @@ parse_variable_assignment_statement(struct parser_state *parser) {
   struct ast_node *var_assign_stmt = malloc(sizeof(struct ast_node));
   var_assign_stmt->node_type = VARIABLE_ASSIGN_STMT;
   struct ast_node *var_id = parse_primary(parser);
-  if (var_id->primary_node_type != IDENTIFIER_PRIMARY_NODE) {
-    printf("Variable assignment identifier string.\n");
-    exit(1);
-  }
+  check_primary_ast_node_type(var_id, IDENTIFIER_PRIMARY_NODE,
+                              "Variable assignment identifier string", parser);
   /* TODO: This has to handle for array access also */
   var_assign_stmt->var_assign_stmt.id = var_id->id;
-  if (!check_index_bound(parser) || get_current_token(parser)->type != EQUAL) {
-    printf("Variable assignment must have '='\n");
-    exit(1);
-  }
-  increment_token_index(parser);
+  consume_token(EQUAL, parser);
   var_assign_stmt->var_assign_stmt.expr = parse_expression(parser);
-  if (!check_index_bound(parser) ||
-      get_current_token(parser)->type != SEMICOLON) {
-    printf("Variable assignment must end with ';'\n");
-    exit(1);
-  }
-  increment_token_index(parser);
+  consume_token(SEMICOLON, parser);
   return var_assign_stmt;
 }
 
@@ -155,17 +137,9 @@ struct ast_node *parse_if_else_statement(struct parser_state *parser) {
   increment_token_index(parser);
   struct ast_node *if_stmt = malloc(sizeof(struct ast_node));
   if_stmt->node_type = IF_STMT;
-  if (get_current_token(parser)->type != LEFT_PAREN) {
-    printf("Keyword 'if' must be followed by '(' <expression> ')'.\n");
-    exit(1);
-  }
-  increment_token_index(parser);
+  consume_token(LEFT_PAREN, parser);
   if_stmt->if_else_stmt.expr = parse_expression(parser);
-  if (get_current_token(parser)->type != RIGHT_PAREN) {
-    printf("The <expression> in 'if' must be followed by ')'.\n");
-    exit(1);
-  }
-  increment_token_index(parser);
+  consume_token(RIGHT_PAREN, parser);
   if_stmt->if_else_stmt.if_block = parse_block_statement(parser);
   if_stmt->if_else_stmt.else_block = NULL;
   if (check_index_bound(parser) && get_current_token(parser)->type == ELSE) {
@@ -179,17 +153,9 @@ struct ast_node *parse_while_statement(struct parser_state *parser) {
   increment_token_index(parser);
   struct ast_node *while_stmt = malloc(sizeof(struct ast_node));
   while_stmt->node_type = WHILE_STMT;
-  if (get_current_token(parser)->type != LEFT_PAREN) {
-    printf("Keyword 'while' must be followed by '(' <expression> ')'.\n");
-    exit(1);
-  }
-  increment_token_index(parser);
+  consume_token(LEFT_PAREN, parser);
   while_stmt->while_stmt.expr = parse_expression(parser);
-  if (get_current_token(parser)->type != RIGHT_PAREN) {
-    printf("The <expression> in 'while' must be followed by ')'.\n");
-    exit(1);
-  }
-  increment_token_index(parser);
+  consume_token(RIGHT_PAREN, parser);
   while_stmt->while_stmt.block = parse_block_statement(parser);
   return while_stmt;
 }
@@ -198,34 +164,22 @@ struct ast_node *parse_for_statement(struct parser_state *parser) {
   increment_token_index(parser);
   struct ast_node *for_stmt = malloc(sizeof(struct ast_node));
   for_stmt->node_type = FOR_STMT;
-  if (get_current_token(parser)->type != LEFT_PAREN) {
-    printf("Keyword 'for' must be followed by '(' <init stmt> <expr stmt> "
-           "<update stmt> ')'.\n");
-    exit(1);
-  }
-  increment_token_index(parser);
+  consume_token(LEFT_PAREN, parser);
   for_stmt->for_stmt.init_stmt = parse_statement(parser);
-  if (for_stmt->for_stmt.init_stmt->node_type != VARIABLE_DECL_STMT) {
-    printf("First statement in 'for' loop must be variable declaration "
-           "statement.\n");
-    exit(1);
-  }
+  check_ast_node_type(
+      for_stmt->for_stmt.init_stmt, VARIABLE_DECL_STMT,
+      "First statement in 'for' loop must be variable declaration statement",
+      parser);
   for_stmt->for_stmt.expr_stmt = parse_statement(parser);
-  if (for_stmt->for_stmt.expr_stmt->node_type != EXPR_STMT) {
-    printf("Second statement in 'for' loop must be an expression statement.\n");
-    exit(1);
-  }
+  check_ast_node_type(
+      for_stmt->for_stmt.expr_stmt, EXPR_STMT,
+      "Second statement in 'for' loop must be an expression statement", parser);
   for_stmt->for_stmt.update_stmt = parse_statement(parser);
-  if (for_stmt->for_stmt.update_stmt->node_type != VARIABLE_ASSIGN_STMT) {
-    printf("Third statement in 'for' loop must be variable assignment "
-           "statement.\n");
-    exit(1);
-  }
-  if (get_current_token(parser)->type != RIGHT_PAREN) {
-    printf("Keyword 'for' loop missing ending ')'.\n");
-    exit(1);
-  }
-  increment_token_index(parser);
+  check_ast_node_type(
+      for_stmt->for_stmt.update_stmt, VARIABLE_ASSIGN_STMT,
+      "Third statement in 'for' loop must be variable assignment statement",
+      parser);
+  consume_token(RIGHT_PAREN, parser);
   for_stmt->for_stmt.block = parse_block_statement(parser);
   return for_stmt;
 }
@@ -234,11 +188,7 @@ struct ast_node *parse_break_statement(struct parser_state *parser) {
   increment_token_index(parser);
   struct ast_node *break_stmt = malloc(sizeof(struct ast_node));
   break_stmt->node_type = BREAK_STMT;
-  if (get_current_token(parser)->type != SEMICOLON) {
-    printf("Semicolon expected at break statement.\n");
-    exit(1);
-  }
-  increment_token_index(parser);
+  consume_token(SEMICOLON, parser);
   return break_stmt;
 }
 
@@ -247,11 +197,7 @@ struct ast_node *parse_return_statement(struct parser_state *parser) {
   struct ast_node *return_stmt = malloc(sizeof(struct ast_node));
   return_stmt->node_type = RETURN_STMT;
   return_stmt->return_stmt_expr = parse_expression(parser);
-  if (get_current_token(parser)->type != SEMICOLON) {
-    printf("Return statement must end with ';'.\n");
-    exit(1);
-  }
-  increment_token_index(parser);
+  consume_token(SEMICOLON, parser);
   return return_stmt;
 }
 
@@ -259,11 +205,7 @@ struct ast_node *parse_expression_statement(struct parser_state *parser) {
   struct ast_node *expr_stmt = malloc(sizeof(struct ast_node));
   expr_stmt->node_type = EXPR_STMT;
   expr_stmt->expr_stmt_expr = parse_expression(parser);
-  if (get_current_token(parser)->type != SEMICOLON) {
-    printf("Expression statement must end with ';'.\n");
-    exit(1);
-  }
-  increment_token_index(parser);
+  consume_token(SEMICOLON, parser);
   return expr_stmt;
 }
 
@@ -276,11 +218,7 @@ struct ast_node *parse_block_statement(struct parser_state *parser) {
          get_current_token(parser)->type != RIGHT_BRACE) {
     vector_push_back(block_stmt->block_stmt_stmts, parse_statement(parser));
   }
-  if (get_current_token(parser)->type != RIGHT_BRACE) {
-    printf("Block statement must end with '}'.\n");
-    exit(1);
-  }
-  increment_token_index(parser);
+  consume_token(RIGHT_BRACE, parser);
   return block_stmt;
 }
 
@@ -416,11 +354,7 @@ struct ast_node *parse_extended_primary(struct parser_state *parser) {
     if (get_current_token(parser)->type == LEFT_BRACKET) {
       increment_token_index(parser);
       struct ast_node *index = parse_expression(parser);
-      if (get_current_token(parser)->type != RIGHT_BRACKET) {
-        printf("Array access must have right bracket. Malformed statement.\n");
-        exit(1);
-      }
-      increment_token_index(parser);
+      consume_token(RIGHT_BRACKET, parser);
       struct ast_node *array_access_primary = malloc(sizeof(struct ast_node));
       array_access_primary->node_type = PRIMARY_NODE;
       array_access_primary->primary_node_type = ARRAY_ACCESS_PRIMARY_NODE;
@@ -440,10 +374,8 @@ struct ast_node *parse_extended_primary(struct parser_state *parser) {
     method_call_primary->primary_node_type = METHOD_CALL_PRIMARY_NODE;
     method_call_primary->method_call.object = primary;
     struct ast_node *method_call_member = parse_fn_call(parser);
-    if (method_call_member->primary_node_type != FN_CALL_PRIMARY_NODE) {
-      printf("Method call must be a function call.\n");
-      exit(1);
-    }
+    check_primary_ast_node_type(method_call_member, FN_CALL_PRIMARY_NODE,
+                                "Method call must be a function call", parser);
     method_call_primary->method_call.member = method_call_member;
     primary = method_call_primary;
   }
@@ -508,12 +440,7 @@ struct ast_node *parse_primary(struct parser_state *parser) {
     increment_token_index(parser);
     struct ast_node *expr = parse_expression(parser);
     cur_tok = get_current_token(parser);
-    if (cur_tok->type != RIGHT_PAREN) {
-      printf("Expecting ')' after the expression, got '%.*s'\n",
-             cur_tok->token_char_len, cur_tok->token_char);
-      exit(1);
-    }
-    increment_token_index(parser);
+    consume_token(RIGHT_PAREN, parser);
     return expr;
   }
   default: {
@@ -532,28 +459,18 @@ struct ast_node *parse_fn_call(struct parser_state *parser) {
   fn_call->fn_call.parameters = vector_init();
   // TODO: Change this to accept arrays and others
   struct token *current_token = get_current_token(parser);
-  if (current_token->type != IDENTIFIER) {
-    printf("Currently only accepts functions calls with `id` of type "
-           "IDENTIFIER.\n");
-    exit(1);
-  }
+  check_current_token_type(
+      IDENTIFIER,
+      "Currently only accepts functions calls with `id` of type IDENTIFIER",
+      parser);
   fn_call->fn_call.id = create_token_string_copy(current_token->token_char, 0,
                                                  current_token->token_char_len);
   increment_token_index(parser);
-  if (get_current_token(parser)->type != LEFT_PAREN) {
-    printf("Function call expression should have '(' <expression> ')' after "
-           "function identifier.\n");
-    exit(1);
-  }
-  increment_token_index(parser);
+  consume_token(LEFT_PAREN, parser);
   if (get_current_token(parser)->type != RIGHT_PAREN) {
     parse_parameters(parser, fn_call->fn_call.parameters);
   }
-  if (get_current_token(parser)->type != RIGHT_PAREN) {
-    printf("Function call must end with ')'\n");
-    exit(1);
-  }
-  increment_token_index(parser);
+  consume_token(RIGHT_PAREN, parser);
   return fn_call;
 }
 
@@ -570,10 +487,10 @@ struct ast_node *parse_array_creation(struct parser_state *parser) {
   struct vector *array = vector_init();
   if (get_current_token(parser)->type != RIGHT_BRACKET) {
     vector_push_back(array, parse_expression(parser));
-    do {
+    while (get_current_token(parser)->type == COMMA) {
       increment_token_index(parser);
       vector_push_back(array, parse_expression(parser));
-    } while (get_current_token(parser)->type == COMMA);
+    }
   }
   increment_token_index(parser);
   struct ast_node *array_node = malloc(sizeof(struct ast_node));
@@ -597,31 +514,63 @@ struct token *get_next_token(struct parser_state *parser) {
 
 void increment_token_index(struct parser_state *parser) {
   parser->current_token_index++;
+  if (check_index_bound(parser)) {
+    parser->current_line = get_current_token(parser)->token_line;
+  }
 }
 
 bool check_index_bound(struct parser_state *parser) {
   return parser->current_token_index < parser->tokens->size;
 }
 
-void consume_token(struct token *current_token, enum token_type expected_token,
+void consume_token(enum token_type expected_token,
                    struct parser_state *parser) {
+  if (!check_index_bound(parser)) {
+    printf("Parser terminated prematurely.\n");
+    exit(1);
+  }
+  struct token *current_token = get_current_token(parser);
   if (current_token->type != expected_token) {
-    printf("Line %li:\tExpected %s, got %s (%.*s)", current_token->token_line,
+    printf("Line %li:\tExpected %s, got %s (%.*s)\n", current_token->token_line,
            get_string_from_token_atom(expected_token),
            get_string_from_token_atom(current_token->type),
            (int)current_token->token_char_len, current_token->token_char);
+    exit(1);
   }
   increment_token_index(parser);
 }
 
-void check_token(struct token *current_token, enum token_type expected_token,
-                 const char *error_message) {
+void check_current_token_type(enum token_type expected_token,
+                              const char *error_message,
+                              struct parser_state *parser) {
+  struct token *current_token = get_current_token(parser);
   if (current_token->type != expected_token) {
-    printf("Line %li:\tExpected %s, got %s (%.*s). %s",
+    printf("Line %li:\tExpected %s, got %s (%.*s). %s\n",
            current_token->token_line,
            get_string_from_token_atom(expected_token),
            get_string_from_token_atom(current_token->type),
            (int)current_token->token_char_len, current_token->token_char,
            error_message);
+    exit(1);
+  }
+}
+
+void check_ast_node_type(struct ast_node *node,
+                         enum ast_node_type expected_node_type,
+                         const char *error_message,
+                         struct parser_state *parser) {
+  if (node->node_type != expected_node_type) {
+    printf("Line %li:\t%s\n", parser->current_line, error_message);
+    exit(1);
+  }
+}
+
+void check_primary_ast_node_type(struct ast_node *node,
+                                 enum ast_primary_node_type expected_node_type,
+                                 const char *error_message,
+                                 struct parser_state *parser) {
+  if (node->primary_node_type != expected_node_type) {
+    printf("Line %li:\t%s", parser->current_line, error_message);
+    exit(1);
   }
 }
