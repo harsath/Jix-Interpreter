@@ -494,10 +494,10 @@ struct token *get_next_token(struct parser_state *parser) {
 }
 
 void increment_token_index(struct parser_state *parser) {
-  parser->current_token_index++;
   if (check_index_bound(parser)) {
     parser->current_line = get_current_token(parser)->token_line;
   }
+  parser->current_token_index++;
 }
 
 bool check_index_bound(struct parser_state *parser) {
@@ -512,7 +512,7 @@ void consume_token(enum token_type expected_token,
   }
   struct token *current_token = get_current_token(parser);
   if (current_token->type != expected_token) {
-    printf("Line %li:\tExpected %s, got %s (%.*s)\n", current_token->token_line,
+    printf("Line %li:\tExpected %s, got %s (%.*s)\n", parser->current_line,
            get_string_from_token_atom(expected_token),
            get_string_from_token_atom(current_token->type),
            (int)current_token->token_char_len, current_token->token_char);
@@ -527,7 +527,7 @@ void check_current_token_type(enum token_type expected_token,
   struct token *current_token = get_current_token(parser);
   if (current_token->type != expected_token) {
     printf("Line %li:\tExpected %s, got %s (%.*s). %s\n",
-           current_token->token_line,
+           parser->current_line,
            get_string_from_token_atom(expected_token),
            get_string_from_token_atom(current_token->type),
            (int)current_token->token_char_len, current_token->token_char,
