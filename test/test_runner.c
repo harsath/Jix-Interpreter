@@ -8,11 +8,11 @@ int main(int argc, const char *argv[]) {
       "while_stmt.jix", "for_stmt.jix",    "break_stmt.jix",
       "functions.jix",  "array_test1.jix", "array_test2.jix",
       "array_add.jix",  "array_len.jix",   "fn_ptr1.jix",
-      "fn_ptr2.jix",
+      "fn_ptr2.jix", "string_concat.jix",
   };
 
   long expected_results[] = {
-      10, 40, 50, 10, 10, 20, 10, 7, 10, 1, 1, 99, 32,
+      10, 40, 50, 10, 10, 20, 10, 7, 10, 1, 1, 99, 32, 10,
   };
 
   const char *test_name[] = {
@@ -29,6 +29,7 @@ int main(int argc, const char *argv[]) {
       "Array len() test",
       "Function pointer test 1",
       "Function pointer test 2",
+      "String concatenation test",
   };
 
   size_t total_tests = sizeof(test_files) / sizeof(test_files[0]);

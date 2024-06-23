@@ -395,10 +395,32 @@ struct object *eval_additive_multiplicative_expression(enum token_type op,
                                                        struct object *lhs,
                                                        struct object *rhs) {
   struct object *returner = malloc(sizeof(struct object));
+  if (lhs->data_type == STRING_VALUE || rhs->data_type == STRING_VALUE) {
+    if (op != PLUS) {
+      printf("Only '+' can be performed on strings.\n");
+      exit(1);
+    }
+    const char *lhs_string;
+    const char *rhs_string;
+    if (lhs->data_type != STRING_VALUE) {
+      lhs_string = convert_object_to_string(lhs);
+      rhs_string = rhs->string_value;
+    } else {
+      lhs_string = lhs->string_value;
+      rhs_string = convert_object_to_string(rhs);
+    }
+    size_t lhs_length = strlen(lhs_string);
+    size_t rhs_length = strlen(rhs_string);
+    returner->data_type = STRING_VALUE;
+    returner->string_value = malloc(lhs_length + rhs_length + 1);
+    sprintf(returner->string_value, "%s%s", lhs_string, rhs_string);
+    returner->string_value[lhs_length + rhs_length + 1] = 0;
+    return returner;
+  }
   returner->data_type = INT_VALUE;
   if (lhs->data_type != INT_VALUE || rhs->data_type != INT_VALUE) {
     printf("For additive and multiplicative expressions, both operands must be "
-           "of integer type.\n");
+           "of integer type or strings.\n");
     exit(1);
   }
   switch (op) {
