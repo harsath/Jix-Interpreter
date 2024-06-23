@@ -10,6 +10,7 @@ See `examples` and `test_files` directories for example programs in Jix.
 - Arrays
     - `add()`
     - `len()`
+    - `pop()`
 - Functions and function pointers
 - Builtin functions
     - Print()

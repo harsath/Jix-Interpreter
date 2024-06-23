@@ -623,6 +623,45 @@ eval_method_call_primary_expression(struct ast_node *ast,
       returner = malloc(sizeof(struct object));
       returner->data_type = INT_VALUE;
       returner->int_value = array_obj->array_value->size;
+    } else if (strcmp(array_method_call_primary->id, "pop") == 0) {
+      if (array_obj->array_value->size <= 0) {
+        printf("Calling .pop() on an empty array.\n");
+        exit(1);
+      }
+      struct vector *member_parameter =
+          ast->method_call.member->fn_call.parameters;
+      if (member_parameter->size > 1) {
+        printf(".pop() only supports one optional argument.\n");
+        exit(1);
+      }
+      if (member_parameter->size == 1) {
+        struct object *index = eval_expression(vector_at(member_parameter, 0), state, return_code);
+        if (index->data_type != INT_VALUE) {
+          printf("The `pos` in .pop(pos) must be an integer \n");
+          exit(1);
+        }
+        /* Positive index */
+        if (index->int_value >= 0) {
+          if (index->int_value >= array_obj->array_value->size) {
+            printf("Index out of bound in .pop(pos)\n");
+            exit(1);
+          }
+          returner = vector_remove_at(array_obj->array_value, index->int_value);
+        } else {
+          /* Negative index */
+          long index_calc = array_obj->array_value->size + index->int_value;
+          if (index_calc < 0) {
+            printf("Index out of bound in .pop(pos)\n");
+            exit(1);
+          }
+          returner = vector_remove_at(array_obj->array_value, index_calc);
+        }
+      } else {
+        /* the `pos` in .pop(pos) is optional. If `pos` is not given, we remove
+         * the last item */
+        returner = vector_remove_at(array_obj->array_value,
+                                    array_obj->array_value->size - 1);
+      }
     } else {
       printf("Invalid method '%s' for array operation.\n",
              array_method_call_primary->id);
