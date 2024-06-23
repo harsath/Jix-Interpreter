@@ -7,9 +7,8 @@
 #include "vector.h"
 
 struct environment {
-  struct hash_table *current_env_variables; /* Key: char*, Value: object* */
-  struct hash_table *current_env_functions; /* Key: char*, Value: function* */
-  struct environment *enclosing_environment;
+  struct hash_table *symbols; /* Key: char*, Value: object* */
+  struct environment *parent_environment;
 };
 
 struct interpreter_state {
@@ -18,19 +17,35 @@ struct interpreter_state {
   struct hash_table *builtin_fns;
 };
 
+/* See documentation "docs/variable references.md" */
 enum object_type {
+  /* Immutable */
   INT_VALUE,
   BOOLEAN_VALUE,
   STRING_VALUE,
+  FUNCTION_VALUE,
+  NIL_VALUE,
+  /* Mutable */
   ARRAY_VALUE,
-  NIL_VALUE
 };
+
 struct object {
   enum object_type data_type;
-  long int_value;
-  bool bool_value;
-  char *string_value;
-  struct vector *array_value; /* Vector of type `object` */
+  union {
+    /* Immutable */
+    long int_value;
+    bool bool_value;
+    char *string_value;
+    struct {
+      bool is_builtin;
+      union {
+        struct builtin_fn *builtin_function;
+        struct function *function_value;
+      };
+    } function_value;
+    /* Mutable */
+    struct vector *array_value;
+  };
 };
 
 struct return_value {
@@ -39,8 +54,8 @@ struct return_value {
 };
 
 struct function {
-  struct vector *parameters; /* Vector of `struct ast_fn_def_parameter' type. */
-  struct ast_node *body;     /* Block statement */
+  struct vector *parameters;
+  struct ast_node *body;
 };
 
 struct object *interpret(struct vector *program);
@@ -102,6 +117,9 @@ struct object *
 eval_fn_call_primary_expression(struct ast_node *ast,
                                 struct interpreter_state *state,
                                 struct return_value *return_code);
+struct object *eval_builtin_fn_call_primary_expression(
+    struct ast_node *ast, struct object *fn_call_primary,
+    struct interpreter_state *state, struct return_value *return_code);
 struct object *
 eval_method_call_primary_expression(struct ast_node *ast,
                                     struct interpreter_state *state,
@@ -117,19 +135,13 @@ eval_array_access_primary_expression(struct ast_node *ast,
 
 struct environment *environment_init();
 struct environment *environment_init_enclosed(struct environment *enclosed_env);
-struct object *environment_lookup_variable(struct environment *env, char *key);
-struct object *environment_lookup_variable_current_env(struct environment *env,
-                                                       char *key);
-void environment_insert_variable(struct environment *env, char *key,
+struct object *environment_lookup_symbol(struct environment *env, char *key);
+struct object *environment_lookup_symbol_current_env(struct environment *env,
+                                                     char *key);
+void environment_insert_symbol(struct environment *env, char *key,
+                               struct object *value);
+void environment_reassign_symbol(struct environment *env, char *key,
                                  struct object *value);
-void environment_update_variable(struct environment *env, char *key,
-                                 struct object *value);
-struct function *environment_lookup_function(struct environment *env,
-                                             char *key);
-struct function *
-environment_lookup_function_current_env(struct environment *env, char *key);
-void environment_insert_function(struct environment *env, char *key,
-                                 struct function *value);
 void environment_free(struct environment *env);
 
 #endif

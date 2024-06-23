@@ -114,7 +114,7 @@ struct ast_node {
 
     /* Function call */
     struct {
-      char *id;
+      struct ast_node *primary;
       struct vector *parameters; /* Vector of `ast_node` of expressions */
     } fn_call;
 

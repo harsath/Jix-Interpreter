@@ -1,0 +1,9 @@
+fn foo() {
+ return 99;
+}
+
+let x = foo;
+
+let y = [1, x, 22];
+
+return y[1]();

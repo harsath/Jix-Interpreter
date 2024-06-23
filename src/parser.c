@@ -363,8 +363,16 @@ struct ast_node *parse_extended_primary(struct parser_state *parser) {
       primary = array_access_primary;
     } else {
       increment_token_index(parser);
-      printf("Function pointer-style calling not yet supported.\n");
-      exit(1);
+      struct ast_node *fn_call = malloc(sizeof(struct ast_node));
+      fn_call->node_type = PRIMARY_NODE;
+      fn_call->primary_node_type = FN_CALL_PRIMARY_NODE;
+      fn_call->fn_call.primary = primary;
+      fn_call->fn_call.parameters = vector_init();
+      if (get_current_token(parser)->type != RIGHT_PAREN) {
+        parse_parameters(parser, fn_call->fn_call.parameters);
+      }
+      consume_token(RIGHT_PAREN, parser);
+      primary = fn_call;
     }
   }
   if (get_current_token(parser)->type == DOT) {
@@ -373,9 +381,7 @@ struct ast_node *parse_extended_primary(struct parser_state *parser) {
     method_call_primary->node_type = PRIMARY_NODE;
     method_call_primary->primary_node_type = METHOD_CALL_PRIMARY_NODE;
     method_call_primary->method_call.object = primary;
-    struct ast_node *method_call_member = parse_fn_call(parser);
-    check_primary_ast_node_type(method_call_member, FN_CALL_PRIMARY_NODE,
-                                "Method call must be a function call", parser);
+    struct ast_node *method_call_member = parse_extended_primary(parser);
     method_call_primary->method_call.member = method_call_member;
     primary = method_call_primary;
   }
@@ -406,9 +412,6 @@ struct ast_node *parse_primary(struct parser_state *parser) {
     return string_node;
   }
   case IDENTIFIER: {
-    if (get_next_token(parser)->type == LEFT_PAREN) {
-      return parse_fn_call(parser);
-    }
     struct ast_node *identifier_node = malloc(sizeof(struct ast_node));
     identifier_node->node_type = PRIMARY_NODE;
     identifier_node->primary_node_type = IDENTIFIER_PRIMARY_NODE;
@@ -450,28 +453,6 @@ struct ast_node *parse_primary(struct parser_state *parser) {
   }
   }
   return NULL;
-}
-
-struct ast_node *parse_fn_call(struct parser_state *parser) {
-  struct ast_node *fn_call = malloc(sizeof(struct ast_node));
-  fn_call->node_type = PRIMARY_NODE;
-  fn_call->primary_node_type = FN_CALL_PRIMARY_NODE;
-  fn_call->fn_call.parameters = vector_init();
-  // TODO: Change this to accept arrays and others
-  struct token *current_token = get_current_token(parser);
-  check_current_token_type(
-      IDENTIFIER,
-      "Currently only accepts functions calls with `id` of type IDENTIFIER",
-      parser);
-  fn_call->fn_call.id = create_token_string_copy(current_token->token_char, 0,
-                                                 current_token->token_char_len);
-  increment_token_index(parser);
-  consume_token(LEFT_PAREN, parser);
-  if (get_current_token(parser)->type != RIGHT_PAREN) {
-    parse_parameters(parser, fn_call->fn_call.parameters);
-  }
-  consume_token(RIGHT_PAREN, parser);
-  return fn_call;
 }
 
 void parse_parameters(struct parser_state *parser, struct vector *parameters) {
