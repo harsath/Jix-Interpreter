@@ -1,0 +1,29 @@
+fn foo() {
+    return [1, 2, 3];
+}
+
+let x = "foo" + 32 + (10 > foo()[0]) + false + foo;
+
+let x_str_expect = "foo32truefalse<function>";
+
+let x_result = 0;
+
+if (x == x_str_expect) {
+    x_result = 1;
+}
+
+let y = "" + [1, 2, 3];
+
+let y_str_expect = "[1, 2, 3]";
+
+let y_result = 0;
+
+if (y == y_str_expect) {
+    y_result = 1;
+}
+
+if (x_result == 1 && y_result == 1) {
+    return 10;
+} else {
+    return 99;
+}

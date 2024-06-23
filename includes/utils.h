@@ -19,4 +19,6 @@ char *create_token_string_copy(const char *char_ptr, size_t start_index,
 struct object *interpreter_pipeline(const char *file_name);
 void print_ast_pipeline(const char *file_name);
 
+const char *convert_object_to_string(struct object *obj);
+
 #endif

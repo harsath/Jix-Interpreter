@@ -1,9 +1,12 @@
 #include "utils.h"
-#include "scanner.h"
-#include "parser.h"
 #include "ast_printer.h"
-#include "tokens.h"
 #include "interpreter.h"
+#include "parser.h"
+#include "scanner.h"
+#include "string_builder.h"
+#include "tokens.h"
+#include "vector.h"
+#include <stdio.h>
 
 char *read_file(const char *file_path) {
   if (!file_path) {
@@ -63,4 +66,51 @@ void print_ast_pipeline(const char *file_name) {
   struct vector *tokens = scan_tokens(input);
   struct vector *program = parse_program(tokens);
   printf("%s", print_ast(program)->str);
+}
+
+const char *convert_object_to_string(struct object *obj) {
+  switch (obj->data_type) {
+  case INT_VALUE: {
+    char *buffer = malloc(20);
+    sprintf(buffer, "%ld", obj->int_value);
+    return buffer;
+  }
+  case BOOLEAN_VALUE: {
+    return obj->bool_value ? "true" : "false";
+  }
+  case FUNCTION_VALUE: {
+    return "<function>";
+  }
+  case NIL_VALUE: {
+    return "nil";
+  }
+  case ARRAY_VALUE: {
+    struct string_builder *str_builder = string_builder_init();
+    string_builder_append(str_builder, "[");
+    for (size_t i = 0; i < obj->array_value->size; i++) {
+      struct object *val = vector_at(obj->array_value, i);
+      if (val->data_type == STRING_VALUE) {
+        string_builder_append(str_builder, "\"");
+        string_builder_append(str_builder, convert_object_to_string(
+                                             vector_at(obj->array_value, i)));
+        string_builder_append(str_builder, "\"");
+      } else {
+        string_builder_append(str_builder, convert_object_to_string(
+                                             vector_at(obj->array_value, i)));
+      }
+      if (i != obj->array_value->size - 1) {
+        string_builder_append(str_builder, ", ");
+      }
+    }
+    string_builder_append(str_builder, "]");
+    return str_builder->str;
+  }
+  case STRING_VALUE: {
+    return obj->string_value;
+  }
+  default: {
+    printf("Unsupported type to convert as string.\n");
+    exit(1);
+  }
+  }
 }
