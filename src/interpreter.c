@@ -81,8 +81,8 @@ void interpret_fn_def_statement(struct ast_node *stmt_node,
   /* Functions are local to environment. Child environments have access to
    * parent environment, but not vice versa. Works much like variable
    * declaration statements. */
-  if (environment_lookup_function_current_env(state->env,
-                                              stmt_node->fn_def_stmt.id)) {
+  if (environment_lookup_symbol_current_env(state->env,
+                                            stmt_node->fn_def_stmt.id)) {
     printf("Function '%s' already exists in current scope.\n",
            stmt_node->fn_def_stmt.id);
     exit(1);
@@ -90,7 +90,12 @@ void interpret_fn_def_statement(struct ast_node *stmt_node,
   struct function *fn_stmt = malloc(sizeof(struct function));
   fn_stmt->body = stmt_node->fn_def_stmt.block;
   fn_stmt->parameters = stmt_node->fn_def_stmt.parameters;
-  environment_insert_function(state->env, stmt_node->fn_def_stmt.id, fn_stmt);
+  struct object *fn_stmt_value = malloc(sizeof(struct object));
+  fn_stmt_value->data_type = FUNCTION_VALUE;
+  fn_stmt_value->function_value.is_builtin = false;
+  fn_stmt_value->function_value.function_value = fn_stmt;
+  environment_insert_symbol(state->env, stmt_node->fn_def_stmt.id,
+                            fn_stmt_value);
 }
 
 void interpret_variable_decl_statement(struct ast_node *stmt_node,
@@ -98,30 +103,30 @@ void interpret_variable_decl_statement(struct ast_node *stmt_node,
                                        struct return_value *return_code) {
   /* Allow creating scope-local variable name of same name in a scope even if it
    * exists in previous scopes. */
-  if (environment_lookup_variable_current_env(state->env,
-                                              stmt_node->var_decl_stmt.id)) {
+  if (environment_lookup_symbol_current_env(state->env,
+                                            stmt_node->var_decl_stmt.id)) {
     printf("Variable '%s' already exists in current scope.\n",
            stmt_node->var_decl_stmt.id);
     exit(1);
   }
   struct object *variable_value =
       eval_expression(stmt_node->var_decl_stmt.expr, state, return_code);
-  environment_insert_variable(state->env, stmt_node->var_decl_stmt.id,
-                              variable_value);
+  environment_insert_symbol(state->env, stmt_node->var_decl_stmt.id,
+                            variable_value);
 }
 
 void interpret_variable_assignment_statement(struct ast_node *stmt_node,
                                              struct interpreter_state *state,
                                              struct return_value *return_code) {
   /* Check current scope, if not traverse to previous parent scope. */
-  if (environment_lookup_variable(state->env, stmt_node->var_assign_stmt.id) ==
+  if (environment_lookup_symbol(state->env, stmt_node->var_assign_stmt.id) ==
       NULL) {
     printf("Variable '%s' does not exist\n", stmt_node->var_assign_stmt.id);
     exit(1);
   }
   struct object *variable_value =
       eval_expression(stmt_node->var_assign_stmt.expr, state, return_code);
-  environment_update_variable(state->env, stmt_node->var_assign_stmt.id,
+  environment_reassign_symbol(state->env, stmt_node->var_assign_stmt.id,
                               variable_value);
 }
 
@@ -443,13 +448,22 @@ struct object *eval_primary_expression(struct ast_node *ast,
     break;
   }
   case IDENTIFIER_PRIMARY_NODE: {
-    struct object *identifier_lookup =
-        environment_lookup_variable(state->env, ast->id);
-    if (!identifier_lookup) {
-      printf("Identifier '%s' does not exist\n", ast->id);
-      exit(1);
+    struct object *symbol_lookup =
+        environment_lookup_symbol(state->env, ast->id);
+    if (!symbol_lookup) {
+      struct builtin_fn *builtin_function =
+          lookup_builtin_fns(state->builtin_fns, ast->id);
+      if (builtin_function != NULL) {
+        returner->data_type = FUNCTION_VALUE;
+        returner->function_value.is_builtin = true;
+        returner->function_value.builtin_function = builtin_function;
+        break;
+      } else {
+        printf("Identifier '%s' does not exist\n", ast->id);
+        exit(1);
+      }
     }
-    returner = identifier_lookup;
+    returner = symbol_lookup;
     break;
   }
   case NIL_PRIMARY_NODE: {
@@ -484,51 +498,33 @@ struct object *
 eval_fn_call_primary_expression(struct ast_node *ast,
                                 struct interpreter_state *state,
                                 struct return_value *return_code) {
-  // TODO: handle builtin functions
-  struct function *fn =
-      environment_lookup_function(state->env, ast->fn_call.id);
-  if (!fn) {
-    struct builtin_fn *builtin_fn_ =
-        lookup_builtin_fns(state->builtin_fns, ast->fn_call.id);
-    /* Check if it's a builtin function */
-    if (!builtin_fn_) {
-      printf("Function name '%s' is not defined.\n", ast->fn_call.id);
-      exit(1);
-    }
-    /* Check builtin function's arity */
-    if (ast->fn_call.parameters->size != builtin_fn_->num_parameters) {
-      printf("Function '%s' takes %ld, gut given %ld\n", ast->fn_call.id,
-             builtin_fn_->num_parameters, ast->fn_call.parameters->size);
-      exit(1);
-    }
-    /* Invoke the builtin function based on arity */
-    if (builtin_fn_->num_parameters == 1) {
-      void *(*fn_ptr)(void *) = builtin_fn_->fn_ptr;
-      fn_ptr(eval_expression(vector_at(ast->fn_call.parameters, 0), state,
-                             return_code));
-    } else if (builtin_fn_->num_parameters == 2) {
-      void *(*fn_ptr)(void *, void *) = builtin_fn_->fn_ptr;
-      fn_ptr(eval_expression(vector_at(ast->fn_call.parameters, 0), state,
-                             return_code),
-             eval_expression(vector_at(ast->fn_call.parameters, 1), state,
-                             return_code));
-    } else {
-      printf("Unsupported number of parameters to bulitn function.\n");
-      exit(1);
-    }
-    return_code->is_set = false;
-    return NULL;
+  struct object *fn_call_primary_eval =
+      eval_primary_expression(ast->fn_call.primary, state, return_code);
+  if (fn_call_primary_eval->data_type != FUNCTION_VALUE) {
+    printf("Function calls can only be performed on callable.\n");
+    exit(1);
   }
+
+  /* Handle builtin functions */
+  if (fn_call_primary_eval->function_value.is_builtin) {
+    return eval_builtin_fn_call_primary_expression(ast, fn_call_primary_eval,
+                                                   state, return_code);
+  }
+
+  /* Handle user-define functions */
   struct environment *parent_env = state->env;
   struct environment *fn_call_env = environment_init_enclosed(parent_env);
   for (size_t i = 0; i < ast->fn_call.parameters->size; i++) {
     struct object *parameter_eval = eval_expression(
         vector_at(ast->fn_call.parameters, i), state, return_code);
-    char *parameter_id = vector_at(fn->parameters, i);
-    environment_insert_variable(fn_call_env, parameter_id, parameter_eval);
+    char *parameter_id = vector_at(
+        fn_call_primary_eval->function_value.function_value->parameters, i);
+    environment_insert_symbol(fn_call_env, parameter_id, parameter_eval);
   }
   state->env = fn_call_env;
-  interpret_block_statement(fn->body, state, return_code);
+  interpret_block_statement(
+      fn_call_primary_eval->function_value.function_value->body, state,
+      return_code);
   struct object *returner = NULL;
   if (return_code->is_set) {
     return_code->is_set = false;
@@ -536,6 +532,39 @@ eval_fn_call_primary_expression(struct ast_node *ast,
   }
   state->env = parent_env;
   return returner;
+}
+
+struct object *eval_builtin_fn_call_primary_expression(
+    struct ast_node *ast, struct object *fn_call_primary,
+    struct interpreter_state *state, struct return_value *return_code) {
+  /* Check builtin function's arity */
+  size_t builtin_fn_arity =
+      fn_call_primary->function_value.builtin_function->num_parameters;
+  if (ast->fn_call.parameters->size != builtin_fn_arity) {
+    printf("Function '%s' takes %ld, gut given %ld\n",
+           fn_call_primary->function_value.builtin_function->fn_name,
+           builtin_fn_arity, ast->fn_call.parameters->size);
+    exit(1);
+  }
+  /* Invoke the builtin function based on arity */
+  if (builtin_fn_arity == 1) {
+    void *(*fn_ptr)(void *) =
+        fn_call_primary->function_value.builtin_function->fn_ptr;
+    fn_ptr(eval_expression(vector_at(ast->fn_call.parameters, 0), state,
+                           return_code));
+  } else if (builtin_fn_arity == 2) {
+    void *(*fn_ptr)(void *, void *) =
+        fn_call_primary->function_value.builtin_function->fn_ptr;
+    fn_ptr(eval_expression(vector_at(ast->fn_call.parameters, 0), state,
+                           return_code),
+           eval_expression(vector_at(ast->fn_call.parameters, 1), state,
+                           return_code));
+  } else {
+    printf("Unsupported number of parameters to bulitn function.\n");
+    exit(1);
+  }
+  return_code->is_set = false;
+  return NULL;
 }
 
 struct object *
@@ -548,7 +577,18 @@ eval_method_call_primary_expression(struct ast_node *ast,
   struct object *array_obj =
       eval_primary_expression(ast->array_access.primary, state, return_code);
   if (array_obj->data_type == ARRAY_VALUE) {
-    if (strcmp(ast->method_call.member->fn_call.id, "add") == 0) {
+    if (ast->method_call.member->primary_node_type != FN_CALL_PRIMARY_NODE) {
+      printf("Array methods can only be function calls.\n");
+      exit(1);
+    }
+    struct ast_node *array_method_call_primary =
+        ast->method_call.member->fn_call.primary;
+    if (array_method_call_primary->primary_node_type !=
+        IDENTIFIER_PRIMARY_NODE) {
+      printf("Method calls to array should must be an identifier type.\n");
+      exit(1);
+    }
+    if (strcmp(array_method_call_primary->id, "add") == 0) {
       for (size_t i = 0; i < ast->method_call.member->fn_call.parameters->size;
            i++) {
         vector_push_back(
@@ -557,13 +597,13 @@ eval_method_call_primary_expression(struct ast_node *ast,
                 vector_at(ast->method_call.member->fn_call.parameters, i),
                 state, return_code));
       }
-    } else if (strcmp(ast->method_call.member->fn_call.id, "len") == 0) {
+    } else if (strcmp(array_method_call_primary->id, "len") == 0) {
       returner = malloc(sizeof(struct object));
       returner->data_type = INT_VALUE;
       returner->int_value = array_obj->array_value->size;
     } else {
       printf("Invalid method '%s' for array operation.\n",
-             ast->method_call.member->fn_call.id);
+             array_method_call_primary->id);
       exit(1);
     }
   } else {
@@ -613,82 +653,56 @@ eval_array_access_primary_expression(struct ast_node *ast,
 
 struct environment *environment_init() {
   struct environment *env = malloc(sizeof(struct environment));
-  env->current_env_variables = hash_table_init();
-  env->current_env_functions = hash_table_init();
-  env->enclosing_environment = NULL;
+  env->symbols = hash_table_init();
+  env->parent_environment = NULL;
   return env;
 }
 
 struct environment *
 environment_init_enclosed(struct environment *enclosed_env) {
   struct environment *env = malloc(sizeof(struct environment));
-  env->current_env_variables = hash_table_init();
-  env->current_env_functions = hash_table_init();
-  env->enclosing_environment = enclosed_env;
+  env->symbols = hash_table_init();
+  env->parent_environment = enclosed_env;
   return env;
 }
 
-struct object *environment_lookup_variable(struct environment *env, char *key) {
-  struct object *cur_env_value =
-      hash_table_lookup(env->current_env_variables, key);
+struct object *environment_lookup_symbol(struct environment *env, char *key) {
+  struct object *cur_env_value = hash_table_lookup(env->symbols, key);
   if (cur_env_value != NULL) {
     return cur_env_value;
   }
-  if (env->enclosing_environment != NULL) {
-    return environment_lookup_variable(env->enclosing_environment, key);
+  if (env->parent_environment != NULL) {
+    return environment_lookup_symbol(env->parent_environment, key);
   }
   return NULL;
 }
 
-struct object *environment_lookup_variable_current_env(struct environment *env,
-                                                       char *key) {
-  return hash_table_lookup(env->current_env_variables, key);
+struct object *environment_lookup_symbol_current_env(struct environment *env,
+                                                     char *key) {
+  return hash_table_lookup(env->symbols, key);
 }
 
-void environment_insert_variable(struct environment *env, char *key,
-                                 struct object *value) {
-  hash_table_insert(env->current_env_variables, key, value);
+void environment_insert_symbol(struct environment *env, char *key,
+                               struct object *value) {
+  hash_table_insert(env->symbols, key, value);
 }
 
-/* Check if the variable exists in the current scope environment. If it is,
- * update it. If it is not, recursively check the parent environment until we
- * reach the global scope. */
-void environment_update_variable(struct environment *env, char *key,
+void environment_reassign_symbol(struct environment *env, char *key,
                                  struct object *value) {
-  struct object *scope = hash_table_lookup(env->current_env_variables, key);
+  struct object *scope = hash_table_lookup(env->symbols, key);
   if (scope != NULL) {
-    hash_table_update(env->current_env_variables, key, value);
+    hash_table_update(env->symbols, key, value);
   } else {
-    if (env->enclosing_environment != NULL) {
-      environment_update_variable(env->enclosing_environment, key, value);
+    if (env->parent_environment != NULL) {
+      environment_reassign_symbol(env->parent_environment, key, value);
     }
   }
 }
 
-struct function *environment_lookup_function(struct environment *env,
-                                             char *key) {
-  struct function *cur_env_value =
-      hash_table_lookup(env->current_env_functions, key);
-  if (cur_env_value != NULL) {
-    return cur_env_value;
-  }
-  if (env->enclosing_environment != NULL) {
-    return environment_lookup_function(env->enclosing_environment, key);
-  }
-  return NULL;
-}
-
-struct function *
-environment_lookup_function_current_env(struct environment *env, char *key) {
-  return hash_table_lookup(env->current_env_functions, key);
-}
-
-void environment_insert_function(struct environment *env, char *key,
-                                 struct function *value) {
-  hash_table_insert(env->current_env_functions, key, value);
-}
-
 void environment_free(struct environment *env) {
-  hash_table_free(env->current_env_variables);
+  if (env->parent_environment != NULL) {
+    environment_free(env->parent_environment);
+  }
+  hash_table_free(env->symbols);
   free(env);
 }

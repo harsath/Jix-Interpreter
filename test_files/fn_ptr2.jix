@@ -1,0 +1,15 @@
+fn lol() {
+  return 32;
+}
+
+fn foo() {
+  return lol;
+}
+
+fn bar() {
+  return foo;
+}
+
+let x = bar;
+
+return x()()();

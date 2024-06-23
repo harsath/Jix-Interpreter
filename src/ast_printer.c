@@ -230,7 +230,7 @@ void print_primary_expression(struct ast_node *node,
     break;
   }
   case FN_CALL_PRIMARY_NODE: {
-    string_builder_append(str, node->fn_call.id);
+    print_primary_expression(node->fn_call.primary, str);
     string_builder_append(str, " ( ");
     for (size_t i = 0; i < node->fn_call.parameters->size; i++) {
       print_expression(vector_at(node->fn_call.parameters, i), str);

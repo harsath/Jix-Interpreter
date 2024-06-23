@@ -34,12 +34,12 @@ block_stmt          :   '{' statement_list '}'
 expression_stmt     :   expr ';'
 
 expr                :   logical_or
-logical_or          :   logical_and ( '||' logical_and )* ;
-logical_and         :   equality ( '&&' equality )* ;
-equality            :   comparative ( ( '==' | '!=' ) comparative )* ;
-comparative         :   additive ( ( '>' | '>=' | '<' | '<=' ) additive )* ;
-additive            :   multiplicative ( ( '+' | '-' ) multiplicative )* ;
-multiplicative      :   unary ( ( '*' | '/' ) unary )* ;
+logical_or          :   logical_and ( '||' logical_and )*
+logical_and         :   equality ( '&&' equality )*
+equality            :   comparative ( ( '==' | '!=' ) comparative )*
+comparative         :   additive ( ( '>' | '>=' | '<' | '<=' ) additive )*
+additive            :   multiplicative ( ( '+' | '-' ) multiplicative )*
+multiplicative      :   unary ( ( '*' | '/' ) unary )*
 unary               :   ( '-' | '!' ) primary
 primary             :   NUMBER 
                     |   STRING 
@@ -52,8 +52,8 @@ primary             :   NUMBER
                     |   array_access  
                     |   '(' expr ')'
 
-fn_call             :   IDENTIFIER '(' parameters? ')' ;
-method_call         :   primary '.' fn_call;
-parameters          :   expr ( ',' expr )* ;
+fn_call             :   primary '(' parameters? ')'
+method_call         :   primary '.' fn_call
+parameters          :   expr ( ',' expr )*
 array_creation      :   '[' ( expr ( ',' expr )* )? ']'
 array_access        :   ( IDENTIFIER | fn_call | array_creation ) '[' expr ']' ( '[' expr ']' )*

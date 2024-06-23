@@ -3,15 +3,13 @@
 
 struct hash_table *init_and_register_builtin_fns() {
   struct hash_table *fn_table = hash_table_init();
-  if (!fn_table) {
-    return NULL;
+  for (size_t i = 0; i < NUM_BUILTIN_FNS; i++) {
+    struct builtin_fn *builtin_fns = malloc(sizeof(struct builtin_fn));
+    builtin_fns[i].fn_name = builtin_fn_names[i];
+    builtin_fns[i].fn_ptr = builtin_print;
+    builtin_fns[i].num_parameters = 1;
+    hash_table_insert(fn_table, builtin_fn_names[i], builtin_fns);
   }
-
-  struct builtin_fn *builtin_fns =
-      malloc(sizeof(struct builtin_fn) * NUM_BUILTIN_FNS);
-  builtin_fns[0].fn_ptr = builtin_print;
-  builtin_fns[0].num_parameters = 1;
-  hash_table_insert(fn_table, strdup("print"), builtin_fns);
   return fn_table;
 }
 
@@ -29,13 +27,13 @@ void *builtin_print(struct object *value) {
     printf("%b", value->bool_value);
     break;
   case STRING_VALUE:
-      printf("%s", value->string_value);
+    printf("%s", value->string_value);
     break;
   case ARRAY_VALUE:
     printf("[ ");
     for (size_t i = 0; i < value->array_value->size; i++) {
       builtin_print(vector_at(value->array_value, i));
-      if(i != value->array_value->size-1) {
+      if (i != value->array_value->size - 1) {
         printf(",");
       }
       printf(" ");
