@@ -10,7 +10,7 @@ See `examples` directory for examples of programs Jix supports.
 - Arrays
     - `add()`
     - `len()`
-- Functions
+- Functions and function pointers
 - Builtin functions
     - Print()
 - Statements
