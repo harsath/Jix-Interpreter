@@ -197,7 +197,7 @@ void print_binary_expression(struct ast_node *node,
 void print_unary_expression(struct ast_node *node, struct string_builder *str) {
   string_builder_append(str, get_string_from_token_atom(node->unary.op));
   string_builder_append(str, " ");
-  print_expression(node->unary.primary, str);
+  print_primary_expression(node->unary.primary, str);
 }
 
 void print_primary_expression(struct ast_node *node,

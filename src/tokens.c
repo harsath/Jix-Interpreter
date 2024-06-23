@@ -232,14 +232,16 @@ const char *get_string_from_token_atom(enum token_type type) {
   }
 }
 
-struct token *create_token(enum token_type type, const char *token_char,
-                           size_t token_char_len, size_t token_line) {
+struct token *create_token(enum token_type type, size_t token_char_start_index,
+                           const char *token_char, size_t token_char_len,
+                           size_t token_line) {
   struct token *token_ = malloc(sizeof(struct token));
   if (!token_) {
     perror("Memory allocation error for token");
     return NULL;
   }
   token_->type = type;
+  token_->token_char_start_index = token_char_start_index;
   token_->token_char = token_char;
   token_->token_char_len = token_char_len;
   token_->token_line = token_line;

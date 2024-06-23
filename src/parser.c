@@ -341,7 +341,7 @@ struct ast_node *parse_unary(struct parser_state *parser) {
     unary->unary.op = current_token_type;
     unary->node_type = UNARY_NODE;
     unary->unary.op = current_token_type;
-    unary->unary.primary = parse_primary(parser);
+    unary->unary.primary = parse_extended_primary(parser);
     return unary;
   }
   return parse_extended_primary(parser);
@@ -512,7 +512,8 @@ void consume_token(enum token_type expected_token,
   }
   struct token *current_token = get_current_token(parser);
   if (current_token->type != expected_token) {
-    printf("Line %li:\tExpected %s, got %s (%.*s)\n", parser->current_line,
+    printf("Line %li, Char %li:\tExpected %s, got %s (%.*s)\n",
+           parser->current_line, current_token->token_char_start_index,
            get_string_from_token_atom(expected_token),
            get_string_from_token_atom(current_token->type),
            (int)current_token->token_char_len, current_token->token_char);
@@ -526,8 +527,8 @@ void check_current_token_type(enum token_type expected_token,
                               struct parser_state *parser) {
   struct token *current_token = get_current_token(parser);
   if (current_token->type != expected_token) {
-    printf("Line %li:\tExpected %s, got %s (%.*s). %s\n",
-           parser->current_line,
+    printf("Line %li, Char %li:\tExpected %s, got %s (%.*s). %s\n",
+           parser->current_line, current_token->token_char_start_index,
            get_string_from_token_atom(expected_token),
            get_string_from_token_atom(current_token->type),
            (int)current_token->token_char_len, current_token->token_char,

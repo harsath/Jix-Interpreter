@@ -29,11 +29,12 @@ bool vector_push_back(struct vector *vector_, void *item) {
   return true;
 }
 
-bool vector_remove_at(struct vector *vector_, size_t index) {
+void *vector_remove_at(struct vector *vector_, size_t index) {
   assert(vector_ != NULL && index >= 0);
   if (vector_->size <= index) {
-    return false;
+    return NULL;
   }
+  void *returner = vector_at(vector_, index);
   size_t current_index = index;
   do {
     void *next_value_ptr = vector_->_internal_buffer[current_index + 1];
@@ -41,7 +42,7 @@ bool vector_remove_at(struct vector *vector_, size_t index) {
     current_index++;
   } while (current_index < vector_->size);
   vector_->size--;
-  return true;
+  return returner;
 }
 
 void *vector_at(struct vector *vector_, size_t index) {
