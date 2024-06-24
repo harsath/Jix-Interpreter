@@ -107,7 +107,7 @@ void print_var_assign_stmt(struct ast_node *node, struct string_builder *str,
                            size_t indent_level) {
   string_builder_append(str, get_indent_str(indent_level));
   string_builder_append(str, "VariableAssignStatement: ");
-  string_builder_append(str, node->var_assign_stmt.id);
+  print_primary_expression(node->var_assign_stmt.primary, str);
   string_builder_append(str, " = ");
   print_expression(node->var_assign_stmt.expr, str);
   string_builder_append(str, "\n");

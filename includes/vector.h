@@ -18,6 +18,7 @@ struct vector {
 
 struct vector *vector_init();
 bool vector_push_back(struct vector *vector_, void *item);
+bool vector_replace_at(struct vector *vector_, size_t index, void *item);
 void *vector_remove_at(struct vector *vector_, size_t index);
 void *vector_at(struct vector *vector_, size_t index);
 void vector_free(struct vector *vector_);

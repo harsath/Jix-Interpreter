@@ -24,11 +24,7 @@ struct ast_node *parse_statement(struct parser_state *parser) {
   case LET:
     return parse_variable_declaration_statement(parser);
   case IDENTIFIER: {
-    if (get_next_token(parser)->type != EQUAL) {
-      return parse_expression_statement(parser);
-    } else {
-      return parse_variable_assignment_statement(parser);
-    }
+    return parse_expression_statement(parser);
   }
   case IF: {
     return parse_if_else_statement(parser);
@@ -119,14 +115,17 @@ parse_variable_declaration_statement(struct parser_state *parser) {
 }
 
 struct ast_node *
-parse_variable_assignment_statement(struct parser_state *parser) {
+parse_variable_assignment_statement(struct parser_state *parser,
+                                    struct ast_node *primary) {
+  if (primary->primary_node_type != IDENTIFIER_PRIMARY_NODE &&
+      primary->primary_node_type != ARRAY_ACCESS_PRIMARY_NODE) {
+    printf("Variable assignments can only be performed on identifiers and "
+           "arrays.\n");
+    exit(1);
+  }
   struct ast_node *var_assign_stmt = malloc(sizeof(struct ast_node));
   var_assign_stmt->node_type = VARIABLE_ASSIGN_STMT;
-  struct ast_node *var_id = parse_primary(parser);
-  check_primary_ast_node_type(var_id, IDENTIFIER_PRIMARY_NODE,
-                              "Variable assignment identifier string", parser);
-  /* TODO: This has to handle for array access also */
-  var_assign_stmt->var_assign_stmt.id = var_id->id;
+  var_assign_stmt->var_assign_stmt.primary = primary;
   consume_token(EQUAL, parser);
   var_assign_stmt->var_assign_stmt.expr = parse_expression(parser);
   consume_token(SEMICOLON, parser);
@@ -202,9 +201,13 @@ struct ast_node *parse_return_statement(struct parser_state *parser) {
 }
 
 struct ast_node *parse_expression_statement(struct parser_state *parser) {
+  struct ast_node *primary = parse_expression(parser);
+  if (get_current_token(parser)->type == EQUAL) {
+    return parse_variable_assignment_statement(parser, primary);
+  }
   struct ast_node *expr_stmt = malloc(sizeof(struct ast_node));
   expr_stmt->node_type = EXPR_STMT;
-  expr_stmt->expr_stmt_expr = parse_expression(parser);
+  expr_stmt->expr_stmt_expr = primary;
   consume_token(SEMICOLON, parser);
   return expr_stmt;
 }

@@ -53,7 +53,7 @@ struct ast_node {
 
     /* Variable assignment statement */
     struct {
-      char *id;
+      struct ast_node *primary;
       struct ast_node *expr;
     } var_assign_stmt;
 
