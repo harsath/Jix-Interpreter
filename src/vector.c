@@ -29,6 +29,15 @@ bool vector_push_back(struct vector *vector_, void *item) {
   return true;
 }
 
+bool vector_replace_at(struct vector *vector_, size_t index, void *item) {
+  assert(vector_ != NULL && index >= 0);
+  if (vector_->size <= index) {
+    return false;
+  }
+  vector_->_internal_buffer[index] = item;
+  return true;
+}
+
 void *vector_remove_at(struct vector *vector_, size_t index) {
   assert(vector_ != NULL && index >= 0);
   if (vector_->size <= index) {

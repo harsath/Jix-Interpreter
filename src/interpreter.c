@@ -119,15 +119,41 @@ void interpret_variable_assignment_statement(struct ast_node *stmt_node,
                                              struct interpreter_state *state,
                                              struct return_value *return_code) {
   /* Check current scope, if not traverse to previous parent scope. */
-  if (environment_lookup_symbol(state->env, stmt_node->var_assign_stmt.id) ==
-      NULL) {
-    printf("Variable '%s' does not exist\n", stmt_node->var_assign_stmt.id);
-    exit(1);
+  if (stmt_node->var_assign_stmt.primary->primary_node_type ==
+      IDENTIFIER_PRIMARY_NODE) {
+    if (environment_lookup_symbol(
+            state->env, stmt_node->var_assign_stmt.primary->id) == NULL) {
+      printf("Variable '%s' does not exist\n",
+             stmt_node->var_assign_stmt.primary->id);
+      exit(1);
+    }
+    struct object *variable_value =
+        eval_expression(stmt_node->var_assign_stmt.expr, state, return_code);
+    environment_reassign_symbol(
+        state->env, stmt_node->var_assign_stmt.primary->id, variable_value);
+  } else {
+    struct object *array_obj = eval_primary_expression(
+        stmt_node->var_assign_stmt.primary->array_access.primary, state,
+        return_code);
+    if (array_obj->data_type != ARRAY_VALUE) {
+      printf("Variable array assignment can only be used for arrays\n");
+      exit(1);
+    }
+    struct object *array_index =
+        eval_expression(stmt_node->var_assign_stmt.primary->array_access.index,
+                        state, return_code);
+    if (array_index->data_type != INT_VALUE) {
+      printf("Variable array assignment index must be an integer\n");
+      exit(1);
+    }
+    if (array_index->int_value >= array_obj->array_value->size) {
+      printf("Index out of bound\n");
+      exit(1);
+    }
+    struct object *expr =
+        eval_expression(stmt_node->var_assign_stmt.expr, state, return_code);
+    vector_replace_at(array_obj->array_value, array_index->int_value, expr);
   }
-  struct object *variable_value =
-      eval_expression(stmt_node->var_assign_stmt.expr, state, return_code);
-  environment_reassign_symbol(state->env, stmt_node->var_assign_stmt.id,
-                              variable_value);
 }
 
 void interpret_if_statement(struct ast_node *stmt_node,
@@ -635,7 +661,8 @@ eval_method_call_primary_expression(struct ast_node *ast,
         exit(1);
       }
       if (member_parameter->size == 1) {
-        struct object *index = eval_expression(vector_at(member_parameter, 0), state, return_code);
+        struct object *index =
+            eval_expression(vector_at(member_parameter, 0), state, return_code);
         if (index->data_type != INT_VALUE) {
           printf("The `pos` in .pop(pos) must be an integer \n");
           exit(1);

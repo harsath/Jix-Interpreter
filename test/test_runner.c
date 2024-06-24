@@ -4,20 +4,22 @@
 int main(int argc, const char *argv[]) {
 
   const char *test_files[] = {
-      "var_decl.jix",   "var_assign.jix",  "if_else_stmt.jix",
-      "while_stmt.jix", "for_stmt.jix",    "break_stmt.jix",
-      "functions.jix",  "array_test1.jix", "array_test2.jix",
-      "array_add.jix",  "array_len.jix",   "array_pop.jix",
-      "fn_ptr1.jix",    "fn_ptr2.jix",     "string_concat.jix",
+      "var_decl.jix",      "var_assign.jix", "var_assign2.jix",
+      "if_else_stmt.jix",  "while_stmt.jix", "for_stmt.jix",
+      "break_stmt.jix",    "functions.jix",  "array_test1.jix",
+      "array_test2.jix",   "array_add.jix",  "array_len.jix",
+      "array_pop.jix",     "fn_ptr1.jix",    "fn_ptr2.jix",
+      "string_concat.jix",
   };
 
   long expected_results[] = {
-      10, 40, 50, 10, 10, 20, 10, 7, 10, 1, 1, 10, 99, 32, 10,
+      10, 40, 99, 50, 10, 10, 20, 10, 7, 10, 1, 1, 10, 99, 32, 10,
   };
 
   const char *test_name[] = {
       "Variable declaration",
       "Variable assignment",
+      "Variable array assignment",
       "If-Else statement",
       "While statement",
       "For statement",
