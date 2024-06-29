@@ -114,3 +114,24 @@ const char *convert_object_to_string(struct object *obj) {
   }
   }
 }
+
+// https://stackoverflow.com/a/1056423
+char *format_string(const char *format, ...) {
+  va_list args;
+  va_list args_copy;
+  int length;
+  char *buffer;
+
+  va_start(args, format);
+  va_copy(args_copy, args);
+  length = vsnprintf(NULL, 0, format, args_copy);
+  va_end(args_copy);
+  buffer = malloc(length + 1);
+  if (buffer == NULL) {
+    va_end(args);
+    return NULL;
+  }
+  vsnprintf(buffer, length + 1, format, args);
+  va_end(args);
+  return buffer;
+}

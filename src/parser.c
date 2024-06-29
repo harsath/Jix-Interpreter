@@ -561,12 +561,11 @@ struct result *consume_token(enum token_type expected_token,
   }
   struct token *current_token = get_current_token(parser);
   if (current_token->type != expected_token) {
-    char *buffer = malloc(150);
-    sprintf(buffer, "Expected %s, but got %s",
-            get_string_from_token_atom(expected_token),
-            get_string_from_token_atom(current_token->type));
+    char *error_message = format_string(
+        "Expected %s, but got %s", get_string_from_token_atom(expected_token),
+        get_string_from_token_atom(current_token->type));
     struct error *error =
-        error_init(ERROR_SYNTAX, buffer, current_token->token_line,
+        error_init(ERROR_SYNTAX, error_message, current_token->token_line,
                    current_token->token_char_start_index);
     return result_error(error);
   }
@@ -578,12 +577,11 @@ struct result *check_current_token_type(enum token_type expected_token,
                                         struct parser_state *parser) {
   struct token *current_token = get_current_token(parser);
   if (current_token->type != expected_token) {
-    char *buffer = malloc(150);
-    sprintf(buffer, "Expected %s, but got %s",
-            get_string_from_token_atom(expected_token),
-            get_string_from_token_atom(current_token->type));
+    char *error_message = format_string(
+        "Expected %s, but got %s", get_string_from_token_atom(expected_token),
+        get_string_from_token_atom(current_token->type));
     struct error *error =
-        error_init(ERROR_SYNTAX, buffer, current_token->token_line,
+        error_init(ERROR_SYNTAX, error_message, current_token->token_line,
                    current_token->token_char_start_index);
     return result_error(error);
   }
@@ -594,12 +592,12 @@ struct result *check_ast_node_type(struct ast_node *node,
                                    enum ast_node_type expected_node_type,
                                    struct parser_state *parser) {
   if (node->node_type != expected_node_type) {
-    char *buffer = malloc(150);
-    sprintf(buffer, "Expected %s, but got %s",
-            get_string_from_ast_node_type(expected_node_type),
-            get_string_from_ast_node_type(node->node_type));
+    char *error_message =
+        format_string("Expected %s, but got %s",
+                      get_string_from_ast_node_type(expected_node_type),
+                      get_string_from_ast_node_type(node->node_type));
     struct error *error =
-        error_init(ERROR_SYNTAX, buffer, parser->current_line, 0);
+        error_init(ERROR_SYNTAX, error_message, parser->current_line, 0);
     return result_error(error);
   }
   return NULL;
@@ -610,12 +608,12 @@ check_primary_ast_node_type(struct ast_node *node,
                             enum ast_primary_node_type expected_node_type,
                             struct parser_state *parser) {
   if (node->primary_node_type != expected_node_type) {
-    char *buffer = malloc(150);
-    sprintf(buffer, "Expected %s, but got %s",
-            get_string_from_primary_ast_node_type(expected_node_type),
-            get_string_from_primary_ast_node_type(node->primary_node_type));
+    char *error_message = format_string(
+        "Expected %s, but got %s",
+        get_string_from_primary_ast_node_type(expected_node_type),
+        get_string_from_primary_ast_node_type(node->primary_node_type));
     struct error *error =
-        error_init(ERROR_SYNTAX, buffer, parser->current_line, 0);
+        error_init(ERROR_SYNTAX, error_message, parser->current_line, 0);
     return result_error(error);
   }
   return NULL;
