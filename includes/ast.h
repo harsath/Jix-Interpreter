@@ -41,63 +41,63 @@ struct ast_node {
     /* Function definition statement */
     struct {
       char *id;
-      struct vector *parameters; /* Vector of `char*` */
-      struct ast_node *block;
+      struct vector *parameters; /* Vector of result(`char*`) */
+      struct result *block;
     } fn_def_stmt;
 
     /* Variable declaration statement */
     struct {
       char *id;
-      struct ast_node *expr;
+      struct result *expr;
     } var_decl_stmt;
 
     /* Variable assignment statement */
     struct {
-      struct ast_node *primary;
-      struct ast_node *expr;
+      struct result *primary;
+      struct result *expr;
     } var_assign_stmt;
 
     /* If-else statement */
     struct {
-      struct ast_node *expr;
-      struct ast_node *if_block;
-      struct ast_node *else_block;
+      struct result *expr;
+      struct result *if_block;
+      struct result *else_block;
     } if_else_stmt;
 
     /* While statement */
     struct {
-      struct ast_node *expr;
-      struct ast_node *block;
+      struct result *expr;
+      struct result *block;
     } while_stmt;
 
     /* For statement */
     struct {
-      struct ast_node *init_stmt;
-      struct ast_node *expr_stmt;
-      struct ast_node *update_stmt;
-      struct ast_node *block;
+      struct result *init_stmt;
+      struct result *expr_stmt;
+      struct result *update_stmt;
+      struct result *block;
     } for_stmt;
 
     /* Return statement */
-    struct ast_node *return_stmt_expr;
+    struct result *return_stmt_expr;
 
     /* Block statement */
     struct vector *block_stmt_stmts;
 
     /* Expression statement */
-    struct ast_node *expr_stmt_expr;
+    struct result *expr_stmt_expr;
 
     /* Binary node */
     struct {
-      struct ast_node *left;
-      struct ast_node *right;
+      struct result *left;
+      struct result *right;
       enum token_type op;
     } binary;
 
     /* Unary node */
     struct {
       enum token_type op;
-      struct ast_node *primary;
+      struct result *primary;
     } unary;
 
     /* Number node */
@@ -114,25 +114,30 @@ struct ast_node {
 
     /* Function call */
     struct {
-      struct ast_node *primary;
-      struct vector *parameters; /* Vector of `ast_node` of expressions */
+      struct result *primary;
+      struct vector
+          *parameters; /* Vector of result(`ast_node`) of expressions */
     } fn_call;
 
     /* Method call */
     struct {
-      struct ast_node *object;
-      struct ast_node *member; /* Function call */
+      struct result *object;
+      struct result *member; /* Function call */
     } method_call;
 
     /* Array node */
-    struct vector *array; /* Vector of `ast_node` of expressions */
+    struct vector *array; /* Vector of result(`ast_node`) of expressions */
 
     /* Array access node */
     struct {
-      struct ast_node *primary; /* One of 3 from grammar */
-      struct ast_node *index;
+      struct result *primary; /* One of 3 from grammar */
+      struct result *index;
     } array_access;
   };
 };
+
+const char *get_string_from_ast_node_type(enum ast_node_type node_type);
+const char *
+get_string_from_primary_ast_node_type(enum ast_primary_node_type node_type);
 
 #endif
