@@ -50,7 +50,7 @@ struct object {
 
 struct return_value {
   bool is_set;
-  struct object *value;
+  struct result *value;
 };
 
 struct function {
@@ -59,76 +59,76 @@ struct function {
 };
 
 struct object *interpret(struct vector *program);
-void interpret_statement(struct ast_node *ast, struct interpreter_state *state,
+struct result *interpret_statement(struct ast_node *ast, struct interpreter_state *state,
                          struct return_value *return_code);
-void interpret_fn_def_statement(struct ast_node *stmt_node,
+struct result *interpret_fn_def_statement(struct ast_node *stmt_node,
                                 struct interpreter_state *state);
-void interpret_expr_statement(struct ast_node *stmt_node,
+struct result *interpret_expr_statement(struct ast_node *stmt_node,
                               struct interpreter_state *state,
                               struct return_value *return_code);
-void interpret_return_statement(struct ast_node *stmt_node,
+struct result *interpret_return_statement(struct ast_node *stmt_node,
                                 struct interpreter_state *state,
                                 struct return_value *return_code);
-void interpret_variable_decl_statement(struct ast_node *stmt_node,
+struct result *interpret_variable_decl_statement(struct ast_node *stmt_node,
                                        struct interpreter_state *state,
                                        struct return_value *return_code);
-void interpret_variable_assignment_statement(struct ast_node *stmt_node,
+struct result *interpret_variable_assignment_statement(struct ast_node *stmt_node,
                                              struct interpreter_state *state,
                                              struct return_value *return_code);
-void interpret_if_statement(struct ast_node *stmt_node,
+struct result *interpret_if_statement(struct ast_node *stmt_node,
                             struct interpreter_state *state,
                             struct return_value *return_code);
-void interpret_while_statement(struct ast_node *stmt_node,
+struct result *interpret_while_statement(struct ast_node *stmt_node,
                                struct interpreter_state *state,
                                struct return_value *return_code);
-void interpret_for_statement(struct ast_node *stmt_node,
+struct result *interpret_for_statement(struct ast_node *stmt_node,
                              struct interpreter_state *state,
                              struct return_value *return_code);
 void interpret_break_statement(struct ast_node *stmt_node,
                                struct interpreter_state *state,
                                struct return_value *return_code);
-void interpret_block_statement(struct ast_node *stmt_node,
+struct result *interpret_block_statement(struct ast_node *stmt_node,
                                struct interpreter_state *state,
                                struct return_value *return_code);
 
-struct object *eval_expression(struct ast_node *ast,
+struct result *eval_expression(struct ast_node *ast,
                                struct interpreter_state *state,
                                struct return_value *return_code);
-struct object *eval_binary_expression(struct ast_node *ast,
+struct result *eval_binary_expression(struct ast_node *ast,
                                       struct interpreter_state *state,
                                       struct return_value *return_code);
-struct object *eval_unary_expression(struct ast_node *ast,
+struct result *eval_unary_expression(struct ast_node *ast,
                                      struct interpreter_state *state,
                                      struct return_value *return_code);
 struct object *eval_logical_expression(enum token_type op, struct object *lhs,
                                        struct object *rhs);
-struct object *eval_equality_expression(enum token_type op, struct object *lhs,
+struct result *eval_equality_expression(enum token_type op, struct object *lhs,
                                         struct object *rhs);
-struct object *eval_comparitive_expression(enum token_type op,
+struct result *eval_comparitive_expression(enum token_type op,
                                            struct object *lhs,
                                            struct object *rhs);
-struct object *eval_additive_multiplicative_expression(enum token_type op,
+struct result *eval_additive_multiplicative_expression(enum token_type op,
                                                        struct object *lhs,
                                                        struct object *rhs);
-struct object *eval_primary_expression(struct ast_node *ast,
+struct result *eval_primary_expression(struct ast_node *ast,
                                        struct interpreter_state *state,
                                        struct return_value *return_code);
-struct object *
+struct result *
 eval_fn_call_primary_expression(struct ast_node *ast,
                                 struct interpreter_state *state,
                                 struct return_value *return_code);
-struct object *eval_builtin_fn_call_primary_expression(
+struct result *eval_builtin_fn_call_primary_expression(
     struct ast_node *ast, struct object *fn_call_primary,
     struct interpreter_state *state, struct return_value *return_code);
-struct object *
+struct result *
 eval_method_call_primary_expression(struct ast_node *ast,
                                     struct interpreter_state *state,
                                     struct return_value *return_code);
-struct object *
+struct result *
 eval_array_creation_primary_expression(struct ast_node *ast,
                                        struct interpreter_state *state,
                                        struct return_value *return_code);
-struct object *
+struct result *
 eval_array_access_primary_expression(struct ast_node *ast,
                                      struct interpreter_state *state,
                                      struct return_value *return_code);
