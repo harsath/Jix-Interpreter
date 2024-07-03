@@ -18,6 +18,9 @@ struct parser *parse_program(struct vector *tokens) {
     if (stmt->type == RESULT_ERROR) {
       vector_push_back(parser_errors, stmt->error);
       reset_parser_to_next_statement(&state);
+      if (check_index_bound(&state)) {
+        consume_token(SEMICOLON, &state);
+      }
     } else {
       vector_push_back(parser->program, stmt->node);
     }
@@ -53,9 +56,10 @@ struct result *parse_statement(struct parser_state *parser) {
   case LEFT_BRACE:
     return parse_block_statement(parser);
   default: {
-    char *error_message = format_string("Unsupported statement type '%s'\n",
-                                        get_string_from_token_atom(stmt->type));
-    return result_error(error_init(ERROR_SYNTAX, error_message, 0));
+    char *error_message = format_string("Unsupported statement type '%.*s'",
+                                        stmt->token_char_len, stmt->token_char);
+    return result_error(
+        error_init(ERROR_SYNTAX, error_message, stmt->token_line));
   }
   }
 }
@@ -421,8 +425,9 @@ struct result *parse_unary(struct parser_state *parser) {
 struct result *parse_extended_primary(struct parser_state *parser) {
   struct result *primary = parse_primary(parser);
   CHECK_AND_RETURN_IF_ERROR_RESULT_NODE(primary);
-  while (get_current_token(parser)->type == LEFT_PAREN ||
-         get_current_token(parser)->type == LEFT_BRACKET) {
+  while (check_index_bound(parser) &&
+         (get_current_token(parser)->type == LEFT_PAREN ||
+          get_current_token(parser)->type == LEFT_BRACKET)) {
     if (get_current_token(parser)->type == LEFT_BRACKET) {
       increment_token_index(parser);
       struct result *index = parse_expression(parser);
@@ -442,7 +447,7 @@ struct result *parse_extended_primary(struct parser_state *parser) {
       fn_call->primary_node_type = FN_CALL_PRIMARY_NODE;
       fn_call->fn_call.primary = primary;
       fn_call->fn_call.parameters = vector_init();
-      if (get_current_token(parser)->type != RIGHT_PAREN) {
+      if (check_index_bound(parser) && get_current_token(parser)->type != RIGHT_PAREN) {
         CHECK_AND_RETURN_IF_ERROR_RESULT_NODE(
             parse_parameters(parser, fn_call->fn_call.parameters));
       }
@@ -451,7 +456,7 @@ struct result *parse_extended_primary(struct parser_state *parser) {
       primary = new_left_result;
     }
   }
-  if (get_current_token(parser)->type == DOT) {
+  if (check_index_bound(parser) && get_current_token(parser)->type == DOT) {
     increment_token_index(parser);
     struct ast_node *method_call_primary = malloc(sizeof(struct ast_node));
     method_call_primary->node_type = PRIMARY_NODE;
@@ -597,9 +602,10 @@ struct result *consume_token(enum token_type expected_token,
   }
   struct token *current_token = get_current_token(parser);
   if (current_token->type != expected_token) {
-    char *error_message = format_string(
-        "Expected %s, but got %s", get_string_from_token_atom(expected_token),
-        get_string_from_token_atom(current_token->type));
+    char *error_message =
+        format_string("Expected '%s', but got '%s'",
+                      get_string_from_token_atom(expected_token),
+                      get_string_from_token_atom(current_token->type));
     struct error *error =
         error_init(ERROR_SYNTAX, error_message, current_token->token_line);
     return result_error(error);
@@ -612,9 +618,10 @@ struct result *check_current_token_type(enum token_type expected_token,
                                         struct parser_state *parser) {
   struct token *current_token = get_current_token(parser);
   if (current_token->type != expected_token) {
-    char *error_message = format_string(
-        "Expected %s, but got %s", get_string_from_token_atom(expected_token),
-        get_string_from_token_atom(current_token->type));
+    char *error_message =
+        format_string("Expected '%s', but got '%s'",
+                      get_string_from_token_atom(expected_token),
+                      get_string_from_token_atom(current_token->type));
     struct error *error =
         error_init(ERROR_SYNTAX, error_message, current_token->token_line);
     return result_error(error);
@@ -627,7 +634,7 @@ struct result *check_ast_node_type(struct ast_node *node,
                                    struct parser_state *parser) {
   if (node->node_type != expected_node_type) {
     char *error_message =
-        format_string("Expected %s, but got %s",
+        format_string("Expected '%s', but got '%s'",
                       get_string_from_ast_node_type(expected_node_type),
                       get_string_from_ast_node_type(node->node_type));
     struct error *error = error_init(ERROR_SYNTAX, error_message,
@@ -643,7 +650,7 @@ check_primary_ast_node_type(struct ast_node *node,
                             struct parser_state *parser) {
   if (node->primary_node_type != expected_node_type) {
     char *error_message = format_string(
-        "Expected %s, but got %s",
+        "Expected '%s', but got '%s'",
         get_string_from_primary_ast_node_type(expected_node_type),
         get_string_from_primary_ast_node_type(node->primary_node_type));
     struct error *error = error_init(ERROR_SYNTAX, error_message,
@@ -654,7 +661,7 @@ check_primary_ast_node_type(struct ast_node *node,
 }
 
 void reset_parser_to_next_statement(struct parser_state *parser) {
-  while (!check_index_bound(parser) &&
+  while (check_index_bound(parser) &&
          get_current_token(parser)->type != SEMICOLON) {
     increment_token_index(parser);
   }
