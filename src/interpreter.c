@@ -29,33 +29,32 @@ struct object *interpret(struct vector *program) {
   return return_code->value->object;
 }
 
-struct result *interpret_statement(struct result *statement,
+struct result *interpret_statement(struct ast_node *statement,
                                    struct interpreter_state *state,
                                    struct return_value *return_code) {
   if (!return_code->is_set) {
-    switch (statement->node->node_type) {
+    switch (statement->node_type) {
     case FN_DEF_STMT:
-      return interpret_fn_def_statement(statement->node, state);
+      return interpret_fn_def_statement(statement, state);
     case VARIABLE_DECL_STMT:
-      return interpret_variable_decl_statement(statement->node, state,
-                                               return_code);
+      return interpret_variable_decl_statement(statement, state, return_code);
     case VARIABLE_ASSIGN_STMT:
-      return interpret_variable_assignment_statement(statement->node, state,
+      return interpret_variable_assignment_statement(statement, state,
                                                      return_code);
     case IF_STMT:
-      return interpret_if_statement(statement->node, state, return_code);
+      return interpret_if_statement(statement, state, return_code);
     case WHILE_STMT:
-      return interpret_while_statement(statement->node, state, return_code);
+      return interpret_while_statement(statement, state, return_code);
     case FOR_STMT:
-      return interpret_for_statement(statement->node, state, return_code);
+      return interpret_for_statement(statement, state, return_code);
     case BREAK_STMT:
-      return interpret_break_statement(statement->node, state, return_code);
+      return interpret_break_statement(statement, state, return_code);
     case RETURN_STMT:
-      return interpret_return_statement(statement->node, state, return_code);
+      return interpret_return_statement(statement, state, return_code);
     case BLOCK_STMT:
-      return interpret_block_statement(statement->node, state, return_code);
+      return interpret_block_statement(statement, state, return_code);
     case EXPR_STMT:
-      return interpret_expr_statement(statement->node, state, return_code);
+      return interpret_expr_statement(statement, state, return_code);
     default: {
       char *error_message = strdup("Invalid statement");
       return result_error(error_init(ERROR_RUNTIME, error_message, 0));

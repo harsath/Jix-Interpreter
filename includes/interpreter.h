@@ -67,7 +67,7 @@ struct function {
 };
 
 struct object *interpret(struct vector *program);
-struct result *interpret_statement(struct result *statement,
+struct result *interpret_statement(struct ast_node *statement,
                                    struct interpreter_state *state,
                                    struct return_value *return_code);
 struct result *interpret_fn_def_statement(struct ast_node *stmt_node,

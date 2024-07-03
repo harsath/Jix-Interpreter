@@ -21,5 +21,6 @@ struct object *interpreter_pipeline(const char *file_name);
 void print_ast_pipeline(const char *file_name);
 const char *convert_object_to_string(struct object *obj);
 char *format_string(const char *format, ...);
+void print_parser_errors(struct vector *parser_errors);
 
 #endif

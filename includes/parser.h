@@ -81,4 +81,11 @@ check_primary_ast_node_type(struct ast_node *node,
                             enum ast_primary_node_type expected_node_type,
                             struct parser_state *parser);
 
+/*
+ * This gets called at statement level when parser encounters an error. To
+ * support fault tolerant parsing, if we encounter a syntax/parser error, we
+ * ignore every token until we encounter ';' and start parsing from there again.
+ */
+void reset_parser_to_next_statement(struct parser_state *parser);
+
 #endif

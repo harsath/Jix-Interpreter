@@ -1,5 +1,6 @@
 #include "utils.h"
 #include "ast_printer.h"
+#include "errors.h"
 #include "interpreter.h"
 #include "parser.h"
 #include "scanner.h"
@@ -54,7 +55,6 @@ struct object *interpreter_pipeline(const char *file_name) {
   struct vector *tokens = scan_tokens(input);
   struct parser *program = parse_program(tokens);
   if (program->parser_errors) {
-    printf("Fix parser errors\n");
     exit(1);
   }
   struct object *interpreter_return_value = interpret(program->program);
@@ -100,11 +100,11 @@ const char *convert_object_to_string(struct object *obj) {
       if (val->data_type == STRING_VALUE) {
         string_builder_append(str_builder, "\"");
         string_builder_append(str_builder, convert_object_to_string(
-                                             vector_at(obj->array_value, i)));
+                                               vector_at(obj->array_value, i)));
         string_builder_append(str_builder, "\"");
       } else {
         string_builder_append(str_builder, convert_object_to_string(
-                                             vector_at(obj->array_value, i)));
+                                               vector_at(obj->array_value, i)));
       }
       if (i != obj->array_value->size - 1) {
         string_builder_append(str_builder, ", ");
@@ -142,4 +142,13 @@ char *format_string(const char *format, ...) {
   vsnprintf(buffer, length + 1, format, args);
   va_end(args);
   return buffer;
+}
+
+void print_parser_errors(struct vector *parser_errors) {
+  for (size_t i = 0; i < parser_errors->size; i++) {
+    struct error *err = vector_at(parser_errors, i);
+    char *error_message =
+        format_string("Syntax Error (line %li): %s\n", err->line, err->message);
+    printf("%s", error_message);
+  }
 }

@@ -12,15 +12,21 @@ struct parser *parse_program(struct vector *tokens) {
   struct parser *parser = malloc(sizeof(struct parser));
   parser->parser_errors = false;
   parser->program = vector_init();
+  struct vector *parser_errors = vector_init();
   while (state.current_token_index < tokens->size) {
     struct result *stmt = parse_statement(&state);
     if (stmt->type == RESULT_ERROR) {
-      parser->parser_errors = true;
-      // TODO: Handle error (skipping to next stmt)
-      printf("PARSER ERROR: %s\n", stmt->error->message);
-      exit(1);
+      vector_push_back(parser_errors, stmt->error);
+      reset_parser_to_next_statement(&state);
+    } else {
+      vector_push_back(parser->program, stmt->node);
     }
-    vector_push_back(parser->program, stmt);
+  }
+  if (parser_errors->size > 0) {
+    parser->parser_errors = true;
+  }
+  if (parser->parser_errors) {
+    print_parser_errors(parser_errors);
   }
   return parser;
 }
@@ -262,7 +268,7 @@ struct result *parse_block_statement(struct parser_state *parser) {
          get_current_token(parser)->type != RIGHT_BRACE) {
     struct result *stmt = parse_statement(parser);
     CHECK_AND_RETURN_IF_ERROR_RESULT_NODE(stmt);
-    vector_push_back(block_stmt->block_stmt_stmts, stmt);
+    vector_push_back(block_stmt->block_stmt_stmts, stmt->node);
   }
   CHECK_AND_RETURN_IF_ERROR_EXISTS(consume_token(RIGHT_BRACE, parser));
   return result_ok_node(block_stmt);
@@ -645,4 +651,11 @@ check_primary_ast_node_type(struct ast_node *node,
     return result_error(error);
   }
   return NULL;
+}
+
+void reset_parser_to_next_statement(struct parser_state *parser) {
+  while (!check_index_bound(parser) &&
+         get_current_token(parser)->type != SEMICOLON) {
+    increment_token_index(parser);
+  }
 }
