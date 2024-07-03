@@ -155,6 +155,7 @@ struct result *parse_variable_assignment_statement(struct parser_state *parser,
   var_assign_stmt->var_assign_stmt.primary = primary;
   CHECK_AND_RETURN_IF_ERROR_EXISTS(consume_token(EQUAL, parser));
   var_assign_stmt->var_assign_stmt.expr = parse_expression(parser);
+  CHECK_AND_RETURN_IF_ERROR_RESULT_NODE(var_assign_stmt->var_assign_stmt.expr);
   CHECK_AND_RETURN_IF_ERROR_EXISTS(consume_token(SEMICOLON, parser));
   var_assign_stmt->source_position.end_line =
       get_previous_token(parser)->token_line;
@@ -447,7 +448,8 @@ struct result *parse_extended_primary(struct parser_state *parser) {
       fn_call->primary_node_type = FN_CALL_PRIMARY_NODE;
       fn_call->fn_call.primary = primary;
       fn_call->fn_call.parameters = vector_init();
-      if (check_index_bound(parser) && get_current_token(parser)->type != RIGHT_PAREN) {
+      if (check_index_bound(parser) &&
+          get_current_token(parser)->type != RIGHT_PAREN) {
         CHECK_AND_RETURN_IF_ERROR_RESULT_NODE(
             parse_parameters(parser, fn_call->fn_call.parameters));
       }
@@ -606,8 +608,8 @@ struct result *consume_token(enum token_type expected_token,
         format_string("Expected '%s', but got '%s'",
                       get_string_from_token_atom(expected_token),
                       get_string_from_token_atom(current_token->type));
-    struct error *error =
-        error_init(ERROR_SYNTAX, error_message, current_token->token_line);
+    struct error *error = error_init(ERROR_SYNTAX, error_message,
+                                     get_previous_token(parser)->token_line);
     return result_error(error);
   }
   increment_token_index(parser);
