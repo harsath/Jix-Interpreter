@@ -28,7 +28,12 @@ struct parser_state {
   struct vector *tokens;
 };
 
-struct vector *parse_program(struct vector *tokens);
+struct parser {
+  bool parser_errors; /* Set to true of there are parser errors */
+  struct vector *program;
+};
+
+struct parser *parse_program(struct vector *tokens);
 struct result *parse_statement(struct parser_state *parser);
 struct result *parse_function_definition_statement(struct parser_state *parser);
 struct result *

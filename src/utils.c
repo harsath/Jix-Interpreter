@@ -52,8 +52,12 @@ struct object *interpreter_pipeline(const char *file_name) {
     return NULL;
   }
   struct vector *tokens = scan_tokens(input);
-  struct vector *program = parse_program(tokens);
-  struct object *interpreter_return_value = interpret(program);
+  struct parser *program = parse_program(tokens);
+  if (program->parser_errors) {
+    printf("Fix parser errors\n");
+    exit(1);
+  }
+  struct object *interpreter_return_value = interpret(program->program);
   vector_free(tokens);
   return interpreter_return_value;
 }
@@ -64,8 +68,12 @@ void print_ast_pipeline(const char *file_name) {
     return;
   }
   struct vector *tokens = scan_tokens(input);
-  struct vector *program = parse_program(tokens);
-  printf("%s", print_ast(program)->str);
+  struct parser *program = parse_program(tokens);
+  if (program->parser_errors) {
+    printf("fix parser errors first\n");
+    exit(1);
+  }
+  printf("%s", print_ast(program->program)->str);
 }
 
 const char *convert_object_to_string(struct object *obj) {

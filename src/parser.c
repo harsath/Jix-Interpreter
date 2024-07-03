@@ -7,15 +7,32 @@
 #include "utils.h"
 #include "vector.h"
 
-struct vector *parse_program(struct vector *tokens) {
-  struct parser_state parser = {.tokens = tokens, .current_token_index = 0};
-  parser.current_line = get_current_token(&parser)->token_line;
-  struct vector *program = vector_init();
-  while (parser.current_token_index < tokens->size) {
-    vector_push_back(program, parse_statement(&parser));
+struct parser *parse_program(struct vector *tokens) {
+  struct parser_state state = {.tokens = tokens, .current_token_index = 0};
+  struct parser *parser = malloc(sizeof(struct parser));
+  parser->parser_errors = false;
+  parser->program = vector_init();
+  state.current_line = get_current_token(&state)->token_line;
+  while (state.current_token_index < tokens->size) {
+    struct result *stmt = parse_statement(&state);
+    if (stmt->type == RESULT_ERROR) {
+      parser->parser_errors = true;
+      // TODO: Handle error (skipping to next stmt)
+      printf("PARSER ERROR: %s\n", stmt->error->message);
+      exit(1);
+    }
+    vector_push_back(parser->program, stmt);
   }
-  return program;
+  return parser;
 }
+
+/* #define PRINT_AND_EXIT_IF_ERROR_PARSER(returner) \ */
+/*   do { \ */
+/*     if (returner->type == RESULT_ERROR) { \ */
+/*       printf("PARSER ERROR: %s\n", returner->error->message); \ */
+/*       exit(1); \ */
+/*     } \ */
+/*   } while (0) */
 
 struct result *parse_statement(struct parser_state *parser) {
   struct token *stmt = get_current_token(parser);
@@ -24,31 +41,24 @@ struct result *parse_statement(struct parser_state *parser) {
     return parse_function_definition_statement(parser);
   case LET:
     return parse_variable_declaration_statement(parser);
-  case IDENTIFIER: {
+  case IDENTIFIER:
     return parse_expression_statement(parser);
-  }
-  case IF: {
+  case IF:
     return parse_if_else_statement(parser);
-  }
-  case WHILE: {
+  case WHILE:
     return parse_while_statement(parser);
-  }
-  case FOR: {
+  case FOR:
     return parse_for_statement(parser);
-  }
-  case BREAK: {
+  case BREAK:
     return parse_break_statement(parser);
-  }
-  case RETURN: {
+  case RETURN:
     return parse_return_statement(parser);
-  }
-  case LEFT_BRACE: {
+  case LEFT_BRACE:
     return parse_block_statement(parser);
-  }
   default: {
-    printf("Unsupported statement type '%s'\n",
-           get_string_from_token_atom(stmt->type));
-    exit(1);
+    char *error_message = format_string("Unsupported statement type '%s'\n",
+                                        get_string_from_token_atom(stmt->type));
+    return result_error(error_init(ERROR_SYNTAX, error_message, 0, 0));
   }
   }
 }
@@ -81,8 +91,8 @@ struct result *
 parse_function_definition_parameters(struct vector *parameters,
                                      struct parser_state *parser) {
   struct token *current_token = get_current_token(parser);
-  struct result *err = check_current_token_type(IDENTIFIER, parser);
-  CHECK_AND_RETURN_IF_ERROR_EXISTS(err);
+  CHECK_AND_RETURN_IF_ERROR_EXISTS(
+      check_current_token_type(IDENTIFIER, parser));
   char *parameter_id = create_token_string_copy(current_token->token_char, 0,
                                                 current_token->token_char_len);
   vector_push_back(parameters, parameter_id);
@@ -123,10 +133,10 @@ struct result *parse_variable_assignment_statement(struct parser_state *parser,
                                                    struct result *primary) {
   if (primary->node->primary_node_type != IDENTIFIER_PRIMARY_NODE &&
       primary->node->primary_node_type != ARRAY_ACCESS_PRIMARY_NODE) {
-    struct error *err = error_init(
-        ERROR_SYNTAX,
-        "Variable assignments can only be performed on identifiers and arrays",
-        parser->current_line, 0);
+    char *error_message = strdup(
+        "Variable assignments can only be performed on identifiers and arrays");
+    struct error *err =
+        error_init(ERROR_SYNTAX, error_message, parser->current_line, 0);
     return result_error(err);
   }
   struct ast_node *var_assign_stmt = malloc(sizeof(struct ast_node));
@@ -205,6 +215,7 @@ struct result *parse_return_statement(struct parser_state *parser) {
   struct ast_node *return_stmt = malloc(sizeof(struct ast_node));
   return_stmt->node_type = RETURN_STMT;
   return_stmt->return_stmt_expr = parse_expression(parser);
+  CHECK_AND_RETURN_IF_ERROR_RESULT_NODE(return_stmt->return_stmt_expr);
   CHECK_AND_RETURN_IF_ERROR_EXISTS(consume_token(SEMICOLON, parser));
   return result_ok_node(return_stmt);
 }
@@ -406,7 +417,8 @@ struct result *parse_extended_primary(struct parser_state *parser) {
       fn_call->fn_call.primary = primary;
       fn_call->fn_call.parameters = vector_init();
       if (get_current_token(parser)->type != RIGHT_PAREN) {
-        parse_parameters(parser, fn_call->fn_call.parameters);
+        CHECK_AND_RETURN_IF_ERROR_RESULT_NODE(
+            parse_parameters(parser, fn_call->fn_call.parameters));
       }
       CHECK_AND_RETURN_IF_ERROR_EXISTS(consume_token(RIGHT_PAREN, parser));
       struct result *new_left_result = result_ok_node(fn_call);
@@ -491,7 +503,6 @@ struct result *parse_primary(struct parser_state *parser) {
     return result_error(error);
   }
   }
-  return NULL;
 }
 
 struct result *parse_parameters(struct parser_state *parser,
@@ -505,7 +516,7 @@ struct result *parse_parameters(struct parser_state *parser,
     CHECK_AND_RETURN_IF_ERROR_RESULT_NODE(expr);
     vector_push_back(parameters, expr);
   }
-  return NULL;
+  return result_ok_node(NULL);
 }
 
 struct result *parse_array_creation(struct parser_state *parser) {
