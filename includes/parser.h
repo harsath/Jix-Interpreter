@@ -24,7 +24,6 @@
 
 struct parser_state {
   size_t current_token_index;
-  size_t current_line; /* Current line in source file */
   struct vector *tokens;
 };
 
