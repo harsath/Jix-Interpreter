@@ -57,8 +57,10 @@ struct result *parse_statement(struct parser_state *parser) {
 
 struct result *
 parse_function_definition_statement(struct parser_state *parser) {
-  increment_token_index(parser);
   struct ast_node *fn_def_stmt = malloc(sizeof(struct ast_node));
+  fn_def_stmt->source_position.start_line =
+      get_current_token(parser)->token_line;
+  increment_token_index(parser);
   fn_def_stmt->node_type = FN_DEF_STMT;
   struct token *current_token = get_current_token(parser);
   CHECK_AND_RETURN_IF_ERROR_EXISTS(
@@ -76,6 +78,8 @@ parse_function_definition_statement(struct parser_state *parser) {
   CHECK_AND_RETURN_IF_ERROR_EXISTS(consume_token(RIGHT_PAREN, parser));
   fn_def_stmt->fn_def_stmt.block = parse_block_statement(parser);
   CHECK_AND_RETURN_IF_ERROR_RESULT_NODE(fn_def_stmt->fn_def_stmt.block);
+  fn_def_stmt->source_position.end_line =
+      get_previous_token(parser)->token_line;
   return result_ok_node(fn_def_stmt);
 }
 
@@ -104,8 +108,10 @@ parse_function_definition_parameters(struct vector *parameters,
 
 struct result *
 parse_variable_declaration_statement(struct parser_state *parser) {
-  increment_token_index(parser);
   struct ast_node *var_decl_stmt = malloc(sizeof(struct ast_node));
+  var_decl_stmt->source_position.start_line =
+      get_current_token(parser)->token_line;
+  increment_token_index(parser);
   var_decl_stmt->node_type = VARIABLE_DECL_STMT;
   struct token *current_token = get_current_token(parser);
   CHECK_AND_RETURN_IF_ERROR_EXISTS(
@@ -118,10 +124,13 @@ parse_variable_declaration_statement(struct parser_state *parser) {
   var_decl_stmt->var_decl_stmt.expr = parse_expression(parser);
   CHECK_AND_RETURN_IF_ERROR_RESULT_NODE(var_decl_stmt->var_decl_stmt.expr);
   CHECK_AND_RETURN_IF_ERROR_EXISTS(consume_token(SEMICOLON, parser));
+  var_decl_stmt->source_position.end_line =
+      get_previous_token(parser)->token_line;
   return result_ok_node(var_decl_stmt);
 }
 
 struct result *parse_variable_assignment_statement(struct parser_state *parser,
+                                                   size_t start_line,
                                                    struct result *primary) {
   if (primary->node->primary_node_type != IDENTIFIER_PRIMARY_NODE &&
       primary->node->primary_node_type != ARRAY_ACCESS_PRIMARY_NODE) {
@@ -132,17 +141,21 @@ struct result *parse_variable_assignment_statement(struct parser_state *parser,
     return result_error(err);
   }
   struct ast_node *var_assign_stmt = malloc(sizeof(struct ast_node));
+  var_assign_stmt->source_position.start_line = start_line;
   var_assign_stmt->node_type = VARIABLE_ASSIGN_STMT;
   var_assign_stmt->var_assign_stmt.primary = primary;
   CHECK_AND_RETURN_IF_ERROR_EXISTS(consume_token(EQUAL, parser));
   var_assign_stmt->var_assign_stmt.expr = parse_expression(parser);
   CHECK_AND_RETURN_IF_ERROR_EXISTS(consume_token(SEMICOLON, parser));
+  var_assign_stmt->source_position.end_line =
+      get_previous_token(parser)->token_line;
   return result_ok_node(var_assign_stmt);
 }
 
 struct result *parse_if_else_statement(struct parser_state *parser) {
-  increment_token_index(parser);
   struct ast_node *if_stmt = malloc(sizeof(struct ast_node));
+  if_stmt->source_position.start_line = get_current_token(parser)->token_line;
+  increment_token_index(parser);
   if_stmt->node_type = IF_STMT;
   CHECK_AND_RETURN_IF_ERROR_EXISTS(consume_token(LEFT_PAREN, parser));
   if_stmt->if_else_stmt.expr = parse_expression(parser);
@@ -156,12 +169,15 @@ struct result *parse_if_else_statement(struct parser_state *parser) {
     if_stmt->if_else_stmt.else_block = parse_block_statement(parser);
     CHECK_AND_RETURN_IF_ERROR_RESULT_NODE(if_stmt->if_else_stmt.else_block);
   }
+  if_stmt->source_position.end_line = get_previous_token(parser)->token_line;
   return result_ok_node(if_stmt);
 }
 
 struct result *parse_while_statement(struct parser_state *parser) {
-  increment_token_index(parser);
   struct ast_node *while_stmt = malloc(sizeof(struct ast_node));
+  while_stmt->source_position.start_line =
+      get_current_token(parser)->token_line;
+  increment_token_index(parser);
   while_stmt->node_type = WHILE_STMT;
   CHECK_AND_RETURN_IF_ERROR_EXISTS(consume_token(LEFT_PAREN, parser));
   while_stmt->while_stmt.expr = parse_expression(parser);
@@ -169,12 +185,14 @@ struct result *parse_while_statement(struct parser_state *parser) {
   CHECK_AND_RETURN_IF_ERROR_EXISTS(consume_token(RIGHT_PAREN, parser));
   while_stmt->while_stmt.block = parse_block_statement(parser);
   CHECK_AND_RETURN_IF_ERROR_RESULT_NODE(while_stmt->while_stmt.block);
+  while_stmt->source_position.end_line = get_previous_token(parser)->token_line;
   return result_ok_node(while_stmt);
 }
 
 struct result *parse_for_statement(struct parser_state *parser) {
-  increment_token_index(parser);
   struct ast_node *for_stmt = malloc(sizeof(struct ast_node));
+  for_stmt->source_position.start_line = get_current_token(parser)->token_line;
+  increment_token_index(parser);
   for_stmt->node_type = FOR_STMT;
   CHECK_AND_RETURN_IF_ERROR_EXISTS(consume_token(LEFT_PAREN, parser));
   for_stmt->for_stmt.init_stmt = parse_statement(parser);
@@ -191,37 +209,48 @@ struct result *parse_for_statement(struct parser_state *parser) {
   CHECK_AND_RETURN_IF_ERROR_EXISTS(consume_token(RIGHT_PAREN, parser));
   for_stmt->for_stmt.block = parse_block_statement(parser);
   CHECK_AND_RETURN_IF_ERROR_RESULT_NODE(for_stmt->for_stmt.block);
+  for_stmt->source_position.end_line = get_previous_token(parser)->token_line;
   return result_ok_node(for_stmt);
 }
 
 struct result *parse_break_statement(struct parser_state *parser) {
-  increment_token_index(parser);
   struct ast_node *break_stmt = malloc(sizeof(struct ast_node));
+  break_stmt->source_position.start_line =
+      get_current_token(parser)->token_line;
+  increment_token_index(parser);
   break_stmt->node_type = BREAK_STMT;
   CHECK_AND_RETURN_IF_ERROR_EXISTS(consume_token(SEMICOLON, parser));
+  break_stmt->source_position.end_line = get_previous_token(parser)->token_line;
   return result_ok_node(break_stmt);
 }
 
 struct result *parse_return_statement(struct parser_state *parser) {
-  increment_token_index(parser);
   struct ast_node *return_stmt = malloc(sizeof(struct ast_node));
+  return_stmt->source_position.start_line =
+      get_current_token(parser)->token_line;
+  increment_token_index(parser);
   return_stmt->node_type = RETURN_STMT;
   return_stmt->return_stmt_expr = parse_expression(parser);
   CHECK_AND_RETURN_IF_ERROR_RESULT_NODE(return_stmt->return_stmt_expr);
   CHECK_AND_RETURN_IF_ERROR_EXISTS(consume_token(SEMICOLON, parser));
+  return_stmt->source_position.end_line =
+      get_previous_token(parser)->token_line;
   return result_ok_node(return_stmt);
 }
 
 struct result *parse_expression_statement(struct parser_state *parser) {
+  size_t start_line = get_current_token(parser)->token_line;
   struct result *primary = parse_expression(parser);
   CHECK_AND_RETURN_IF_ERROR_RESULT_NODE(primary);
   if (get_current_token(parser)->type == EQUAL) {
-    return parse_variable_assignment_statement(parser, primary);
+    return parse_variable_assignment_statement(parser, start_line, primary);
   }
   struct ast_node *expr_stmt = malloc(sizeof(struct ast_node));
+  expr_stmt->source_position.start_line = start_line;
   expr_stmt->node_type = EXPR_STMT;
   expr_stmt->expr_stmt_expr = primary;
   CHECK_AND_RETURN_IF_ERROR_EXISTS(consume_token(SEMICOLON, parser));
+  expr_stmt->source_position.end_line = get_previous_token(parser)->token_line;
   return result_ok_node(expr_stmt);
 }
 

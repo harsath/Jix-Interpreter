@@ -36,6 +36,10 @@ enum ast_primary_node_type {
 struct ast_node {
   enum ast_node_type node_type;
   enum ast_primary_node_type primary_node_type;
+  struct {
+    size_t start_line;
+    size_t end_line;
+  } source_position;
 
   union {
     /* Function definition statement */

@@ -44,6 +44,7 @@ struct result *parse_expression_statement(struct parser_state *parser);
 struct result *
 parse_variable_declaration_statement(struct parser_state *parser);
 struct result *parse_variable_assignment_statement(struct parser_state *parser,
+                                                   size_t start_line,
                                                    struct result *primary);
 struct result *parse_if_else_statement(struct parser_state *parser);
 struct result *parse_while_statement(struct parser_state *parser);
