@@ -26,14 +26,6 @@ struct parser *parse_program(struct vector *tokens) {
   return parser;
 }
 
-/* #define PRINT_AND_EXIT_IF_ERROR_PARSER(returner) \ */
-/*   do { \ */
-/*     if (returner->type == RESULT_ERROR) { \ */
-/*       printf("PARSER ERROR: %s\n", returner->error->message); \ */
-/*       exit(1); \ */
-/*     } \ */
-/*   } while (0) */
-
 struct result *parse_statement(struct parser_state *parser) {
   struct token *stmt = get_current_token(parser);
   switch (stmt->type) {
