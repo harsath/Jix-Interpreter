@@ -58,7 +58,7 @@ struct result *parse_statement(struct parser_state *parser) {
   default: {
     char *error_message = format_string("Unsupported statement type '%s'\n",
                                         get_string_from_token_atom(stmt->type));
-    return result_error(error_init(ERROR_SYNTAX, error_message, 0, 0));
+    return result_error(error_init(ERROR_SYNTAX, error_message, 0));
   }
   }
 }
@@ -136,7 +136,7 @@ struct result *parse_variable_assignment_statement(struct parser_state *parser,
     char *error_message = strdup(
         "Variable assignments can only be performed on identifiers and arrays");
     struct error *err =
-        error_init(ERROR_SYNTAX, error_message, parser->current_line, 0);
+        error_init(ERROR_SYNTAX, error_message, parser->current_line);
     return result_error(err);
   }
   struct ast_node *var_assign_stmt = malloc(sizeof(struct ast_node));
@@ -499,7 +499,7 @@ struct result *parse_primary(struct parser_state *parser) {
     return expr;
   }
   default: {
-    struct error *error = error_init(ERROR_SYNTAX, "Unsupported primary", 0, 0);
+    struct error *error = error_init(ERROR_SYNTAX, "Unsupported primary", 0);
     return result_error(error);
   }
   }
@@ -568,7 +568,7 @@ struct result *consume_token(enum token_type expected_token,
                              struct parser_state *parser) {
   if (!check_index_bound(parser)) {
     return result_error(
-        error_init(ERROR_SYNTAX, "Parser terminated prematurely", 0, 0));
+        error_init(ERROR_SYNTAX, "Parser terminated prematurely", 0));
   }
   struct token *current_token = get_current_token(parser);
   if (current_token->type != expected_token) {
@@ -576,8 +576,7 @@ struct result *consume_token(enum token_type expected_token,
         "Expected %s, but got %s", get_string_from_token_atom(expected_token),
         get_string_from_token_atom(current_token->type));
     struct error *error =
-        error_init(ERROR_SYNTAX, error_message, current_token->token_line,
-                   current_token->token_char_start_index);
+        error_init(ERROR_SYNTAX, error_message, current_token->token_line);
     return result_error(error);
   }
   increment_token_index(parser);
@@ -592,8 +591,7 @@ struct result *check_current_token_type(enum token_type expected_token,
         "Expected %s, but got %s", get_string_from_token_atom(expected_token),
         get_string_from_token_atom(current_token->type));
     struct error *error =
-        error_init(ERROR_SYNTAX, error_message, current_token->token_line,
-                   current_token->token_char_start_index);
+        error_init(ERROR_SYNTAX, error_message, current_token->token_line);
     return result_error(error);
   }
   return NULL;
@@ -608,7 +606,7 @@ struct result *check_ast_node_type(struct ast_node *node,
                       get_string_from_ast_node_type(expected_node_type),
                       get_string_from_ast_node_type(node->node_type));
     struct error *error =
-        error_init(ERROR_SYNTAX, error_message, parser->current_line, 0);
+        error_init(ERROR_SYNTAX, error_message, parser->current_line);
     return result_error(error);
   }
   return NULL;
@@ -624,7 +622,7 @@ check_primary_ast_node_type(struct ast_node *node,
         get_string_from_primary_ast_node_type(expected_node_type),
         get_string_from_primary_ast_node_type(node->primary_node_type));
     struct error *error =
-        error_init(ERROR_SYNTAX, error_message, parser->current_line, 0);
+        error_init(ERROR_SYNTAX, error_message, parser->current_line);
     return result_error(error);
   }
   return NULL;

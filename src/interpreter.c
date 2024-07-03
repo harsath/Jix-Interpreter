@@ -58,7 +58,7 @@ struct result *interpret_statement(struct result *statement,
       return interpret_expr_statement(statement->node, state, return_code);
     default: {
       char *error_message = strdup("Invalid statement");
-      return result_error(error_init(ERROR_RUNTIME, error_message, 0, 0));
+      return result_error(error_init(ERROR_RUNTIME, error_message, 0));
     }
     }
   }
@@ -75,7 +75,7 @@ struct result *interpret_fn_def_statement(struct ast_node *stmt_node,
     char *error_message =
         format_string("Function '%s' already exists in current scope",
                       stmt_node->fn_def_stmt.id);
-    return result_error(error_init(ERROR_RUNTIME, error_message, 0, 0));
+    return result_error(error_init(ERROR_RUNTIME, error_message, 0));
   }
   struct function *fn_stmt = malloc(sizeof(struct function));
   fn_stmt->body = stmt_node->fn_def_stmt.block->node;
@@ -100,7 +100,7 @@ interpret_variable_decl_statement(struct ast_node *stmt_node,
     char *error_message =
         format_string("Variable '%s' already exists in current scope",
                       stmt_node->var_decl_stmt.id);
-    return result_error(error_init(ERROR_RUNTIME, error_message, 0, 0));
+    return result_error(error_init(ERROR_RUNTIME, error_message, 0));
   }
   struct result *variable_value =
       eval_expression(stmt_node->var_decl_stmt.expr->node, state, return_code);
@@ -123,7 +123,7 @@ interpret_variable_assignment_statement(struct ast_node *stmt_node,
       error_message =
           format_string("Variable '%s' does not exist",
                         stmt_node->var_assign_stmt.primary->node->id);
-      return result_error(error_init(ERROR_RUNTIME, error_message, 0, 0));
+      return result_error(error_init(ERROR_RUNTIME, error_message, 0));
     }
     struct result *variable_value = eval_expression(
         stmt_node->var_assign_stmt.expr->node, state, return_code);
@@ -139,7 +139,7 @@ interpret_variable_assignment_statement(struct ast_node *stmt_node,
     if (array_obj->object->data_type != ARRAY_VALUE) {
       error_message =
           strdup("Variable array assignment can only be used for arrays");
-      return result_error(error_init(ERROR_RUNTIME, error_message, 0, 0));
+      return result_error(error_init(ERROR_RUNTIME, error_message, 0));
     }
     struct result *array_index = eval_expression(
         stmt_node->var_assign_stmt.primary->node->array_access.index->node,
@@ -148,12 +148,12 @@ interpret_variable_assignment_statement(struct ast_node *stmt_node,
     if (array_index->object->data_type != INT_VALUE) {
       error_message =
           strdup("Variable array assignment index must be an integer");
-      return result_error(error_init(ERROR_RUNTIME, error_message, 0, 0));
+      return result_error(error_init(ERROR_RUNTIME, error_message, 0));
     }
     if (array_index->object->int_value >=
         array_obj->object->array_value->size) {
       error_message = strdup("Index out of bound");
-      return result_error(error_init(ERROR_RUNTIME, error_message, 0, 0));
+      return result_error(error_init(ERROR_RUNTIME, error_message, 0));
     }
     struct result *expr = eval_expression(stmt_node->var_assign_stmt.expr->node,
                                           state, return_code);
@@ -173,7 +173,7 @@ struct result *interpret_if_statement(struct ast_node *stmt_node,
   if (if_expr->object->data_type != BOOLEAN_VALUE) {
     char *error_message = strdup("The result of the <expression> inside 'if' "
                                  "statement should result in a boolean value");
-    return result_error(error_init(ERROR_RUNTIME, error_message, 0, 0));
+    return result_error(error_init(ERROR_RUNTIME, error_message, 0));
   }
   if (if_expr->object->bool_value) {
     struct result *ret = interpret_block_statement(
@@ -198,7 +198,7 @@ struct result *interpret_while_statement(struct ast_node *stmt_node,
   if (while_expr->object->data_type != BOOLEAN_VALUE) {
     char *error_message =
         strdup("The <expression> of 'while' must return boolean");
-    return result_error(error_init(ERROR_RUNTIME, error_message, 0, 0));
+    return result_error(error_init(ERROR_RUNTIME, error_message, 0));
   }
   while (while_expr->object->bool_value) {
     if (state->is_break) {
@@ -231,7 +231,7 @@ struct result *interpret_for_statement(struct ast_node *stmt_node,
   if (for_expr->object->data_type != BOOLEAN_VALUE) {
     char *error_message =
         strdup("The expression of 'for' loop must result in a boolean value");
-    return result_error(error_init(ERROR_RUNTIME, error_message, 0, 0));
+    return result_error(error_init(ERROR_RUNTIME, error_message, 0));
   }
   while (for_expr->object->bool_value) {
     if (state->is_break) {
@@ -309,7 +309,7 @@ struct result *eval_expression(struct ast_node *ast,
   default: {
     char *error_message =
         strdup("Invalid expression type inside `eval_expression`");
-    return result_error(error_init(ERROR_RUNTIME, error_message, 0, 0));
+    return result_error(error_init(ERROR_RUNTIME, error_message, 0));
   }
   }
 }
@@ -346,7 +346,7 @@ struct result *eval_binary_expression(struct ast_node *ast,
     char *error_message =
         format_string("Invalid operation '%s' in binary node",
                       get_string_from_token_atom(ast->binary.op));
-    return result_error(error_init(ERROR_RUNTIME, error_message, 0, 0));
+    return result_error(error_init(ERROR_RUNTIME, error_message, 0));
   }
   }
 }
@@ -363,7 +363,7 @@ struct result *eval_unary_expression(struct ast_node *ast,
     case MINUS: {
       if (primary_expr->object->data_type != INT_VALUE) {
         error_message = strdup("Unary '-' can only be applied to integers");
-        return result_error(error_init(ERROR_RUNTIME, error_message, 0, 0));
+        return result_error(error_init(ERROR_RUNTIME, error_message, 0));
       }
       primary_expr->object->int_value = -primary_expr->object->int_value;
       break;
@@ -372,14 +372,14 @@ struct result *eval_unary_expression(struct ast_node *ast,
       if (primary_expr->object->data_type != BOOLEAN_VALUE) {
         char *error_message =
             strdup("Unary '!' can only be applied to booleans");
-        return result_error(error_init(ERROR_RUNTIME, error_message, 0, 0));
+        return result_error(error_init(ERROR_RUNTIME, error_message, 0));
       }
       primary_expr->object->bool_value = !primary_expr->object->bool_value;
       break;
     }
     default: {
       char *error_message = strdup("Invalid unary operation");
-      return result_error(error_init(ERROR_RUNTIME, error_message, 0, 0));
+      return result_error(error_init(ERROR_RUNTIME, error_message, 0));
     }
     }
   }
@@ -418,7 +418,7 @@ struct result *eval_equality_expression(enum token_type op, struct object *lhs,
     char *error_message =
         strdup("Equality operator can only be performed between two operands "
                "of integers, strings, or booleans");
-    return result_error(error_init(ERROR_RUNTIME, error_message, 0, 0));
+    return result_error(error_init(ERROR_RUNTIME, error_message, 0));
   }
   return result_ok_object(returner);
 }
@@ -431,7 +431,7 @@ struct result *eval_comparitive_expression(enum token_type op,
   if (lhs->data_type != INT_VALUE || rhs->data_type != INT_VALUE) {
     char *error_message = strdup("Comparitive expression can only be "
                                  "performed between two integers.\n");
-    return result_error(error_init(ERROR_RUNTIME, error_message, 0, 0));
+    return result_error(error_init(ERROR_RUNTIME, error_message, 0));
   }
   long lhs_value = lhs->int_value;
   long rhs_value = rhs->int_value;
@@ -465,7 +465,7 @@ struct result *eval_additive_multiplicative_expression(enum token_type op,
   if (lhs->data_type == STRING_VALUE || rhs->data_type == STRING_VALUE) {
     if (op != PLUS) {
       char *error_message = strdup("Only '+' can be performed on strings");
-      return result_error(error_init(ERROR_RUNTIME, error_message, 0, 0));
+      return result_error(error_init(ERROR_RUNTIME, error_message, 0));
     }
     const char *lhs_string;
     const char *rhs_string;
@@ -487,7 +487,7 @@ struct result *eval_additive_multiplicative_expression(enum token_type op,
     char *error_message =
         strdup("For additive and multiplicative expressions, both operands "
                "must be of integer type or strings");
-    return result_error(error_init(ERROR_RUNTIME, error_message, 0, 0));
+    return result_error(error_init(ERROR_RUNTIME, error_message, 0));
   }
   switch (op) {
   case PLUS: {
@@ -549,7 +549,7 @@ struct result *eval_primary_expression(struct ast_node *ast,
       } else {
         char *error_message =
             format_string("Identifier '%s' does not exist", ast->id);
-        return result_error(error_init(ERROR_RUNTIME, error_message, 0, 0));
+        return result_error(error_init(ERROR_RUNTIME, error_message, 0));
       }
     }
     returner = symbol_lookup;
@@ -589,7 +589,7 @@ struct result *eval_primary_expression(struct ast_node *ast,
   }
   default: {
     char *error_message = strdup("Unimplemented primary expression");
-    return result_error(error_init(ERROR_RUNTIME, error_message, 0, 0));
+    return result_error(error_init(ERROR_RUNTIME, error_message, 0));
   }
   }
   return result_ok_object(returner);
@@ -606,7 +606,7 @@ eval_fn_call_primary_expression(struct ast_node *ast,
   char *error_message;
   if (fn_call_primary_eval->data_type != FUNCTION_VALUE) {
     error_message = strdup("Function calls can only be performed on callable");
-    return result_error(error_init(ERROR_RUNTIME, error_message, 0, 0));
+    return result_error(error_init(ERROR_RUNTIME, error_message, 0));
   }
 
   /* Handle builtin functions */
@@ -653,7 +653,7 @@ struct result *eval_builtin_fn_call_primary_expression(
         format_string("Function '%s' takes %ld, gut given %ld",
                       fn_call_primary->function_value.builtin_function->fn_name,
                       builtin_fn_arity, ast->fn_call.parameters->size);
-    return result_error(error_init(ERROR_RUNTIME, error_message, 0, 0));
+    return result_error(error_init(ERROR_RUNTIME, error_message, 0));
   }
   /* Invoke the builtin function based on arity */
   if (builtin_fn_arity == 1) {
@@ -678,7 +678,7 @@ struct result *eval_builtin_fn_call_primary_expression(
   } else {
     char *error_message =
         strdup("Unsupported number of parameters to bulitn function");
-    return result_error(error_init(ERROR_RUNTIME, error_message, 0, 0));
+    return result_error(error_init(ERROR_RUNTIME, error_message, 0));
   }
   return_code->is_set = false;
   return result_ok_object(NULL);
@@ -698,7 +698,7 @@ eval_method_call_primary_expression(struct ast_node *ast,
     if (ast->method_call.member->node->primary_node_type !=
         FN_CALL_PRIMARY_NODE) {
       char *error_message = strdup("Array methods can only be function calls");
-      return result_error(error_init(ERROR_RUNTIME, error_message, 0, 0));
+      return result_error(error_init(ERROR_RUNTIME, error_message, 0));
     }
     struct result *array_method_call_primary =
         ast->method_call.member->node->fn_call.primary;
@@ -706,7 +706,7 @@ eval_method_call_primary_expression(struct ast_node *ast,
         IDENTIFIER_PRIMARY_NODE) {
       char *error_message =
           strdup("Method calls to array should must be an identifier type");
-      return result_error(error_init(ERROR_RUNTIME, error_message, 0, 0));
+      return result_error(error_init(ERROR_RUNTIME, error_message, 0));
     }
     if (strcmp(array_method_call_primary->node->id, "add") == 0) {
       for (size_t i = 0;
@@ -724,14 +724,14 @@ eval_method_call_primary_expression(struct ast_node *ast,
     } else if (strcmp(array_method_call_primary->node->id, "pop") == 0) {
       if (array_obj->object->array_value->size <= 0) {
         char *error_message = strdup("Calling .pop() on an empty array");
-        return result_error(error_init(ERROR_RUNTIME, error_message, 0, 0));
+        return result_error(error_init(ERROR_RUNTIME, error_message, 0));
       }
       struct vector *member_parameter =
           ast->method_call.member->node->fn_call.parameters;
       if (member_parameter->size > 1) {
         char *error_message =
             strdup(".pop() only supports one optional argument");
-        return result_error(error_init(ERROR_RUNTIME, error_message, 0, 0));
+        return result_error(error_init(ERROR_RUNTIME, error_message, 0));
       }
       if (member_parameter->size == 1) {
         struct result *val = vector_at(member_parameter, 0);
@@ -741,13 +741,13 @@ eval_method_call_primary_expression(struct ast_node *ast,
         if (index->data_type != INT_VALUE) {
           char *error_message =
               strdup("The `pos` in .pop(pos) must be an integer");
-          return result_error(error_init(ERROR_RUNTIME, error_message, 0, 0));
+          return result_error(error_init(ERROR_RUNTIME, error_message, 0));
         }
         /* Positive index */
         if (index->int_value >= 0) {
           if (index->int_value >= array_obj->object->array_value->size) {
             char *error_message = strdup("Index out of bound in .pop(pos)");
-            return result_error(error_init(ERROR_RUNTIME, error_message, 0, 0));
+            return result_error(error_init(ERROR_RUNTIME, error_message, 0));
           }
           returner = vector_remove_at(array_obj->object->array_value,
                                       index->int_value);
@@ -757,7 +757,7 @@ eval_method_call_primary_expression(struct ast_node *ast,
               array_obj->object->array_value->size + index->int_value;
           if (index_calc < 0) {
             char *error_message = strdup("Index out of bound in .pop(pos)");
-            return result_error(error_init(ERROR_RUNTIME, error_message, 0, 0));
+            return result_error(error_init(ERROR_RUNTIME, error_message, 0));
           }
           returner =
               vector_remove_at(array_obj->object->array_value, index_calc);
@@ -772,12 +772,12 @@ eval_method_call_primary_expression(struct ast_node *ast,
       char *error_message =
           format_string("Invalid method '%s' for array operation",
                         array_method_call_primary->node->id);
-      return result_error(error_init(ERROR_RUNTIME, error_message, 0, 0));
+      return result_error(error_init(ERROR_RUNTIME, error_message, 0));
     }
   } else {
     char *error_message =
         strdup("Method calls are only supported for arrays for now");
-    return result_error(error_init(ERROR_RUNTIME, error_message, 0, 0));
+    return result_error(error_init(ERROR_RUNTIME, error_message, 0));
   }
   return result_ok_object(returner);
 }
@@ -808,7 +808,7 @@ eval_array_access_primary_expression(struct ast_node *ast,
   struct object *array_obj = primary_eval->object;
   if (array_obj->data_type != ARRAY_VALUE) {
     char *error_message = strdup("Array access can only be used for arrays");
-    return result_error(error_init(ERROR_RUNTIME, error_message, 0, 0));
+    return result_error(error_init(ERROR_RUNTIME, error_message, 0));
   }
   struct result *index_eval =
       eval_expression(ast->array_access.index->node, state, return_code);
@@ -816,11 +816,11 @@ eval_array_access_primary_expression(struct ast_node *ast,
   struct object *array_index = index_eval->object;
   if (array_index->data_type != INT_VALUE) {
     char *error_message = strdup("Array index must be an integer");
-    return result_error(error_init(ERROR_RUNTIME, error_message, 0, 0));
+    return result_error(error_init(ERROR_RUNTIME, error_message, 0));
   }
   if (array_index->int_value >= array_obj->array_value->size) {
     char *error_message = strdup("Index out of bound");
-    return result_error(error_init(ERROR_RUNTIME, error_message, 0, 0));
+    return result_error(error_init(ERROR_RUNTIME, error_message, 0));
   }
   return result_ok_object(
       vector_at(array_obj->array_value, array_index->int_value));

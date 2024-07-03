@@ -7,13 +7,11 @@
  * For ERROR_SYNTAX, `expected` will be the string representation of the token
  * that is expected and `got` will be the token that we received intead.
  */
-struct error *error_init(enum error_type type, const char *message, size_t line,
-                         size_t column) {
+struct error *error_init(enum error_type type, const char *message, size_t line) {
   struct error *ret = malloc(sizeof(struct error));
   ret->type = type;
   ret->message = message;
   ret->line = line;
-  ret->column = column;
   return ret;
 }
 
