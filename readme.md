@@ -6,6 +6,7 @@ This project implements an interpreter for Jix, a [dynamically typed](https://en
 See `examples` and `test_files` directories for example programs in Jix.
 
 ## Features: 
+### Language:
 - Dynamic types (int, bool, and string)
 - Arrays
     - `add()`
@@ -22,6 +23,8 @@ See `examples` and `test_files` directories for example programs in Jix.
     - Break
     - Variable declaration and assignment
 - Nested blocks / statements
+### Interpreter:
+- Fault-tolerant parsing
 
 ## Building
 To build this project:
