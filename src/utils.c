@@ -146,9 +146,22 @@ char *format_string(const char *format, ...) {
 
 void print_parser_errors(struct vector *parser_errors) {
   for (size_t i = 0; i < parser_errors->size; i++) {
-    struct error *err = vector_at(parser_errors, i);
+    struct parser_error *err = vector_at(parser_errors, i);
     char *error_message =
         format_string("Syntax Error (line %li): %s\n", err->line, err->message);
     printf("%s", error_message);
   }
+}
+
+void print_interpreter_error(struct runtime_error *error) {
+  char *error_message;
+  if (error->start_line != error->end_line) {
+    error_message =
+        format_string("Runtime Error (lines %li-%li): %s\n", error->start_line,
+                      error->end_line, error->message);
+  } else {
+    error_message = format_string("Runtime Error (line %li): %s\n",
+                                  error->start_line, error->message);
+  }
+  printf("%s", error_message);
 }

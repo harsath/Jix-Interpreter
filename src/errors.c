@@ -1,17 +1,18 @@
 #include "errors.h"
 
-/**
- * For ERROR_RUNTIME, `expected` will contain the error message and `got` will
- * be NULL.
- *
- * For ERROR_SYNTAX, `expected` will be the string representation of the token
- * that is expected and `got` will be the token that we received intead.
- */
-struct error *error_init(enum error_type type, const char *message, size_t line) {
-  struct error *ret = malloc(sizeof(struct error));
-  ret->type = type;
+struct parser_error *parser_error_init(const char *message, size_t line) {
+  struct parser_error *ret = malloc(sizeof(struct parser_error));
   ret->message = message;
   ret->line = line;
+  return ret;
+}
+
+struct runtime_error *runtime_error_init(const char *message, size_t start_line,
+                                         size_t end_line) {
+  struct runtime_error *ret = malloc(sizeof(struct runtime_error));
+  ret->message = message;
+  ret->start_line = start_line;
+  ret->end_line = end_line;
   return ret;
 }
 
@@ -29,9 +30,16 @@ struct result *result_ok_object(struct object *object) {
   return ret;
 }
 
-struct result *result_error(struct error *error) {
+struct result *result_error_parser(struct parser_error *error) {
   struct result *ret = malloc(sizeof(struct result));
   ret->type = RESULT_ERROR;
-  ret->error = error;
+  ret->error.parser = error;
+  return ret;
+}
+
+struct result *result_error_runtime(struct runtime_error *error) {
+  struct result *ret = malloc(sizeof(struct result));
+  ret->type = RESULT_ERROR;
+  ret->error.runtime = error;
   return ret;
 }

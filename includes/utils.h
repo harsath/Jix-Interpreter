@@ -2,14 +2,14 @@
 #define UTILS_H
 
 #include "ast.h"
+#include "interpreter.h"
 #include "tokens.h"
 #include "vector.h"
-#include "interpreter.h"
 #include <fcntl.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <stdarg.h>
 
 #define BUFFER_SIZE 10240
 #define IDENTIFIER_BUFFER_SIZE 50
@@ -22,5 +22,6 @@ void print_ast_pipeline(const char *file_name);
 const char *convert_object_to_string(struct object *obj);
 char *format_string(const char *format, ...);
 void print_parser_errors(struct vector *parser_errors);
+void print_interpreter_error(struct runtime_error *runtime_error);
 
 #endif

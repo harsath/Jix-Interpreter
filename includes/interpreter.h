@@ -20,6 +20,10 @@ struct environment {
 };
 
 struct interpreter_state {
+  struct {
+    size_t start_line;
+    size_t end_line;
+  } current_stmt_lines;
   bool is_break;
   struct environment *env;
   struct hash_table *builtin_fns;
@@ -114,13 +118,16 @@ struct result *eval_unary_expression(struct ast_node *ast,
 struct result *eval_logical_expression(enum token_type op, struct object *lhs,
                                        struct object *rhs);
 struct result *eval_equality_expression(enum token_type op, struct object *lhs,
-                                        struct object *rhs);
+                                        struct object *rhs,
+                                        struct interpreter_state *state);
 struct result *eval_comparitive_expression(enum token_type op,
                                            struct object *lhs,
-                                           struct object *rhs);
-struct result *eval_additive_multiplicative_expression(enum token_type op,
-                                                       struct object *lhs,
-                                                       struct object *rhs);
+                                           struct object *rhs,
+                                           struct interpreter_state *state);
+struct result *
+eval_additive_multiplicative_expression(enum token_type op, struct object *lhs,
+                                        struct object *rhs,
+                                        struct interpreter_state *state);
 struct result *eval_primary_expression(struct ast_node *ast,
                                        struct interpreter_state *state,
                                        struct return_value *return_code);
