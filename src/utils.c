@@ -70,8 +70,7 @@ void print_ast_pipeline(const char *file_name) {
   struct vector *tokens = scan_tokens(input);
   struct parser *program = parse_program(tokens);
   if (program->parser_errors) {
-    printf("fix parser errors first\n");
-    exit(1);
+    return;
   }
   printf("%s", print_ast(program->program)->str);
 }
