@@ -1,5 +1,6 @@
 #include "utils.h"
 #include "ast_printer.h"
+#include "errors.h"
 #include "interpreter.h"
 #include "parser.h"
 #include "scanner.h"
@@ -52,8 +53,11 @@ struct object *interpreter_pipeline(const char *file_name) {
     return NULL;
   }
   struct vector *tokens = scan_tokens(input);
-  struct vector *program = parse_program(tokens);
-  struct object *interpreter_return_value = interpret(program);
+  struct parser *program = parse_program(tokens);
+  if (program->parser_errors) {
+    exit(1);
+  }
+  struct object *interpreter_return_value = interpret(program->program);
   vector_free(tokens);
   return interpreter_return_value;
 }
@@ -64,8 +68,12 @@ void print_ast_pipeline(const char *file_name) {
     return;
   }
   struct vector *tokens = scan_tokens(input);
-  struct vector *program = parse_program(tokens);
-  printf("%s", print_ast(program)->str);
+  struct parser *program = parse_program(tokens);
+  if (program->parser_errors) {
+    printf("fix parser errors first\n");
+    exit(1);
+  }
+  printf("%s", print_ast(program->program)->str);
 }
 
 const char *convert_object_to_string(struct object *obj) {
@@ -92,11 +100,11 @@ const char *convert_object_to_string(struct object *obj) {
       if (val->data_type == STRING_VALUE) {
         string_builder_append(str_builder, "\"");
         string_builder_append(str_builder, convert_object_to_string(
-                                             vector_at(obj->array_value, i)));
+                                               vector_at(obj->array_value, i)));
         string_builder_append(str_builder, "\"");
       } else {
         string_builder_append(str_builder, convert_object_to_string(
-                                             vector_at(obj->array_value, i)));
+                                               vector_at(obj->array_value, i)));
       }
       if (i != obj->array_value->size - 1) {
         string_builder_append(str_builder, ", ");
@@ -113,4 +121,47 @@ const char *convert_object_to_string(struct object *obj) {
     exit(1);
   }
   }
+}
+
+// https://stackoverflow.com/a/1056423
+char *format_string(const char *format, ...) {
+  va_list args;
+  va_list args_copy;
+  int length;
+  char *buffer;
+
+  va_start(args, format);
+  va_copy(args_copy, args);
+  length = vsnprintf(NULL, 0, format, args_copy);
+  va_end(args_copy);
+  buffer = malloc(length + 1);
+  if (buffer == NULL) {
+    va_end(args);
+    return NULL;
+  }
+  vsnprintf(buffer, length + 1, format, args);
+  va_end(args);
+  return buffer;
+}
+
+void print_parser_errors(struct vector *parser_errors) {
+  for (size_t i = 0; i < parser_errors->size; i++) {
+    struct parser_error *err = vector_at(parser_errors, i);
+    char *error_message =
+        format_string("Syntax Error (line %li): %s\n", err->line, err->message);
+    printf("%s", error_message);
+  }
+}
+
+void print_interpreter_error(struct runtime_error *error) {
+  char *error_message;
+  if (error->start_line != error->end_line) {
+    error_message =
+        format_string("Runtime Error (lines %li-%li): %s\n", error->start_line,
+                      error->end_line, error->message);
+  } else {
+    error_message = format_string("Runtime Error (line %li): %s\n",
+                                  error->start_line, error->message);
+  }
+  printf("%s", error_message);
 }
