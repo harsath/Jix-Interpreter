@@ -12,7 +12,8 @@ See `examples` and `test_files` directories for example programs in Jix.
     - `add()`
     - `len()`
     - `pop()`
-- Functions and function pointers
+- Functions
+- Basic functional programming features: first-class functions, higher-order functions, and function pointers.
 - Builtin functions
     - Print()
 - Statements
